@@ -9,8 +9,6 @@ import java.util.*;
 
 public class DisplayView extends View
 {
-	// Canvas[][] canvasGlobal;
-	
 	// TODO: Implement 8080 vram feed to canvas
 	// 256 x 224 (w x h) = 57344 object 28 * 8; 32 * 8
 	// 1 rect object per pixel (black = 0, white = 1)
@@ -29,30 +27,21 @@ public class DisplayView extends View
 	// x = 0 * pxWidth; y = 0 * pxwidth
 	// if needs to down vertically , use for value to define how much it needs to go below
 	
+	CpuComponents cpu;
+
+	Paint paintred;
+	Paint paintwhite;
+	Paint paintgreen;
 	
 	private final float PIXEL_SIZE = 2.90f;
 	private final float PIXEL_SIZE_WIDTH = PIXEL_SIZE;
 	private final float PIXEL_SIZE_HEIGHT = PIXEL_SIZE;
 	
-	private final float ASPECT = 1.00f;
 	private final int WIDTH = 256; // 256
 	private final int HEIGHT = 224; // 224
 	
-	private float cur_width = 0.00f;
-	private float cur_height = 0.00f;
-	
-	private int vram = 0x2400;
-	
 	private boolean isUpdatingOnFunc = false;
-	
-	CpuComponents cpu;
-	
-	RectF[][] rectF = new RectF[HEIGHT][WIDTH];
-	float[] plotWhite, plotBlack;
-	
-	Paint paintblack;
-	Paint paintwhite;
-	Paint paintgreen;
+	float[] pixelLoc;
 
 	public DisplayView(Context context) {
 		super(context);
@@ -73,46 +62,12 @@ public class DisplayView extends View
 		init(attrs);
 	}
 	
-	public void setCpu(CpuComponents cpu) {
-		this.cpu = cpu;
-	}
-	
-	
 	@Override
 	protected void onDraw(Canvas canvas) {
 		super.onDraw(canvas);
 		
-		// suspend emu
-		// canvas.drawRect(0, 0, getWidth(), getHeight(), paintblack);
-		
 		if (isUpdatingOnFunc) {
-			// put on other thread!
-			vram = 0x2400;
-			int pxPos = 0;
-			for (int y = 0; y < HEIGHT; y++) {
-				for (int x = 0; x < WIDTH; x+=8) {
-					int flipbit = cpu.memory[vram];
-					int hscan = 0;
-					for(int scan = 0; scan < 8; scan++) { // Little endian
-
-						if (((flipbit >> scan) & 0x1) == 1) {
-							// canvas.drawRect(rectF[y][x + hscan], paintwhite);
-							plotWhite[pxPos] = (scan + x) * PIXEL_SIZE_WIDTH;
-							pxPos++;
-							plotWhite[pxPos] = (y * PIXEL_SIZE_HEIGHT);
-							pxPos++;
-						}
-
-						hscan++;
-					}
-
-					vram++;
-				}
-			}
-
-			
-			canvas.drawPoints(plotWhite, paintwhite);
-			
+			canvas.drawPoints(pixelLoc, paintwhite);
 			isUpdatingOnFunc = false;
 			
 			if(canvas.isHardwareAccelerated()) {
@@ -121,38 +76,20 @@ public class DisplayView extends View
 				canvas.drawText("Hardware-accelerated: false", 0, getHeight(), paintwhite);
 			}
 			
-			
-			// canvas.drawPoints(plot, paintwhite);
-			// unsuspend emu
-			
 		}
 	}
 
 	///  METHODS  ///
 	private void init(AttributeSet attrs) {
-		//this.canvasGlobal = new Canvas[HEIGHT][WIDTH];
 		
-		paintblack = setPaint(Color.BLACK);
+		paintred = setPaint(Color.RED);
 		paintwhite = setPaint(Color.WHITE);
 		paintgreen = setPaint(Color.GREEN);
 		
 		paintwhite.setStrokeWidth(PIXEL_SIZE);
 		
-		//rectF = new RectF[HEIGHT][WIDTH];
-		plotWhite = new float[(HEIGHT * WIDTH)];
+		pixelLoc = new float[(HEIGHT * WIDTH)];
 		
-		/*
-		for(int y = 0; y < HEIGHT; y++) {
-			cur_width = 0;
-
-			for(int x = 0; x < WIDTH; x++) {
-				rectF[y][x] = new RectF(cur_width, cur_height, cur_width + (PIXEL_SIZE_WIDTH * ASPECT), cur_height + (PIXEL_SIZE_HEIGHT * ASPECT)); // left, top, right, bottom
-				cur_width += (PIXEL_SIZE_WIDTH * ASPECT);
-			}
-
-			cur_height += (PIXEL_SIZE_HEIGHT * ASPECT);
-		}
-		*/
 	}
 
 	private Paint setPaint(int color) {
@@ -165,10 +102,36 @@ public class DisplayView extends View
 	}
 	
 	public void updateView(CpuComponents cpu) {
+		// cpu object
 		this.cpu = cpu;
+		// initialize every draw
+		pixelLoc = new float[(HEIGHT * WIDTH)];
+		// vram starting point
+		int vram = 0x2400;
+		// array
+		int arr = 0;
+		
+		for (int y = 0; y < HEIGHT; y++) { // 256
+			
+			for (int x = 0; x < WIDTH; x += 8) { // 224
+				int pixel = cpu.memory[vram];
+				
+				for(int scan = 0; scan < 8; scan++) { // convert binary into pixel (on and off)
+					if (((pixel >> scan) & 0x1) == 1) {
+						pixelLoc[arr] = (scan + x) * PIXEL_SIZE_WIDTH;
+						arr++;
+						pixelLoc[arr] = y * PIXEL_SIZE_HEIGHT;
+						arr++;
+					}
+				}
+				
+				vram++;
+			}
+		}
+
 		isUpdatingOnFunc = true;
 		postInvalidate();
-		cpu.updateScreen = false;
+		
 	}
 
 }

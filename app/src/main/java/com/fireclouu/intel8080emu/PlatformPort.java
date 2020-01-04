@@ -37,7 +37,11 @@ public class PlatformPort
 
 			@Override
 			public void run() {
-				mDisplay.updateView(cpu);
+				while(cpu.updateScreen) {
+					mDisplay.updateView(cpu);
+				}
+				
+				cpu.updateScreen = false;
 				dispHandler.post(dispRunnable);
 			}
 			

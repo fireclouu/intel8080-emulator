@@ -44,13 +44,16 @@ public class Emulation
 			// 2MHz = execute every 5e-7 secs
 			// System.nanoTime() = billionth of a sec. (epoch)
 			timerNow = getMicroSec();
-			/*if (timerHz + 1_6667 < timerNow) {
+			
+			// 60hz
+			if (timerHz + 1_6667 < timerNow) {
 				cpu.updateScreen = true;
 				timerHz = timerNow;
-			}*/
+			}
 			
 			timerNow = getMicroSec();
 			
+			// first run values
 			if (timerLastRecord == 0) {
 				timerLastRecord = timerNow;
 				nextInterrupt = timerLastRecord + 16000;
@@ -72,16 +75,16 @@ public class Emulation
 			
 			// measured in microseconds
 			long elapse = timerNow - timerLastRecord;
-			// long cycle_needed = (elapse * 2);
+			long cycle_needed = (elapse * 2);
 			
-			// int cycles = 0; // reset every succeeding usec passed
+			int cycles = 0; // reset every succeeding usec passed
 			
 			//while((cycles < cycle_needed)) {
 				// print instruction
 				// pTrace.printInstruction(cpu, cpu.PC, true); // enabling this slows (?) emulation
 				
 				// emulation
-				interpreter.emulate8080(cpu);
+				cycles += interpreter.emulate8080(cpu);
 			//}
 			
 			timerLastRecord = timerNow;
