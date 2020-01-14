@@ -17,13 +17,33 @@ public class Interpreter
 		init(cpu);
 	}
 	
+	// SOURCES: nav97 / dramikei
+	short cycles8080[] = {
+		4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4, //0x00..0x0f
+		4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4,
+		4, 10, 16, 5, 5, 5, 7, 4, 4, 10, 16, 5, 5, 5, 7, 4,
+		4, 10, 13, 5, 10, 10, 10, 4, 4, 10, 13, 5, 5, 5, 7, 4,
+
+		5, 5, 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 7, 5, //0x40..0x4f
+		5, 5, 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 7, 5,
+		5, 5, 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 7, 5,
+		7, 7, 7, 7, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 7, 5,
+
+		4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4, //0x80..0x8f
+		4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+		4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+		4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
+
+		11, 10, 10, 10, 17, 11, 7, 11, 11, 10, 10, 10, 10, 17, 7, 11, //0xc0..0xcf
+		11, 10, 10, 10, 17, 11, 7, 11, 11, 10, 10, 10, 10, 17, 7, 11,
+		11, 10, 10, 18, 17, 11, 7, 11, 11, 5, 10, 5, 17, 17, 7, 11,
+		11, 10, 10, 4, 17, 11, 7, 11, 11, 5, 10, 4, 17, 17, 7, 11,
+	};
+	
 	/// MAIN EMULATION
-	public byte emulate8080(CpuComponents cpu) {
+	public short emulate8080(CpuComponents cpu) {
 		// temporary containers
 		int res;
-		
-		// cpu cycle
-		byte cycle = 1;
 		
 		// opcode
 		int opcode = cpu.PC;
@@ -44,7 +64,6 @@ public class Interpreter
 				cpu.B = cpu.memory[opcode + 2];
 				cpu.C = cpu.memory[opcode + 1];
 				cpu.PC += 2;
-				cycle = 3;
 				break; // LXI B, D16
 			case 0x02:
 				STA(cpu, cpu.B, cpu.C);
@@ -72,7 +91,6 @@ public class Interpreter
 			case 0x06:
 				cpu.B = cpu.memory[opcode + 1];
 				cpu.PC++;
-				cycle = 2;
 				break; // MVI B, D8
 			case 0x07:
 				RLC(cpu);
@@ -108,7 +126,6 @@ public class Interpreter
 			case 0x0e:
 				cpu.C = cpu.memory[opcode + 1];
 				cpu.PC++;
-				cycle = 2;
 				break; // MVI C, D8
 			case 0x0f:
 				RRC(cpu);	
@@ -122,7 +139,6 @@ public class Interpreter
 				cpu.D = cpu.memory[opcode + 2];
 				cpu.E = cpu.memory[opcode + 1];
 				cpu.PC += 2;
-				cycle = 3;
 				break; // LXI D, D16
 			case 0x12:
 				STA(cpu, cpu.D, cpu.E);
@@ -150,7 +166,6 @@ public class Interpreter
 			case 0x16:
 				cpu.D = cpu.memory[opcode + 1];
 				cpu.PC++;
-				cycle = 2;
 				break; // MVI D, D8
 			case 0x17:
 				RAL(cpu);
@@ -186,7 +201,6 @@ public class Interpreter
 			case 0x1e:
 				cpu.E = cpu.memory[opcode + 1];
 				cpu.PC++;
-				cycle = 2;
 				break; // MVI E, D8
 			case 0x1f:
 				RAR(cpu);
@@ -200,12 +214,10 @@ public class Interpreter
 				cpu.H = cpu.memory[opcode + 2];
 				cpu.L = cpu.memory[opcode + 1];
 				cpu.PC += 2;
-				cycle = 3;
 				break; // LXI H, D16
 			case 0x22:
 				SHLD(cpu, opcode);
 				cpu.PC += 2;
-				cycle = 3;
 				break; // SHLD adr
 			case 0x23:
 			{
@@ -230,7 +242,6 @@ public class Interpreter
 			case 0x26:
 				cpu.H = cpu.memory[opcode + 1];
 				cpu.PC++;
-				cycle = 2;
 				break; // MVI H, D8
 
 				// Case 0x27 DAA (BCD)
@@ -243,7 +254,6 @@ public class Interpreter
 			case 0x2a:
 				LHLD(cpu, opcode);
 				cpu.PC += 2;
-				cycle = 3;
 				break; // LHLD adr
 			case 0x2b:
 			{
@@ -268,7 +278,6 @@ public class Interpreter
 			case 0x2e:
 				cpu.L = cpu.memory[opcode + 1];
 				cpu.PC++;
-				cycle = 2;
 				break; // MVI L, D8
 			case 0x2f:
 				cpu.A = (short) ((~cpu.A & 0xff));
@@ -279,12 +288,10 @@ public class Interpreter
 			case 0x31:
 				cpu.SP = ((cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1]);
 				cpu.PC += 2;
-				cycle = 3;
 				break; // LXI SP, D16
 			case 0x32:
 				STA(cpu, cpu.memory[opcode + 2], cpu.memory[opcode + 1]);
 				cpu.PC += 2;
-				cycle = 3;
 				break; // STA adr
 			case 0x33:
 				cpu.SP = (short) ((cpu.SP + 1) & 0xffff);
@@ -302,7 +309,6 @@ public class Interpreter
 			case 0x36:
 				cpu.memory[addr] = cpu.memory[opcode + 1];
 				cpu.PC++;
-				cycle = 2;
 				break; // MVI M, D8
 			case 0x37:
 				cpu.cc.CY = 1;
@@ -315,7 +321,6 @@ public class Interpreter
 			case 0x3a:
 				LDA(cpu, cpu.memory[opcode + 2], cpu.memory[opcode + 1]);
 				cpu.PC += 2;
-				cycle = 3;
 				break; // LDA adr
 			case 0x3b:
 				cpu.SP = (cpu.SP - 1) & 0xffff;
@@ -333,7 +338,6 @@ public class Interpreter
 			case 0x3e:
 				cpu.A = cpu.memory[opcode + 1];
 				cpu.PC++;
-				cycle = 2;
 				break; // MVI A, D8
 			case 0x3f:
 				cpu.cc.CY = (cpu.cc.CY == 1) ? (byte) 0 : 1;
@@ -766,11 +770,9 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // JNZ adr
 			case 0xc3:
 				cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
-				cycle = 3;
 				break; // JMP adr
 			case 0xc4:
 				if (cpu.cc.Z == 0) {
@@ -778,7 +780,6 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // CNZ adr
 			case 0xc5:
 				cpu.memory[(cpu.SP - 1) & 0xffff] = cpu.B;
@@ -788,11 +789,9 @@ public class Interpreter
 			case 0xc6:
 				ADD(cpu, cpu.memory[opcode + 1]);
 				cpu.PC++;
-				cycle = 2;
 				break; // ADI D8
 			case 0xc7:
 				CALL(cpu, 0x00);
-				cycle = 1;
 				break; // RST 0
 			case 0xc8:
 				if (cpu.cc.Z == 1) {
@@ -808,7 +807,6 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // JZ adr
 			case 0xcb:
 				break; // -
@@ -818,21 +816,17 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // CZ adr
 			case 0xcd:
 				// CALL(cpu, opcode);
-				 TEST_DIAG(cpu, opcode);
-				cycle = 3;
+				TEST_DIAG(cpu, opcode);
 				break; // CALL adr
 			case 0xce:
 				ADC(cpu, cpu.memory[opcode + 1]);
 				cpu.PC++;
-				cycle = 2;
 				break;  // ACI D8
 			case 0xcf:
 				CALL(cpu, 0x08);
-				cycle = 1;
 				break; // RST 1
 
 				//////   0xd0 - 0xdf   /////
@@ -853,11 +847,10 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // JNC adr
 			case 0xd3:
+				// stub
 				cpu.PC++;
-				cycle = 2;
 				break; // OUT D8
 			case 0xd4:
 				if (cpu.cc.CY == 0) {
@@ -865,7 +858,6 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // CNC adr
 			case 0xd5:
 				cpu.memory[(cpu.SP - 1) & 0xffff] = cpu.D;
@@ -875,11 +867,9 @@ public class Interpreter
 			case 0xd6:
 				SUB(cpu, cpu.memory[opcode + 1]);
 				cpu.PC++;
-				cycle = 2;
 				break; // SUI D8
 			case 0xd7:
 				CALL(cpu, 0x10);
-				cycle = 1;
 				break;// RST 2
 			case 0xd8: 
 				if (cpu.cc.CY == 1) {
@@ -894,9 +884,9 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // JC adr
 			case 0xdb:
+				//cpu.A = 0xff;  // stub
 				cpu.PC++;
 				break; // IN D8 (stub) (Load I/O to Accumulator)
 			case 0xdc:
@@ -905,18 +895,15 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // CC adr
 			case 0xdd:
 				break; // -
 			case 0xde:
 				SBB(cpu, cpu.memory[opcode + 1]);
 				cpu.PC++;
-				cycle = 2;
 				break; // SBI D8
 			case 0xdf:
 				CALL(cpu, 0x18);
-				cycle = 1;
 				break;// RST 3
 
 				//////   0xe0 - 0xef   /////
@@ -937,7 +924,6 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // JPO adr
 			case 0xe3:
 				XTHL(cpu);
@@ -948,7 +934,6 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // CPO adr
 			case 0xe5:
 				cpu.memory[(cpu.SP - 1) & 0xffff] = cpu.H;
@@ -958,11 +943,9 @@ public class Interpreter
 			case 0xe6:
 				ANA(cpu, cpu.memory[opcode + 1]);
 				cpu.PC++;
-				cycle = 2;
 				break; // ANI D8
 			case 0xe7:
 				CALL(cpu, 0x20);
-				cycle = 1;
 				break;// RST 4
 			case 0xe8: 
 				if (cpu.cc.P == 1) {
@@ -978,7 +961,6 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // JPE adr
 			case 0xeb:
 				XCHG(cpu);
@@ -989,18 +971,15 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // CPE adr
 			case 0xed:
 				break; // -
 			case 0xee:
 				XRA(cpu, cpu.memory[opcode + 1]);
 				cpu.PC++;
-				cycle = 2;
 				break; // XRI D8
 			case 0xef:
 				CALL(cpu, 0x28);
-				cycle = 1;
 				break; // RST 5
 		
 				//////   0xf0 - 0xff   /////
@@ -1019,7 +998,6 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // JP adr
 			case 0xf3:
 				cpu.int_enable = false;
@@ -1030,7 +1008,6 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // CP adr
 			case 0xf5:
 				PUSH_PSW(cpu);
@@ -1038,11 +1015,9 @@ public class Interpreter
 			case 0xf6:
 				ORA(cpu, cpu.memory[opcode + 1]);
 				cpu.PC++;
-				cycle = 2;
 				break; // ORI D8
 			case 0xf7:
 				CALL(cpu, 0x30);
-				cycle = 1;
 				break;// RST 6
 			case 0xf8: 
 				if (cpu.cc.S == 1) {
@@ -1058,7 +1033,6 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // JM adr	
 			case 0xfb:
 				cpu.int_enable = true;
@@ -1069,24 +1043,19 @@ public class Interpreter
 				} else {
 					cpu.PC += 2;
 				}
-				cycle = 3;
 				break; // CM adr
 			case 0xfd:
 				break; // -
 			case 0xfe:
 				CMP(cpu, cpu.memory[opcode + 1]);
 				cpu.PC++;
-				cycle = 2;
 				break; // CPI D8
 			case 0xff:
 				CALL(cpu, 0x38);
-				cycle = 1;
 				break;// RST 7
-			default:
-				return -1;
 		}
 		
-		return cycle;
+		return cycles8080[cpu.memory[opcode]];
 	}
 
 	// TODO: implement aux. carry
@@ -1212,22 +1181,24 @@ public class Interpreter
 			(cpu.cc.Z     <<  6)  |   // place zero flag status on pos 6
 			(cpu.cc.AC    <<  4)  |   // place aux. carry flag status on pos 4
 			(cpu.cc.P     <<  2)  |   // place parity flag status on pos 2
-			(cpu.cc.CY)           ;   // place carry flag status on pos 0
+			(1            <<  1)  |
+			(cpu.cc.CY    <<  0)  ;   // place carry flag status on pos 0
 
 		cpu.memory[(cpu.SP - 2) & 0xffff] = (short) (PSW & 0xff); // cut to 8 bit after
 		cpu.SP = (cpu.SP - 2) & 0xffff;
 	}
-
+	
+	// reference: superzazu
 	private void RAL(CpuComponents cpu) {
-		int res = (cpu.A + cpu.cc.CY) << 1; // verify
-		cpu.cc.CY = (res > 0xff) ? (byte) 1 : 0;
-		cpu.A = (short) (res & 0xff);
+		final byte cy = cpu.cc.CY; // hold carry flag before next instruction
+		cpu.cc.CY = (byte) ((cpu.A >> 7) & 0xf);
+		cpu.A = (short) (((cpu.A << 1) | cy) & 0xff);
 	}
 
 	private void RAR(CpuComponents cpu) {
-		int res = (cpu.A + cpu.cc.CY) >> 1; // verify
-		cpu.cc.CY = (byte) (cpu.A & 0x1); // leftover bit 0 as carry
-		cpu.A = (short) ((res | cpu.cc.CY) & 0xff);
+		final byte cy = cpu.cc.CY;
+		cpu.cc.CY = (byte) (cpu.A & 1);
+		cpu.A = (short) (((cpu.A >> 1) | (cy << 7)) & 0xff);
 	}
 
 	private void RET(CpuComponents cpu) {
@@ -1237,15 +1208,13 @@ public class Interpreter
 	}
 
 	private void RLC(CpuComponents cpu) {
-		int res = (cpu.A << 1); // Rotate left shift
-		cpu.cc.CY = (res > 0xff) ? (byte) 1 : 0; // normal carry check
-		cpu.A = (short) ((res + cpu.cc.CY) & 0xff); // rotated value plus its carry flag 
+		cpu.cc.CY = (byte) (cpu.A >> 7);
+		cpu.A = (short) (((cpu.A << 1) | cpu.cc.CY) & 0xff);
 	}
 
 	private void RRC(CpuComponents cpu) {
-		int res = (cpu.A >>> 1); // Rotate right shift (zero fill)
-		cpu.cc.CY = (byte) (cpu.A & 0x1); // leftover bit 0 as carry
-		cpu.A = (short) ((res | (cpu.cc.CY << 7)) & 0xff); // update Accumulator with rotated value with its carry flag leftmost bit (0xff)
+		cpu.cc.CY = (byte) (cpu.A & 1);
+		cpu.A = (short) ((cpu.A >> 1) | (cpu.cc.CY << 7) & 0xff);
 	}
 
 	private void SBB(CpuComponents cpu, int var) {
