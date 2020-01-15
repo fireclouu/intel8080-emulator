@@ -6,45 +6,45 @@ public class Interpreter
 {
 	/// NOTES
 	/*
-		- strict handling of 0xff (8 bit), 0xffff (16 bit) addresses, java only offers signed data types
-	*/
-	
-	/// OFFSET (use to correctly display memory address of ROMS that is not loaded on array 0)
-	public static int realAddr = ProgramInfo.romAddr[0];
-	
+	 - strict handling of 0xff (8 bit), 0xffff (16 bit) addresses, java only offers signed data types
+	 */
+
+	// pause threads are bad for interrupts!
+
+	static boolean test_finished;
+	static long cycle = 0;
+
 	/// CONSTRUCTOR
 	public Interpreter(CpuComponents cpu) {
 		init(cpu);
 	}
-	
-	// SOURCES: nav97 / dramikei
-	short cycles8080[] = {
-		4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4, //0x00..0x0f
-		4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4,
-		4, 10, 16, 5, 5, 5, 7, 4, 4, 10, 16, 5, 5, 5, 7, 4,
-		4, 10, 13, 5, 10, 10, 10, 4, 4, 10, 13, 5, 5, 5, 7, 4,
 
-		5, 5, 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 7, 5, //0x40..0x4f
-		5, 5, 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 7, 5,
-		5, 5, 5, 5, 5, 5, 7, 5, 5, 5, 5, 5, 5, 5, 7, 5,
-		7, 7, 7, 7, 7, 7, 7, 7, 5, 5, 5, 5, 5, 5, 7, 5,
-
-		4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4, //0x80..0x8f
-		4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-		4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-		4, 4, 4, 4, 4, 4, 7, 4, 4, 4, 4, 4, 4, 4, 7, 4,
-
-		11, 10, 10, 10, 17, 11, 7, 11, 11, 10, 10, 10, 10, 17, 7, 11, //0xc0..0xcf
-		11, 10, 10, 10, 17, 11, 7, 11, 11, 10, 10, 10, 10, 17, 7, 11,
-		11, 10, 10, 18, 17, 11, 7, 11, 11, 5, 10, 5, 17, 17, 7, 11,
-		11, 10, 10, 4, 17, 11, 7, 11, 11, 5, 10, 4, 17, 17, 7, 11,
+	// SOURCES: superzazu
+	static short OPCODES_CYCLES[] = {
+		//  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+		4,  10, 7,  5,  5,  5,  7,  4,  4,  10, 7,  5,  5,  5,  7,  4,  // 0
+		4,  10, 7,  5,  5,  5,  7,  4,  4,  10, 7,  5,  5,  5,  7,  4,  // 1
+		4,  10, 16, 5,  5,  5,  7,  4,  4,  10, 16, 5,  5,  5,  7,  4,  // 2
+		4,  10, 13, 5,  10, 10, 10, 4,  4,  10, 13, 5,  5,  5,  7,  4,  // 3
+		5,  5,  5,  5,  5,  5,  7,  5,  5,  5,  5,  5,  5,  5,  7,  5,  // 4
+		5,  5,  5,  5,  5,  5,  7,  5,  5,  5,  5,  5,  5,  5,  7,  5,  // 5
+		5,  5,  5,  5,  5,  5,  7,  5,  5,  5,  5,  5,  5,  5,  7,  5,  // 6
+		7,  7,  7,  7,  7,  7,  7,  7,  5,  5,  5,  5,  5,  5,  7,  5,  // 7
+		4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4,  // 8
+		4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4,  // 9
+		4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4,  // A
+		4,  4,  4,  4,  4,  4,  7,  4,  4,  4,  4,  4,  4,  4,  7,  4,  // B
+		5,  10, 10, 10, 11, 11, 7,  11, 5,  10, 10, 10, 11, 17, 7,  11, // C
+		5,  10, 10, 10, 11, 11, 7,  11, 5,  10, 10, 10, 11, 17, 7,  11, // D
+		5,  10, 10, 18, 11, 11, 7,  11, 5,  5,  10, 4,  11, 17, 7,  11, // E
+		5,  10, 10, 4,  11, 11, 7,  11, 5,  5,  10, 4,  11, 17, 7,  11  // F
 	};
-	
+
 	/// MAIN EMULATION
 	public short emulate8080(CpuComponents cpu) {
 		// temporary containers
 		int res;
-		
+
 		// opcode
 		int opcode = cpu.PC;
 
@@ -55,7 +55,6 @@ public class Interpreter
 		cpu.PC++;
 
 		switch (cpu.memory[opcode]) {
-
 				/////   0x00 - 0x0f   /////
 
 			case 0x00:
@@ -69,14 +68,14 @@ public class Interpreter
 				STA(cpu, cpu.B, cpu.C);
 				break; // STAX B
 			case 0x03:
-			{
-				cpu.C++;
-				if (cpu.C > 0xff) {
-					cpu.B++;
+				{
+					cpu.C++;
+					if (cpu.C > 0xff) {
+						cpu.B++;
+					}
+					cpu.B &= 0xff;
+					cpu.C &= 0xff;
 				}
-				cpu.B &= 0xff;
-				cpu.C &= 0xff;
-			}
 				break; // INX B
 			case 0x04:
 				res = cpu.B + 1;
@@ -104,14 +103,14 @@ public class Interpreter
 				LDA(cpu, cpu.B, cpu.C);
 				break; // LDAX B
 			case 0x0b:
-			{
-				cpu.C--;
-				if ((cpu.C & 0xff) == 0xff) { 
-					cpu.B--;
+				{
+					cpu.C--;
+					if ((cpu.C & 0xff) == 0xff) { 
+						cpu.B--;
+					}
+					cpu.C &= 0xff;
+					cpu.B &= 0xff;
 				}
-				cpu.C &= 0xff;
-				cpu.B &= 0xff;
-			}
 				break; // DCX B
 			case 0x0c:
 				res = cpu.C + 1;
@@ -144,14 +143,14 @@ public class Interpreter
 				STA(cpu, cpu.D, cpu.E);
 				break; // STAX D
 			case 0x13:
-			{
-				cpu.E++;
-				if (cpu.E > 0xff) {
-					cpu.D++;
+				{
+					cpu.E++;
+					if (cpu.E > 0xff) {
+						cpu.D++;
+					}
+					cpu.D &= 0xff;
+					cpu.E &= 0xff;
 				}
-				cpu.D &= 0xff;
-				cpu.E &= 0xff;
-			}
 				break; // INX D
 			case 0x14:
 				res = cpu.D + 1;
@@ -179,14 +178,14 @@ public class Interpreter
 				LDA(cpu, cpu.D, cpu.E);
 				break; // LDAX D
 			case 0x1b:
-			{
-				cpu.E--;
-				if ((cpu.E & 0xff) == 0xff) { 
-					cpu.D--;
+				{
+					cpu.E--;
+					if ((cpu.E & 0xff) == 0xff) { 
+						cpu.D--;
+					}
+					cpu.E &= 0xff;
+					cpu.D &= 0xff;
 				}
-				cpu.E &= 0xff;
-				cpu.D &= 0xff;
-			}
 				break; // DCX D
 			case 0x1c:
 				res = cpu.E + 1;
@@ -220,14 +219,14 @@ public class Interpreter
 				cpu.PC += 2;
 				break; // SHLD adr
 			case 0x23:
-			{
-				cpu.L++;
-				if (cpu.L > 0xff) {
-					cpu.H++;
+				{
+					cpu.L++;
+					if (cpu.L > 0xff) {
+						cpu.H++;
+					}
+					cpu.H &= 0xff;
+					cpu.L &= 0xff;
 				}
-				cpu.H &= 0xff;
-				cpu.L &= 0xff;
-			}
 				break; // INX H
 			case 0x24:
 				res = cpu.H + 1;
@@ -244,7 +243,13 @@ public class Interpreter
 				cpu.PC++;
 				break; // MVI H, D8
 
-				// Case 0x27 DAA (BCD)
+			case 0x27:
+
+				cpu.cc.AC = 0;
+				cpu.cc.Z = 0;
+				cpu.cc.P = 0;
+				cpu.cc.S = 0;
+				break; // DAA
 
 			case 0x28:
 				break; // -
@@ -256,14 +261,14 @@ public class Interpreter
 				cpu.PC += 2;
 				break; // LHLD adr
 			case 0x2b:
-			{
-				cpu.L--;
-				if ((cpu.L & 0xff) == 0xff) { 
-					cpu.H--;
-				}
-				cpu.L &= 0xff;
-				cpu.H &= 0xff;
-			}	
+				{
+					cpu.L--;
+					if ((cpu.L & 0xff) == 0xff) { 
+						cpu.H--;
+					}
+					cpu.L &= 0xff;
+					cpu.H &= 0xff;
+				}	
 				break; // DCX H
 			case 0x2c:
 				res = cpu.L + 1;
@@ -517,7 +522,7 @@ public class Interpreter
 				cpu.memory[addr] = cpu.L;
 				break; // MOV M, L
 			case 0x76:
-				// System.exit(0); // terminate program
+				//System.exit(0); // terminate program
 				System.out.println("HLT CALLED!");
 				return -1; // HLT
 			case 0x77:
@@ -765,21 +770,13 @@ public class Interpreter
 				cpu.SP = (cpu.SP + 2) & 0xffff;
 				break; // POP B
 			case 0xc2:
-				if (cpu.cc.Z == 0) {
-					cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_jmp(cpu, opcode, cpu.cc.Z == 0);
 				break; // JNZ adr
 			case 0xc3:
-				cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
+				JMP(cpu, opcode);
 				break; // JMP adr
 			case 0xc4:
-				if (cpu.cc.Z == 0) {
-					CALL(cpu, opcode);
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_call(cpu, opcode, cpu.cc.Z == 0);
 				break; // CNZ adr
 			case 0xc5:
 				cpu.memory[(cpu.SP - 1) & 0xffff] = cpu.B;
@@ -791,7 +788,7 @@ public class Interpreter
 				cpu.PC++;
 				break; // ADI D8
 			case 0xc7:
-				CALL(cpu, 0x00);
+				GenerateInterrupt(cpu, 0x00);
 				break; // RST 0
 			case 0xc8:
 				if (cpu.cc.Z == 1) {
@@ -802,31 +799,22 @@ public class Interpreter
 				RET(cpu);
 				break; // RET
 			case 0xca:
-				if (cpu.cc.Z == 1) {
-					cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_jmp(cpu, opcode, cpu.cc.Z == 1);
 				break; // JZ adr
 			case 0xcb:
 				break; // -
 			case 0xcc:
-				if (cpu.cc.Z == 1) {
-					CALL(cpu, opcode);
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_call(cpu, opcode, cpu.cc.Z == 1);
 				break; // CZ adr
 			case 0xcd:
-				// CALL(cpu, opcode);
-				TEST_DIAG(cpu, opcode);
+				CALL(cpu, opcode);
 				break; // CALL adr
 			case 0xce:
 				ADC(cpu, cpu.memory[opcode + 1]);
 				cpu.PC++;
-				break;  // ACI D8
+				break; // ACI D8
 			case 0xcf:
-				CALL(cpu, 0x08);
+				GenerateInterrupt(cpu, 0x08);
 				break; // RST 1
 
 				//////   0xd0 - 0xdf   /////
@@ -842,22 +830,14 @@ public class Interpreter
 				cpu.SP = (cpu.SP + 2) & 0xffff;
 				break; // POP D
 			case 0xd2:
-				if (cpu.cc.CY == 0) {
-					cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_jmp(cpu, opcode, cpu.cc.CY == 0);
 				break; // JNC adr
 			case 0xd3:
-				// stub
+				if (ProgramUtils.Machine.DEBUG) port_out();
 				cpu.PC++;
 				break; // OUT D8
 			case 0xd4:
-				if (cpu.cc.CY == 0) {
-					CALL(cpu, opcode);
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_call(cpu, opcode, cpu.cc.CY == 0);
 				break; // CNC adr
 			case 0xd5:
 				cpu.memory[(cpu.SP - 1) & 0xffff] = cpu.D;
@@ -869,8 +849,8 @@ public class Interpreter
 				cpu.PC++;
 				break; // SUI D8
 			case 0xd7:
-				CALL(cpu, 0x10);
-				break;// RST 2
+				GenerateInterrupt(cpu, 0x10);
+				break; // RST 2
 			case 0xd8: 
 				if (cpu.cc.CY == 1) {
 					RET(cpu);
@@ -879,22 +859,14 @@ public class Interpreter
 			case 0xd9:
 				break; // -
 			case 0xda:
-				if (cpu.cc.CY == 1) {
-					cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_jmp(cpu, opcode, cpu.cc.CY == 1);
 				break; // JC adr
 			case 0xdb:
-				//cpu.A = 0xff;  // stub
+				if (ProgramUtils.Machine.DEBUG) cpu.A = port_in(cpu);
 				cpu.PC++;
 				break; // IN D8 (stub) (Load I/O to Accumulator)
 			case 0xdc:
-				if (cpu.cc.CY == 1) {
-					CALL(cpu, opcode);
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_call(cpu, opcode, cpu.cc.CY == 1);
 				break; // CC adr
 			case 0xdd:
 				break; // -
@@ -903,8 +875,8 @@ public class Interpreter
 				cpu.PC++;
 				break; // SBI D8
 			case 0xdf:
-				CALL(cpu, 0x18);
-				break;// RST 3
+				GenerateInterrupt(cpu, 0x18);
+				break; // RST 3
 
 				//////   0xe0 - 0xef   /////
 
@@ -919,21 +891,13 @@ public class Interpreter
 				cpu.SP = (cpu.SP + 2) & 0xffff;
 				break; // POP H
 			case 0xe2:
-				if (cpu.cc.P == 0) {
-					cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_jmp(cpu, opcode, cpu.cc.P == 0);
 				break; // JPO adr
 			case 0xe3:
 				XTHL(cpu);
 				break; // XTHL
 			case 0xe4:
-				if (cpu.cc.P == 0) {
-					CALL(cpu, opcode);
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_call(cpu, opcode, cpu.cc.P == 0);
 				break; // CPO adr
 			case 0xe5:
 				cpu.memory[(cpu.SP - 1) & 0xffff] = cpu.H;
@@ -945,8 +909,8 @@ public class Interpreter
 				cpu.PC++;
 				break; // ANI D8
 			case 0xe7:
-				CALL(cpu, 0x20);
-				break;// RST 4
+				GenerateInterrupt(cpu, 0x20);
+				break; // RST 4
 			case 0xe8: 
 				if (cpu.cc.P == 1) {
 					RET(cpu);
@@ -956,21 +920,13 @@ public class Interpreter
 				cpu.PC = addr;
 				break; // PCHL
 			case 0xea:
-				if (cpu.cc.P == 1) {
-					cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_jmp(cpu, opcode, cpu.cc.P == 1);
 				break; // JPE adr
 			case 0xeb:
 				XCHG(cpu);
 				break; // XCHG (HL to DE vice-versa)
 			case 0xec:
-				if (cpu.cc.P == 1) {
-					CALL(cpu, opcode);
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_call(cpu, opcode, cpu.cc.P == 1);
 				break; // CPE adr
 			case 0xed:
 				break; // -
@@ -979,9 +935,9 @@ public class Interpreter
 				cpu.PC++;
 				break; // XRI D8
 			case 0xef:
-				CALL(cpu, 0x28);
+				GenerateInterrupt(cpu, 0x28);
 				break; // RST 5
-		
+
 				//////   0xf0 - 0xff   /////
 
 			case 0xf0: 
@@ -993,21 +949,13 @@ public class Interpreter
 				POP_PSW(cpu);
 				break; // POP PSW
 			case 0xf2:
-				if (cpu.cc.S == 0) {
-					cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_jmp(cpu, opcode, cpu.cc.S == 0);
 				break; // JP adr
 			case 0xf3:
 				cpu.int_enable = false;
 				break; // DI
 			case 0xf4:
-				if (cpu.cc.S == 0) {
-					CALL(cpu, opcode);
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_call(cpu, opcode, cpu.cc.S == 0);
 				break; // CP adr
 			case 0xf5:
 				PUSH_PSW(cpu);
@@ -1017,8 +965,8 @@ public class Interpreter
 				cpu.PC++;
 				break; // ORI D8
 			case 0xf7:
-				CALL(cpu, 0x30);
-				break;// RST 6
+				GenerateInterrupt(cpu, 0x30);
+				break; // RST 6
 			case 0xf8: 
 				if (cpu.cc.S == 1) {
 					RET(cpu);
@@ -1028,21 +976,13 @@ public class Interpreter
 				SPHL(cpu, addr);
 				break; // SPHL
 			case 0xfa:
-				if (cpu.cc.S == 1) {
-					cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_jmp(cpu, opcode, cpu.cc.S == 1);
 				break; // JM adr	
 			case 0xfb:
 				cpu.int_enable = true;
 				break; // EI
 			case 0xfc:
-				if (cpu.cc.S == 1) {
-					CALL(cpu, opcode);
-				} else {
-					cpu.PC += 2;
-				}
+				i8080_cond_call(cpu, opcode, cpu.cc.S == 1);
 				break; // CM adr
 			case 0xfd:
 				break; // -
@@ -1051,27 +991,43 @@ public class Interpreter
 				cpu.PC++;
 				break; // CPI D8
 			case 0xff:
-				CALL(cpu, 0x38);
-				break;// RST 7
+				GenerateInterrupt(cpu, 0x38);
+				break; // RST 7
 		}
-		
-		return cycles8080[cpu.memory[opcode]];
+
+		return OPCODES_CYCLES[cpu.memory[opcode]];
 	}
 
 	// TODO: implement aux. carry
-	
+
 	/// INTERRUPT
-	public void GenerateInterrupt(CpuComponents cpu, byte interrupt_num) {
+	public void GenerateInterrupt(CpuComponents cpu, int interrupt_num) {
 		// PUSH PC
 		cpu.memory[(cpu.SP - 1) & 0xffff] = (short) ((cpu.PC & 0xff00) >> 8);
 		cpu.memory[(cpu.SP - 2) & 0xffff] = (short) (cpu.PC & 0xff);
 		cpu.SP = (cpu.SP - 2) & 0xffff;
-		
+
 		cpu.PC = 8 * interrupt_num;
 		cpu.int_enable = false;
 	}
-	
+
 	/// SUBROUTINES
+	private void i8080_cond_call(CpuComponents cpu, int opcode, boolean cond) {
+		if (cond) {
+			CALL(cpu, opcode);
+		} else {
+			cpu.PC += 2;
+		}
+	}
+
+	private void i8080_cond_jmp(CpuComponents cpu, int opcode, boolean cond) {
+		if (cond) {
+			JMP(cpu, opcode);
+		} else {
+			cpu.PC += 2;
+		}
+	}
+
 	private void ADC(CpuComponents cpu, int var) {
 		int res = (cpu.A + var) + cpu.cc.CY;
 
@@ -1098,7 +1054,7 @@ public class Interpreter
 		cpu.memory[(cpu.SP - 2) & 0xffff] = (short) (nextAddr & 0xff);
 		cpu.SP = (cpu.SP - 2) & 0xffff;
 
-		cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
+		JMP(cpu, opcode);
 	}
 
 	private void CMP(CpuComponents cpu, int var) {
@@ -1125,9 +1081,13 @@ public class Interpreter
 		int res = HL + pair; // may result greater than 16 bit, raise CY if occured
 
 		cpu.cc.CY = ((res & 0xffff_0000) > 0) ? (byte) 1 : 0; // cut all values from lower 16 bit and check if higher 16 bit has value
-		
+
 		cpu.H = (short) ((res & 0xff00) >> 8);	// store higher 8-bit to H
 		cpu.L = (short) (res & 0xff);			// store lower  8-bit to L
+	}
+
+	private void JMP(CpuComponents cpu, int opcode) {
+		cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
 	}
 
 	private void LDA(CpuComponents cpu, int hi_nib, int lo_nib) {
@@ -1159,7 +1119,7 @@ public class Interpreter
 		cpu.cc.AC = ((PSW & cpu.PSW_FLAG_POS_AC) != 0) ? (byte) 1 : 0;
 		cpu.cc.Z  = ((PSW & cpu.PSW_FLAG_POS_ZE) != 0) ? (byte) 1 : 0;
 		cpu.cc.S  = ((PSW & cpu.PSW_FLAG_POS_SN) != 0) ? (byte) 1 : 0;
-		
+
 		cpu.A = cpu.memory[(cpu.SP + 1) & 0xffff];
 		cpu.SP = (cpu.SP + 2) & 0xffff;
 	}
@@ -1187,10 +1147,9 @@ public class Interpreter
 		cpu.memory[(cpu.SP - 2) & 0xffff] = (short) (PSW & 0xff); // cut to 8 bit after
 		cpu.SP = (cpu.SP - 2) & 0xffff;
 	}
-	
-	// reference: superzazu
+
 	private void RAL(CpuComponents cpu) {
-		final byte cy = cpu.cc.CY; // hold carry flag before next instruction
+		final byte cy = cpu.cc.CY;
 		cpu.cc.CY = (byte) ((cpu.A >> 7) & 0xf);
 		cpu.A = (short) (((cpu.A << 1) | cy) & 0xff);
 	}
@@ -1208,17 +1167,17 @@ public class Interpreter
 	}
 
 	private void RLC(CpuComponents cpu) {
-		cpu.cc.CY = (byte) (cpu.A >> 7);
-		cpu.A = (short) (((cpu.A << 1) | cpu.cc.CY) & 0xff);
+		cpu.cc.CY = (byte) (cpu.A >> 7); // get bit 7 as carry
+		cpu.A = (short) (((cpu.A << 1) | cpu.cc.CY) & 0xff); // rotate to left, wrapping its content
 	}
 
 	private void RRC(CpuComponents cpu) {
-		cpu.cc.CY = (byte) (cpu.A & 1);
-		cpu.A = (short) ((cpu.A >> 1) | (cpu.cc.CY << 7) & 0xff);
+		cpu.cc.CY = (byte) (cpu.A & 1); // get bit 0 as carry
+		cpu.A = (short) ((cpu.A >> 1) | (cpu.cc.CY << 7) & 0xff); // rotate to right, wrapping its contents by placing bit 0 to bit 7
 	}
 
 	private void SBB(CpuComponents cpu, int var) {
-		int res = (cpu.A + ((~var + 1) & 0xff)) + ((~cpu.cc.CY + 1) & 0xff);
+		int res = (cpu.A + ((~var + 1) & 0xff)) + ((~cpu.cc.CY + 1) & 0xff);  // two's comp
 
 		cpu.cc.Z = ((res & 0xff) == 0) ? (byte) 1 : 0;
 		cpu.cc.S = ((res & 0x80) == 0x80) ? (byte) 1 : 0;
@@ -1312,79 +1271,117 @@ public class Interpreter
 		int res = Integer.toBinaryString(result).replaceAll("0", "").length(); // Simple workaround to get count of flipped binary
 		return (res % 2 == 0) ? (byte) 1 : 0;
 	}
-	
+
 	/// INIT
 	private void init(CpuComponents cpu) {
 		// testing purposes
 		AUTO_TEST(cpu);
 	}
-	
-	///  MISC  ///
-	private final int MAX_INT = 2_147_483_647;
-	
+
+	/// FIX
+
 	// CPU OVERRIDE
 	private void AUTO_TEST(CpuComponents cpu) {
-		switch (ProgramInfo.romName[0]) {
+		switch (ProgramUtils.Rom.FILE_NAME[0]) {
 			case "cpudiag.bin":
 				TEST_OVERRIDE_CPUDIAG(cpu);
+				if (!ProgramUtils.Machine.DEBUG) System.out.println("debug is off!");
+				System.out.println("CPU EXERCISER");
+				PAUSE_THREAD(1000);
 				break;
 			case "8080EX1.COM":
-				TEST_OVERRIDE_EX1(cpu);
+			case "8080EXER.COM":
+			case "CPUTEST.COM":
+			case "8080EXM.COM":
+			case "8080PRE.COM":
+				TEST_OVERRIDE_GENERIC(cpu);
+				if (!ProgramUtils.Machine.DEBUG) System.out.println("debug is off!");
+				System.out.println("CPU EXERCISER");
+				PAUSE_THREAD(1000);
+				break;
+			case "TST8080.COM":
+				TEST_TST(cpu);
+				if (!ProgramUtils.Machine.DEBUG) System.out.println("debug is off!");
 				break;
 		}
 	}
 
+	private void TEST_TST(CpuComponents cpu) {
+		// skip daa inst
+		short addr = 0x04d9 + 0x100;
+
+		cpu.memory[0x4b4 + 0x100] = 0xc3;
+		cpu.memory[0x4b5 + 0x100] = (short) (addr & 0xff);
+		cpu.memory[0x4b6 + 0x100] = (short) (addr >> 8);
+
+		System.out.println("NOTE: DAA instruction skipped!");
+	}
+
 	private void TEST_OVERRIDE_CPUDIAG(CpuComponents cpu) {
 		// Direct PC to loaded address
-		cpu.PC = this.realAddr;
+		cpu.PC = ProgramUtils.Rom.ROM_ADDRESS[0];
 
 		// SKIP DAA inst
 		cpu.memory[0x59c] = 0xc3;
 		cpu.memory[0x59d] = 0xc2;
 		cpu.memory[0x59e] = 0x05;
+		System.out.println("NOTE: DAA instruction skipped!");
+		//PAUSE_THREAD(1000);
 	}
 
-	private void TEST_OVERRIDE_EX1(CpuComponents cpu) {
-		cpu.PC = this.realAddr;
+	private void TEST_OVERRIDE_GENERIC(CpuComponents cpu) {
+		cpu.PC = ProgramUtils.Rom.ROM_ADDRESS[0];
 	}
 
-	private void TEST_DIAG(CpuComponents cpu, int opcode) {
-		// SOURCE: kpmiller — Full 8080 emulation
-		if (5 == ((cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1])) {
+	private short port_in(CpuComponents cpu) {
+		int operation = cpu.C; // get c value to determine prints
 
-			if (cpu.C == 9) {
-				int offset = (cpu.D << 8) | (cpu.E);
-				int str = offset + 3;  //skip the prefix bytes
-				char read;
-
-				while ((read = (char)cpu.memory[str]) != '$') {
-					System.out.print(read);
-					str++;
-				}
-				
-				PAUSE_THREAD(1000);
-				System.out.println();
-			} else if (cpu.C == 2) {
-				System.out.println("print char routine called\n");
-			}
-
-		} else if (0 ==  ((cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1])) {
-			// System.exit(0);
-			System.out.println("-- System called for exit --");
-		} else {
-			int  ret = cpu.PC + 2;
-			cpu.memory[(cpu.SP - 1) & 0xffff] = (short) ((ret >> 8) & 0xff);
-			cpu.memory[(cpu.SP - 2) & 0xffff] = (short) (ret & 0xff);
-			cpu.SP = (cpu.SP - 2) & 0xffff;
-			cpu.PC = (cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1];
+		if (operation == 2) {
+			System.out.printf("%c", cpu.E); // print values on E
 		}
+		else if (operation == 9) {
+			int addr = (cpu.D << 8) | cpu.E;
+			do {
+				System.out.printf("%c", cpu.memory[addr++]);
+			} while (cpu.memory[addr] != '$');
+		}
+
+		return 0xff; // ?
 	}
 
-	public void PAUSE_THREAD(int mills) {
+	private void port_out() {
+		test_finished = true;
+	}
+
+	public static void PAUSE_THREAD(int mills) {
 		try {
 			Thread.sleep(mills);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
 	}
+
+	// inits
+	public static void i8080_init(CpuComponents cpu) {
+
+		cpu.PC = 0;
+		cpu.SP = 0;
+
+		cpu.A = 0;
+		cpu.B = 0;
+		cpu.C = 0;
+		cpu.D = 0;
+		cpu.E = 0;
+		cpu.H = 0;
+		cpu.L = 0;
+
+		cpu.cc.CY = 0;
+		cpu.cc.Z = 0;
+		cpu.cc.S = 0;
+		cpu.cc.P = 0;
+		cpu.cc.AC = 0;
+		cpu.int_enable = false; // or null
+	}
 }
+
+// fixed port in, psw updated

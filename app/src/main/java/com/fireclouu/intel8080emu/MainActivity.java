@@ -5,30 +5,52 @@ import android.graphics.*;
 import android.os.*;
 import android.content.pm.*;
 import android.view.*;
+import com.fireclouu.intel8080emu.Emulator.*;
 
 public class MainActivity extends Activity 
 {
-	DisplayView mDisplay;
+	MainGraphics mGraphics;
 	PlatformPort ms; // machine specific
 	
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+		//setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		
 		// render to hardware
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 		
-		mDisplay = new DisplayView(this);
+		mGraphics = new MainGraphics(this);
+		
         super.onCreate(savedInstanceState);
-        setContentView(this.mDisplay);
+        setContentView(mGraphics);
+		
 		
 		init();
 		ms.startEmulator();
 	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		
+		// Program notifier
+		ProgramUtils.Machine.isRunning = true;
+	}
+
+	@Override
+	protected void onPause() {
+		super.onPause();
+		
+		// Program notifier
+		ProgramUtils.Machine.isRunning = false;
+	}
+	
 	
 	private void init() {
-		ms = new PlatformPort(this, mDisplay);
+		ms = new PlatformPort(this, mGraphics);
+		
+		ProgramUtils.Machine.isRunning = true;
 	}
 	
 }

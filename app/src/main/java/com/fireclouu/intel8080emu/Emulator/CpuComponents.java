@@ -23,7 +23,7 @@ public class CpuComponents
 	public ConditionCodes cc;
 	
 	///  VIDEO
-	public boolean updateScreen = false;
+	public static boolean updateScreen = false;
 	public boolean suspendEmu = false;
 	
 	///  INTERRUPT  ///
