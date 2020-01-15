@@ -53,7 +53,7 @@ public class MainGraphics extends SurfaceView
 	}
 	
 	public void updateView(CpuComponents cpu) {
-		plotImage(cpu);
+		plotPixelCounterClock(cpu);
 		
 		if (!holder.getSurface().isValid()) {
 			return;
@@ -67,55 +67,76 @@ public class MainGraphics extends SurfaceView
 		holder.unlockCanvasAndPost(c);
 	}
 	
-	private void plotImageCC(CpuComponents cpu) {
+	private void plotPixelCounterClock(CpuComponents cpu) {
+		// rotate counter clockwise
+		//           x, y
+		// original: 0, 0
+		// fixed:    0, 224
+		
+		// original: 1, 0
+		// fixed:    0, 223
+		
 		// initialize every draw
 		display = new float[(DISPLAY_HEIGHT * DISPLAY_WIDTH)];
 		// vram starting point
-		int vram = 0x2400;
+		short vram = 0x2400;
 		// array
-		int loc = 0; // drawPoints feeds two values of float
+		short loc = 0; // drawPoints feeds two values of float
 		
-		
+		for (int x = 0; x < DISPLAY_HEIGHT; x++) {          // x-axis 224px (H)
+			
+			for (int y = DISPLAY_WIDTH; y > 0; y -= 8) {    // y-axis 256px (V)
+				
+				short pixel = cpu.memory[vram++];           // read memory byte
+				if (pixel == 0) continue;                   // optimization
+			
+				for (byte scan = 0; scan < 8; scan++) {	    // read bits as pixel
+					
+					if (((pixel >> scan) & 0x1) == 1) {
+						
+						display[loc] = x * PIXEL_SIZE_WIDTH;                 // x
+						display[loc + 1] = (y - scan) * PIXEL_SIZE_HEIGHT;   // y
+						loc += 2; // point to empty stack
+					
+					}
+					
+				}
+			}
+			
+		}
 		
 
 	}
 	
-	private void plotImage(CpuComponents cpu) {
+	private void plotPixelDefault(CpuComponents cpu) {
 		// initialize every draw
 		display = new float[(DISPLAY_HEIGHT * DISPLAY_WIDTH)];
 		// vram starting point
-		int vram = 0x2400;
+		short vram = 0x2400;
 		// array
-		int arr = 0;
+		short loc = 0; // drawPoints feeds two values of float
 		
-		for (int y = 0; y < DISPLAY_HEIGHT; y++) { // 256
+		for (int y = 0; y < DISPLAY_HEIGHT; y++) {       // y-axis 224px (V)
 
-			for (int x = 0; x < DISPLAY_WIDTH; x += 8) { // 224
-				int pixel = cpu.memory[vram];
-
-				for(int scan = 0; scan < 8; scan++) { // convert binary into pixel (on and off)
+			for (int x = 0; x < DISPLAY_WIDTH; x += 8) { // x-axis 256px (H)
+				
+				short pixel = cpu.memory[vram++];        // read memory byte
+				if (pixel == 0) continue;                // optimization
+				
+				for(byte scan = 0; scan < 8; scan++) {   // read bits as pixel
+				
 					if (((pixel >> scan) & 0x1) == 1) {
-						display[arr] = (scan + x) * PIXEL_SIZE_WIDTH;
-						arr++;
-						display[arr] = y * PIXEL_SIZE_HEIGHT;
-						arr++;
+					
+						display[loc] = (scan + x) * PIXEL_SIZE_WIDTH;   // x
+						display[loc + 1] = y * PIXEL_SIZE_HEIGHT;       // y
+						loc += 2; // point to empty stack
+						
 					}
 				}
-
-				vram++;
 			}
 		}
 		
 	}
-	
-	// rotate vid counterclockwise
-	// suppose x, y = 0, 0 , next 1, 0 after rotate, 0, 256, next 0, 255
-	// y constantly updated from bottom to up, while x, increments every y > 256
-	
-	// original 255, 0 in fixed on is 0, 1
-	
-	// update will turn bottom to up, left to right
-	
 	
 	private Paint setPaint(int color) {
 		Paint mPaint;
