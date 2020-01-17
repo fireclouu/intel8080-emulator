@@ -35,23 +35,15 @@ public class PlatformPort
 			cpu = new CpuComponents( memory );
 			emulator = new EmulationThread(cpu, mGraphics);
 		} else {
-			Toast.makeText(context, R.string.warn_file_error, Toast.LENGTH_LONG).show();
+			Toast.makeText(
+				context,
+				R.string.warn_file_error,
+				Toast.LENGTH_LONG).show();
 		}
 	}
 	
 	// FUNCTION
 	public void startEmulator() {
-		
-		displayThread = new Thread() {
-			@Override
-			public void run() {
-				while (ProgramUtils.Machine.isRunning) {
-					mGraphics.updateView(cpu);
-				}
-			}
-		};
-		
-		displayThread.start(); // display
 		emulator.start(); // emulation
 	}
 	

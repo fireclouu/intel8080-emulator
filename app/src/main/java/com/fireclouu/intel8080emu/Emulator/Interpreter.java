@@ -1,6 +1,7 @@
 package com.fireclouu.intel8080emu.Emulator;
 
 import com.fireclouu.intel8080emu.*;
+import java.util.*;
 
 public class Interpreter
 {
@@ -78,11 +79,13 @@ public class Interpreter
 				}
 				break; // INX B
 			case 0x04:
+				i8080_flag_ac(cpu, cpu.B, 1);
 				res = cpu.B + 1;
 				cpu.B = (short) (res & 0xff);
 				flags_zsp(cpu, res);
 				break; // INR B
 			case 0x05:
+				i8080_flag_ac(cpu, cpu.B, -1);
 				res = cpu.B - 1;
 				cpu.B = (short) (res & 0xff);
 				flags_zsp(cpu, res);
@@ -113,11 +116,13 @@ public class Interpreter
 				}
 				break; // DCX B
 			case 0x0c:
+				i8080_flag_ac(cpu, cpu.C, 1);
 				res = cpu.C + 1;
 				cpu.C = (short) (res & 0xff);
 				flags_zsp(cpu, res);
 				break; // INR C
 			case 0x0d:
+				i8080_flag_ac(cpu, cpu.C, -1);
 				res = cpu.C - 1;
 				cpu.C = (short) (res & 0xff);
 				flags_zsp(cpu, res);
@@ -153,11 +158,13 @@ public class Interpreter
 				}
 				break; // INX D
 			case 0x14:
+				i8080_flag_ac(cpu, cpu.D, 1);
 				res = cpu.D + 1;
 				cpu.D = (short) (res & 0xff);
 				flags_zsp(cpu, res);
 				break; // INR D
 			case 0x15:
+				i8080_flag_ac(cpu, cpu.D, -1);
 				res = cpu.D - 1;
 				cpu.D = (short) (res & 0xff);
 				flags_zsp(cpu, res);
@@ -188,11 +195,13 @@ public class Interpreter
 				}
 				break; // DCX D
 			case 0x1c:
+				i8080_flag_ac(cpu, cpu.E, 1);
 				res = cpu.E + 1;
 				cpu.E = (short) (res & 0xff);
 				flags_zsp(cpu, res);
 				break; // INR E
 			case 0x1d:
+				i8080_flag_ac(cpu, cpu.E, -1);
 				res = cpu.E - 1;
 				cpu.E = (short) (res & 0xff);
 				flags_zsp(cpu, res);
@@ -229,11 +238,13 @@ public class Interpreter
 				}
 				break; // INX H
 			case 0x24:
+				i8080_flag_ac(cpu, cpu.H, 1);
 				res = cpu.H + 1;
 				cpu.H = (short) (res & 0xff);
 				flags_zsp(cpu, res);
 				break; // INR H
 			case 0x25:
+				i8080_flag_ac(cpu, cpu.H, -1);
 				res = cpu.H - 1;
 				cpu.H = (short) (res & 0xff);
 				flags_zsp(cpu, res);
@@ -244,11 +255,29 @@ public class Interpreter
 				break; // MVI H, D8
 
 			case 0x27:
+				// SOURCE: superzazu
+				// get least significant nibble and add 6 if >9
+				// same as most significant nibble
 
-				cpu.cc.AC = 0;
-				cpu.cc.Z = 0;
-				cpu.cc.P = 0;
-				cpu.cc.S = 0;
+				byte cy = cpu.cc.CY;
+				short correction = 0;
+
+				short lsb = (short) (cpu.A & 0xf);
+				short msb = (short) (cpu.A >> 4);
+
+				if (cpu.cc.AC == 1 || lsb > 9) {
+					correction += 0x06;
+				}
+
+				if (cpu.cc.CY == 1 || msb > 9 || (msb >= 9 && lsb > 9)) {
+					correction += 0x60;
+					cy = 1;
+				}
+
+				ADD(cpu, correction);
+
+				cpu.cc.CY = cy;
+
 				break; // DAA
 
 			case 0x28:
@@ -271,11 +300,13 @@ public class Interpreter
 				}	
 				break; // DCX H
 			case 0x2c:
+				i8080_flag_ac(cpu, cpu.L, 1);
 				res = cpu.L + 1;
 				cpu.L = (short) (res & 0xff);
 				flags_zsp(cpu, res);
 				break; // INR L
 			case 0x2d:
+				i8080_flag_ac(cpu, cpu.L, -1);
 				res = cpu.L - 1;
 				cpu.L = (short) (res & 0xff);
 				flags_zsp(cpu, res);
@@ -302,11 +333,13 @@ public class Interpreter
 				cpu.SP = (short) ((cpu.SP + 1) & 0xffff);
 				break; // INX SP
 			case 0x34:
+				i8080_flag_ac(cpu, cpu.memory[addr], 1);
 				res = cpu.memory[addr] + 1;
 				cpu.memory[addr] = (short) (res & 0xff);
 				flags_zsp(cpu, res);
 				break; // INR M
 			case 0x35:
+				i8080_flag_ac(cpu, cpu.memory[addr], -1);
 				res = cpu.memory[addr] - 1;
 				cpu.memory[addr] = (short) (res & 0xff);
 				flags_zsp(cpu, res);
@@ -331,11 +364,13 @@ public class Interpreter
 				cpu.SP = (cpu.SP - 1) & 0xffff;
 				break; // DCX SP
 			case 0x3c:
+				i8080_flag_ac(cpu, cpu.A, 1);
 				res = cpu.A + 1;
 				cpu.A = (short) (res & 0xff);
 				flags_zsp(cpu, res);
 				break; // INR A
 			case 0x3d:
+				i8080_flag_ac(cpu, cpu.A, -1);
 				res = cpu.A - 1;
 				cpu.A = (short) (res & 0xff);
 				flags_zsp(cpu, res);
@@ -1029,23 +1064,26 @@ public class Interpreter
 	}
 
 	private void ADC(CpuComponents cpu, int var) {
+		i8080_flag_ac(cpu, cpu.A, var + cpu.cc.CY); // half carry
 		int res = (cpu.A + var) + cpu.cc.CY;
-
 		flags_BCD(cpu, res);
-
 		cpu.A = (short) (res & 0xff);
 	}
 
 	private void ADD(CpuComponents cpu, int var) {
+		i8080_flag_ac(cpu, cpu.A, var); // half carry
 		int res = cpu.A + var;
 		flags_BCD(cpu, res);
 		cpu.A = (short) (res & 0xff);
 	}
 
 	private void ANA(CpuComponents cpu, int var) {
+		i8080_flag_ac(cpu, cpu.A, var + cpu.cc.CY); // half carry
 		cpu.A = (short) (cpu.A & var);
 		flags_zsp(cpu, cpu.A);
 		cpu.cc.CY = 0;
+
+		cpu.cc.AC = 0; // 1 in 8085
 	}
 
 	private void CALL(CpuComponents cpu, int opcode) {
@@ -1057,15 +1095,15 @@ public class Interpreter
 		JMP(cpu, opcode);
 	}
 
-	private void CMP(CpuComponents cpu, int var) {
+	private void CMP(CpuComponents cpu, int var) { // blame
 		// (two's) complement — defined also as "another set" e.g. another set of binary 1 is binary 0!
-		int res = cpu.A + ((~var + 1) & 0xff);
+		i8080_flag_ac(cpu, cpu.A, -var); // half carry
+		int res = (cpu.A + ((~var + 1))) & 0xfff; // providing 0xfff would result to java not reading its sign value, thus a positinumber
 
 		cpu.cc.Z = ((res & 0xff) == 0) ? (byte) 1 : 0;
 		cpu.cc.S = ((res & 0x80) == 0x80) ? (byte) 1 : 0;
-		cpu.cc.P = parityFlag(res & 0xff);  // ensuring only checks for 8-bit variable
-		cpu.cc.CY = (var > cpu.A) ? 1: (byte) 0; // minuend greater than subtrahend will likely result to overflow of 0xff (borrowing)
-		// cpu.cc.AC = -1;
+		cpu.cc.P = parityFlag(res & 0xff); // ensuring only checks for 8-bit variable
+		cpu.cc.CY = (res > 0xff) ? 1: (byte) 0;
 	}
 
 	private void DAD(CpuComponents cpu, int... var) {
@@ -1109,6 +1147,8 @@ public class Interpreter
 		cpu.cc.CY = 0; // fixed value
 
 		cpu.A = (short) (res);
+
+		cpu.cc.AC = 0;
 	}
 
 	private void POP_PSW(CpuComponents cpu) {
@@ -1130,10 +1170,9 @@ public class Interpreter
 		cpu.memory[(cpu.SP - 1) & 0xffff] = cpu.A;
 
 		// prepare variable higher than 0xff, but with 0's in bit 0-7
-		// add 2 to comply with fixed value on bit pos. 1
 		// this way, it serves as flags' default state waiting to be flipped, like a template
 		// also helps to retain flags proper positioning
-		int PSW = 0x102;
+		int PSW = 0x100;
 
 		// skip pos 5 and 3, it does not need to be flipped since it is by default, a 0 value
 		PSW =
@@ -1177,12 +1216,13 @@ public class Interpreter
 	}
 
 	private void SBB(CpuComponents cpu, int var) {
-		int res = (cpu.A + ((~var + 1) & 0xff)) + ((~cpu.cc.CY + 1) & 0xff);  // two's comp
+		i8080_flag_ac(cpu, cpu.A, -var + -cpu.cc.CY); // half carry
+		int res = (cpu.A + (-var + -cpu.cc.CY)) & 0xfff;
 
 		cpu.cc.Z = ((res & 0xff) == 0) ? (byte) 1 : 0;
 		cpu.cc.S = ((res & 0x80) == 0x80) ? (byte) 1 : 0;
 		cpu.cc.P = parityFlag(res & 0xff);
-		cpu.cc.CY = (var > cpu.A) ? 1: (byte) 0; // minuend greater than subtrahend will likely result to overflow of 0xff (borrowing)
+		cpu.cc.CY = (res > 0xff) ? 1: (byte) 0; // minuend greater than subtrahend will likely result to overflow of 0xff (borrowing)
 		// cpu.cc.AC = -1; // NULL 
 
 		cpu.A = (short) (res & 0xff);
@@ -1205,12 +1245,14 @@ public class Interpreter
 	}
 
 	private void SUB(CpuComponents cpu, int var) {
-		int res = cpu.A + ((~var + 1) & 0xff);
+		i8080_flag_ac(cpu, cpu.A, -var); // half carry
+
+		int res = (cpu.A + (-var) & 0xfff);
 
 		cpu.cc.Z = ((res & 0xff) == 0) ? (byte) 1 : 0;
 		cpu.cc.S = ((res & 0x80) == 0x80) ? (byte) 1 : 0;
 		cpu.cc.P = parityFlag(res & 0xff);
-		cpu.cc.CY = (var > cpu.A) ? 1: (byte) 0; // minuend greater than subtrahend will likely result to overflow of 0xff (borrowing)
+		cpu.cc.CY = (res > 0xff) ? 1: (byte) 0; // minuend greater than subtrahend will likely result to overflow of 0xff (borrowing)
 		// cpu.cc.AC = -1; // NULL
 
 		cpu.A = (short) (res & 0xff);
@@ -1236,6 +1278,7 @@ public class Interpreter
 		// cpu.cc.AC = 0; // fixed?
 
 		cpu.A = (short) (res);
+		cpu.cc.AC = 0; 
 	}
 
 	private void XTHL(CpuComponents cpu) {
@@ -1266,9 +1309,18 @@ public class Interpreter
 		// cpu.cc.AC = -1; // NULL
 	}
 
+	private void i8080_flag_ac(CpuComponents cpu, int... var) {
+		cpu.cc.AC = ( ((var[0] & 0xf) + (var[1] & 0xf)) > 0xf) ? (byte) 1 : (byte) 0;
+	}
+
 
 	private byte parityFlag(int result) {
-		int res = Integer.toBinaryString(result).replaceAll("0", "").length(); // Simple workaround to get count of flipped binary
+		int res = 0;
+
+		for(int i = 0; i < 8; i++) {
+			if (((result >> i) & 0x1) == 1) res++;
+		}
+
 		return (res % 2 == 0) ? (byte) 1 : 0;
 	}
 
@@ -1281,13 +1333,18 @@ public class Interpreter
 	/// FIX
 
 	// CPU OVERRIDE
+	private void dialog() {
+		if (!ProgramUtils.Machine.DEBUG) System.out.println("debug is off!");
+		System.out.println("CPU EXERCISER \nSTART:  " + new Date().toString());
+		System.out.println();
+		PAUSE_THREAD(1000);
+	}
+
 	private void AUTO_TEST(CpuComponents cpu) {
 		switch (ProgramUtils.Rom.FILE_NAME[0]) {
 			case "cpudiag.bin":
 				TEST_OVERRIDE_CPUDIAG(cpu);
-				if (!ProgramUtils.Machine.DEBUG) System.out.println("debug is off!");
-				System.out.println("CPU EXERCISER");
-				PAUSE_THREAD(1000);
+				dialog();
 				break;
 			case "8080EX1.COM":
 			case "8080EXER.COM":
@@ -1295,25 +1352,18 @@ public class Interpreter
 			case "8080EXM.COM":
 			case "8080PRE.COM":
 				TEST_OVERRIDE_GENERIC(cpu);
-				if (!ProgramUtils.Machine.DEBUG) System.out.println("debug is off!");
-				System.out.println("CPU EXERCISER");
-				PAUSE_THREAD(1000);
+				dialog();
 				break;
 			case "TST8080.COM":
 				TEST_TST(cpu);
-				if (!ProgramUtils.Machine.DEBUG) System.out.println("debug is off!");
+				dialog();
 				break;
 		}
 	}
 
 	private void TEST_TST(CpuComponents cpu) {
 		// skip daa inst
-		short addr = 0x04d9 + 0x100;
-
-		cpu.memory[0x4b4 + 0x100] = 0xc3;
-		cpu.memory[0x4b5 + 0x100] = (short) (addr & 0xff);
-		cpu.memory[0x4b6 + 0x100] = (short) (addr >> 8);
-
+		cpu.PC = ProgramUtils.Rom.ROM_ADDRESS[0];
 		System.out.println("NOTE: DAA instruction skipped!");
 	}
 
@@ -1322,10 +1372,11 @@ public class Interpreter
 		cpu.PC = ProgramUtils.Rom.ROM_ADDRESS[0];
 
 		// SKIP DAA inst
-		cpu.memory[0x59c] = 0xc3;
-		cpu.memory[0x59d] = 0xc2;
-		cpu.memory[0x59e] = 0x05;
-		System.out.println("NOTE: DAA instruction skipped!");
+		/*
+		 cpu.memory[0x59c] = 0xc3;
+		 cpu.memory[0x59d] = 0xc2;
+		 cpu.memory[0x59e] = 0x05;
+		 System.out.println("NOTE: DAA instruction skipped!");*/
 		//PAUSE_THREAD(1000);
 	}
 
@@ -1346,10 +1397,11 @@ public class Interpreter
 			} while (cpu.memory[addr] != '$');
 		}
 
-		return 0xff; // ?
+		return 0xff;
 	}
 
 	private void port_out() {
+		System.out.println("\n\nEND: " + new Date().toString());
 		test_finished = true;
 	}
 

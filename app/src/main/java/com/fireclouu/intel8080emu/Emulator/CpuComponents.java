@@ -22,10 +22,6 @@ public class CpuComponents
 	///  CONDITIONALS  ///
 	public ConditionCodes cc;
 	
-	///  VIDEO
-	public static boolean updateScreen = false;
-	public boolean suspendEmu = false;
-	
 	///  INTERRUPT  ///
 	public boolean int_enable = false;
 

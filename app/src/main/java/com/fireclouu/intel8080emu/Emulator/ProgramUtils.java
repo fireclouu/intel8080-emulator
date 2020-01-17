@@ -36,11 +36,11 @@ public final class ProgramUtils
 		public Machine() { }
 
 		public static final boolean DEBUG = false;
-		public static final boolean PRINT_LESS = true;
+		public static final boolean PRINT_LESS = false;
 		public static boolean isRunning;
 		
 		public static final int PROGRAM_LENGTH = 0x10_000;
-
+		public static final short VRAM_LOCATION = 0x2400;
 		public static final String STORAGE_LOCATION = "/sdcard/Download/";
 
 	}

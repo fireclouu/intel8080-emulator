@@ -15,7 +15,7 @@ public class Emulation
 	long nextInterrupt;
 	
 	long timerHz;
-	long refreshRate = ((1 / 60) * usec_template); // 16ms
+	int refreshRate = (int) ((1.0 / 60.0) * usec_template); // 16ms
 	
 	PrintTrace pTrace;
 	public Interpreter interpreter;
@@ -25,7 +25,7 @@ public class Emulation
 		System.out.println("Start emulator...\n");
 		
 		init(cpu);
-		startEmulation(cpu, mGraphics);
+		startEmulation(cpu, mGraphics);  // this is wrong!
 		
 		System.out.println("\nEnd emulator...");
 	}
@@ -39,28 +39,28 @@ public class Emulation
 	// MAIN
 	public void startEmulation(CpuComponents cpu, MainGraphics mGraphics) {
 		
-		while(ProgramUtils.Machine.isRunning) {	
+		while(true) {	
 			// 2MHz = execute every 5e-7 secs
 			// System.nanoTime() = billionth of a sec. (epoch)
+			
+			
 			nowTime = getMicroSec();
 			
 			// 60hz
-			if ( (timerHz + refreshRate) < nowTime) {
-				cpu.updateScreen = true;
+			if (((timerHz + refreshRate) < nowTime) & !mGraphics.isMemLoaded) {
+				mGraphics.setMemory(cpu.memory);
 				timerHz = nowTime;
 			}
-			
-			// emulation
-			interpreter.emulate8080(cpu);
 			
 			// first run
 			if (lastTime == 0) {
 				lastTime = nowTime;
-				nextInterrupt = lastTime + refreshRate;
+				nextInterrupt = lastTime + 16000;
 				whichInterrupt = 1;
 				timerHz = nowTime;
 			}
 			
+			// INTERRUPT
 			if (cpu.int_enable && (nowTime > nextInterrupt)){
 				if (whichInterrupt == 1) {
 					interpreter.GenerateInterrupt(cpu, (byte) 1);
@@ -69,9 +69,12 @@ public class Emulation
 					interpreter.GenerateInterrupt(cpu, (byte) 2);
 					whichInterrupt = 1;
 				}
-				
+
 				nextInterrupt = nowTime + (8000);
 			}
+			
+			// emulation
+			interpreter.emulate8080(cpu);
 			
 			// 2 MHz
 			// continue execute instructions if lastTime < lastTime + usec & cycle < 2million

@@ -18,13 +18,14 @@ public class MainActivity extends Activity
 		//setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		
 		// render to hardware
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+		getWindow().setFlags(
+			WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+			WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 		
 		mGraphics = new MainGraphics(this);
 		
         super.onCreate(savedInstanceState);
         setContentView(mGraphics);
-		
 		
 		init();
 		ms.startEmulator();
