@@ -1,6 +1,6 @@
 package com.fireclouu.intel8080emu.Emulator;
 
-import com.fireclouu.intel8080emu.*;
+import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
 import java.util.*;
 
 public class Interpreter
@@ -14,11 +14,6 @@ public class Interpreter
 
 	static boolean test_finished;
 	static long cycle = 0;
-
-	/// CONSTRUCTOR
-	public Interpreter(CpuComponents cpu) {
-		init(cpu);
-	}
 
 	// SOURCES: superzazu
 	static short OPCODES_CYCLES[] = {
@@ -868,7 +863,7 @@ public class Interpreter
 				i8080_cond_jmp(cpu, opcode, cpu.cc.CY == 0);
 				break; // JNC adr
 			case 0xd3:
-				if (ProgramUtils.Machine.DEBUG) port_out();
+				if (AppUtils.Machine.DEBUG) port_out();
 				cpu.PC++;
 				break; // OUT D8
 			case 0xd4:
@@ -897,7 +892,7 @@ public class Interpreter
 				i8080_cond_jmp(cpu, opcode, cpu.cc.CY == 1);
 				break; // JC adr
 			case 0xdb:
-				if (ProgramUtils.Machine.DEBUG) cpu.A = port_in(cpu);
+				if (AppUtils.Machine.DEBUG) cpu.A = port_in(cpu);
 				cpu.PC++;
 				break; // IN D8 (stub) (Load I/O to Accumulator)
 			case 0xdc:
@@ -1032,8 +1027,6 @@ public class Interpreter
 
 		return OPCODES_CYCLES[cpu.memory[opcode]];
 	}
-
-	// TODO: implement aux. carry
 
 	/// INTERRUPT
 	public void GenerateInterrupt(CpuComponents cpu, int interrupt_num) {
@@ -1323,67 +1316,8 @@ public class Interpreter
 
 		return (res % 2 == 0) ? (byte) 1 : 0;
 	}
-
-	/// INIT
-	private void init(CpuComponents cpu) {
-		// testing purposes
-		AUTO_TEST(cpu);
-	}
-
-	/// FIX
-
-	// CPU OVERRIDE
-	private void dialog() {
-		if (!ProgramUtils.Machine.DEBUG) System.out.println("debug is off!");
-		System.out.println("CPU EXERCISER \nSTART:  " + new Date().toString());
-		System.out.println();
-		PAUSE_THREAD(1000);
-	}
-
-	private void AUTO_TEST(CpuComponents cpu) {
-		switch (ProgramUtils.Rom.FILE_NAME[0]) {
-			case "cpudiag.bin":
-				TEST_OVERRIDE_CPUDIAG(cpu);
-				dialog();
-				break;
-			case "8080EX1.COM":
-			case "8080EXER.COM":
-			case "CPUTEST.COM":
-			case "8080EXM.COM":
-			case "8080PRE.COM":
-				TEST_OVERRIDE_GENERIC(cpu);
-				dialog();
-				break;
-			case "TST8080.COM":
-				TEST_TST(cpu);
-				dialog();
-				break;
-		}
-	}
-
-	private void TEST_TST(CpuComponents cpu) {
-		// skip daa inst
-		cpu.PC = ProgramUtils.Rom.ROM_ADDRESS[0];
-		System.out.println("NOTE: DAA instruction skipped!");
-	}
-
-	private void TEST_OVERRIDE_CPUDIAG(CpuComponents cpu) {
-		// Direct PC to loaded address
-		cpu.PC = ProgramUtils.Rom.ROM_ADDRESS[0];
-
-		// SKIP DAA inst
-		/*
-		 cpu.memory[0x59c] = 0xc3;
-		 cpu.memory[0x59d] = 0xc2;
-		 cpu.memory[0x59e] = 0x05;
-		 System.out.println("NOTE: DAA instruction skipped!");*/
-		//PAUSE_THREAD(1000);
-	}
-
-	private void TEST_OVERRIDE_GENERIC(CpuComponents cpu) {
-		cpu.PC = ProgramUtils.Rom.ROM_ADDRESS[0];
-	}
-
+	
+	// Custom
 	private short port_in(CpuComponents cpu) {
 		int operation = cpu.C; // get c value to determine prints
 
@@ -1404,15 +1338,7 @@ public class Interpreter
 		System.out.println("\n\nEND: " + new Date().toString());
 		test_finished = true;
 	}
-
-	public static void PAUSE_THREAD(int mills) {
-		try {
-			Thread.sleep(mills);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-
+	
 	// inits
 	public static void i8080_init(CpuComponents cpu) {
 
@@ -1435,5 +1361,3 @@ public class Interpreter
 		cpu.int_enable = false; // or null
 	}
 }
-
-// fixed port in, psw updated

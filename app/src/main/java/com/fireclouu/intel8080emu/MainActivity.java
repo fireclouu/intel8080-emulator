@@ -1,16 +1,13 @@
 package com.fireclouu.intel8080emu;
 
 import android.app.*;
-import android.graphics.*;
 import android.os.*;
-import android.content.pm.*;
 import android.view.*;
-import com.fireclouu.intel8080emu.Emulator.*;
 
 public class MainActivity extends Activity 
 {
-	MainGraphics mGraphics;
-	PlatformPort ms; // machine specific
+	AppDisplay mDisplay;
+	Platform ms; // machine specific
 	
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -22,13 +19,13 @@ public class MainActivity extends Activity
 			WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
 			WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 		
-		mGraphics = new MainGraphics(this);
-		
+		// set window first
+		mDisplay = new AppDisplay(this);
         super.onCreate(savedInstanceState);
-        setContentView(mGraphics);
+        setContentView(mDisplay);
 		
 		init();
-		ms.startEmulator();
+	 	ms.startOp();
 	}
 
 	@Override
@@ -36,7 +33,6 @@ public class MainActivity extends Activity
 		super.onResume();
 		
 		// Program notifier
-		ProgramUtils.Machine.isRunning = true;
 	}
 
 	@Override
@@ -44,14 +40,10 @@ public class MainActivity extends Activity
 		super.onPause();
 		
 		// Program notifier
-		ProgramUtils.Machine.isRunning = false;
 	}
 	
 	
 	private void init() {
-		ms = new PlatformPort(this, mGraphics);
-		
-		ProgramUtils.Machine.isRunning = true;
+		ms = new Platform(this, mDisplay);
 	}
-	
 }

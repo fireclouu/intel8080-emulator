@@ -1,16 +1,15 @@
-package com.fireclouu.intel8080emu.Emulator;
+package com.fireclouu.intel8080emu.Emulator.BaseClass;
 
-public final class ProgramUtils
+public final class AppUtils
 {
-	public ProgramUtils() { } // prevent instatiation
+	private AppUtils() { } // prevent instatiation
 
-	public static final class Rom {
-
-		public Rom() { }
+	public static final class File {
+		private File() { }
 
 		public static final String[] FILE_NAME = {
-			 "invaders.h", "invaders.g",
-			 "invaders.f", "invaders.e"
+			"invaders.h", "invaders.g",
+			"invaders.f", "invaders.e"
 
 			///  TESTS  ///
 			//"cpudiag.bin"
@@ -23,24 +22,22 @@ public final class ProgramUtils
 		};
 
 		public static final int[] ROM_ADDRESS = {
-			 0x0000,
-			 0x0800,
-			 0x1000,
-			 0x1800
+			0x0000,
+			0x0800,
+			0x1000,
+			0x1800
 			//0x0100
 		};
-
 	}
 
 	public static final class Machine {
-		public Machine() { }
-
-		public static final boolean DEBUG = false;
-		public static final boolean PRINT_LESS = false;
-		public static boolean isRunning;
+		private Machine() { }
 		
+		// DO NOT MODIFY WHEN EMULATING SPACE INVADER
+		public static final boolean DEBUG = false;
+		
+		public static final boolean PRINT_LESS = true;
 		public static final int PROGRAM_LENGTH = 0x10_000;
-		public static final short VRAM_LOCATION = 0x2400;
 		public static final String STORAGE_LOCATION = "/sdcard/Download/";
 
 	}
