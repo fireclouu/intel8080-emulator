@@ -10,11 +10,9 @@ public class Platform extends PlatformAdapter
 {
 	Context context;
 	CpuComponents cpu;
-	AppDisplay mDisplay;
 	
-	// CONSTRUCTOR
-	public Platform(Context context, AppDisplay mDisplay) {
-		this.mDisplay = mDisplay; // set AppDisplay variable
+	public Platform(Context context, DisplayAdapter display) {
+		super(display);
 		this.context = context;
 	}
 	
@@ -22,14 +20,10 @@ public class Platform extends PlatformAdapter
 	public InputStream openFile(String romName) {
 		try
 		{
-			return ((Activity)context).getAssets().open(romName);
+			return context.getAssets().open(romName);
 		} catch (IOException e) {
+			e.printStackTrace();
 			return null;
 		}
-	}
-	
-	@Override
-	public void makeDisplay() {
-		this.display = mDisplay; // set DisplayAdapter variable
 	}
 }

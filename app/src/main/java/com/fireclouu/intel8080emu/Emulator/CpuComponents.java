@@ -1,14 +1,16 @@
 package com.fireclouu.intel8080emu.Emulator;
 
+import com.fireclouu.intel8080emu.Emulator.BaseClass.AppUtils;
+
 public class CpuComponents
 {
 	///  PSW FLAG POSITIONS  ///
 	public final int 
-		PSW_FLAG_POS_CY = 0b_0000_0001, // on bit pos 0 (Carry)
-		PSW_FLAG_POS_PA = 0b_0000_0100, // on bit pos 2 (Parity)
-		PSW_FLAG_POS_AC = 0b_0001_0000, // on bit pos 4 (Aux. carry)
-		PSW_FLAG_POS_ZE = 0b_0100_0000, // on bit pos 6 (Zero)
-		PSW_FLAG_POS_SN = 0b_1000_0000; // on bit pos 7 (Sign)
+	PSW_FLAG_POS_CY = 0b_0000_0001, // on bit pos 0 (Carry)
+	PSW_FLAG_POS_PA = 0b_0000_0100, // on bit pos 2 (Parity)
+	PSW_FLAG_POS_AC = 0b_0001_0000, // on bit pos 4 (Aux. carry)
+	PSW_FLAG_POS_ZE = 0b_0100_0000, // on bit pos 6 (Zero)
+	PSW_FLAG_POS_SN = 0b_1000_0000; // on bit pos 7 (Sign)
 
 	///  REGISTERS  ///
 	public short B, C, D, E, H, L, A;
@@ -21,12 +23,19 @@ public class CpuComponents
 
 	///  CONDITIONALS  ///
 	public ConditionCodes cc;
-	
+
 	///  INTERRUPT  ///
-	public boolean int_enable = false;
+	public byte int_enable;
 
 	// RESET / INIT
-	public CpuComponents(short memory[]) {
+	public CpuComponents() {
+		// reset components
+		cc = new ConditionCodes();
+		init();
+	}
+
+	public void init() {
+		// init register (byte) / address (word)
 		B = 0;
 		C = 0;
 		D = 0;
@@ -38,33 +47,36 @@ public class CpuComponents
 		PC = 0;
 		SP = 0;
 
-		cc = new ConditionCodes();
+		int_enable = 0;
 
-		cc.Z = 0;
-		cc.S = 0;
-		cc.P = 0;
-		cc.CY = 0;
-		cc.AC = 0;
-		
-		this.memory = memory;
-		// int_enable = 0; ?
-		// cc.pad = 0; ?
-	}
-	
-	@Deprecated
-	public short[] loadVram(short mem[]) {
-		short[] tempVram = new short[0x4000 - 0x2400];
-		
-		for(int i = 0; i < tempVram.length; i++) {
-			tempVram[i] = mem[0x2400 + i];
-		}
-		
-		return tempVram;
+		// load file on memory
+		memory = new short[AppUtils.Component.PROGRAM_LENGTH];
+
+		// init flags (bit)
+		cc.init();
 	}
 }
 
 class ConditionCodes
 {
+	///  FLAGS  ///
 	public byte Z, S, P, CY, AC;
-	public short pad;
+
+	///  IN / OUT  ///
+	public byte pad;
+
+	public ConditionCodes() {
+		// reset flags
+		init();
+	}
+
+	public void init() {
+		// init flags (bit)
+		Z = 0;
+		S = 0;
+		P = 0;
+		CY = 0;
+		AC = 0;
+		pad = 0;
+	}
 }

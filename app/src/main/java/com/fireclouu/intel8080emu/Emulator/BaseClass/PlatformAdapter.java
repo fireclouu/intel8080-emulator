@@ -3,109 +3,231 @@ package com.fireclouu.intel8080emu.Emulator.BaseClass;
 import com.fireclouu.intel8080emu.Emulator.*;
 import java.io.*;
 
-
 public abstract class PlatformAdapter implements Runnable
 {
-	private Thread mainThread;
+	public static Thread master;
+	
+	private static boolean isRunning = true;
+	
 	protected Emulator emulator;
-	protected short[] file;
-	protected AppUtils.File fileUtils;
-	protected AppUtils.Machine machineUtils;
-
 	protected CpuComponents cpu;
 	protected DisplayAdapter display;
+	protected AppUtils.File fileUtils;
+	protected AppUtils.Component machineUtils;
 	
 	public static String OUT_MSG = "System OK!";
+	public static String TEST_NAME;
+	public static String BUILD_MSG[];
+	public static int MSG_COUNT = 0;
+	
 	
 	// Stream file
 	public abstract InputStream openFile(String romName);
-	public abstract void makeDisplay();
-	
+
 	@Override
 	public void run() {
 		emulator.startEmulation(cpu, display);
 	}
-
+	
+	public PlatformAdapter(DisplayAdapter display) {
+		this.display = display;
+	}
+	
 	// Main
 	public void startOp() {
-		if (!isAvailable(fileUtils.FILE_NAME)) {
-			display.isMemLoaded = true;
+		// set master state
+		setStateMaster(true);
+		
+		// initial file check
+		/*if(!isAllFileOK()) {
+			OUT_MSG = "Some files could be corrupted, or no files specified";
+			display.setView();
+			display.readyToDraw = true;
+			
 			System.out.println(OUT_MSG);
 			return;
-		}
-		
-		init(); // let override instantiation first before calling these
-		mainThread.start();
-	}
-	
-	public void init() {
-		file = loadFile(fileUtils.FILE_NAME);
-		this.cpu = new CpuComponents(file);
-		mainThread = new Thread(this);
-		emulator = new Emulator();
-		makeDisplay();
-		
-		display.isMemLoaded = false;
-	}
-	
-	// Read and buffer file
-	public short[] loadFile(String[] filename) {
-		short[] holder = new short[machineUtils.PROGRAM_LENGTH];
-		InputStream file;
-		short read;
-		int addr;
-		
-		for (int i = 0; i < fileUtils.FILE_NAME.length; i++) {
-			file = openFile(fileUtils.FILE_NAME[i]);
-			addr = fileUtils.ROM_ADDRESS[i];
+		}*/
 
-			try {
-				while ((read = (short) file.read()) != -1) {
-					holder[addr++] = read;
-				}
-			} catch (IOException e) {
-				OUT_MSG = fileUtils.ROM_ADDRESS[i] + " cannot be read!";
-				return null;
+		// check if file is test file
+		if (isTestFile()) {
+			startTest();
+			return;
+		}
+		// Start emulation
+		startMain();
+	}
+
+	public void init() {
+		// initialize cpu components
+		cpu = new CpuComponents();
+		// initialize emulator
+		emulator = new Emulator();
+		// display draw signal
+		display.isDrawing = false;
+	}
+
+	private void startMain() {
+		// reset objects
+		init();
+		// set view
+		display.startView();
+		// load and start emulation
+		if(loadSplitFiles() == 0) {
+			master = new Thread(this);
+			master.start();
+		}
+	}
+
+	private void startTest() {
+		// init
+		init();
+		// trigger debug
+		AppUtils.Component.DEBUG = true;
+		// view
+		//display.readyToDraw = true;
+		// dummy
+		String name = "8080EXM.COM";
+		
+		//for (String name : fileUtils.FILES) {
+			// BUILD MSG
+			BUILD_MSG = new String[5000];
+			BUILD_MSG[0] = "";
+			// get test filename
+			TEST_NAME = name;
+			// reset objects
+			init();
+			display.startView();
+			display.isDrawing = true;
+			
+			// load file and injects
+			// SOURCE: superzazu — intel 8080 c99
+			// inject "out 1,a" at 0x0000 (signal to stop the test)
+			cpu.memory[0x0000] = 0xD3;
+			cpu.memory[0x0001] = 0x00;
+			// inject "in a,0" at 0x0005 (signal to output some characters)
+			cpu.memory[0x0005] = 0xDB;
+			cpu.memory[0x0006] = 0x00;
+			cpu.memory[0x0007] = 0xC9;
+			// jump pc to 0x100 (to avoid executing test_finished to true);
+			cpu.PC = 0x0100;
+			loadFile(name, 0x100);
+			// start emulation
+			master = new Thread(this);
+			master.start();
+			// avoid overlaps
+			/*try {
+				mainThread.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}*/
+
+			System.out.println(BUILD_MSG);
+		//}
+	}
+
+	// check all files
+	private boolean isAllFileOK() {
+		for (String files : fileUtils.FILES) {
+			if (!isAvailable(files)) return false;
+		}
+		try
+		{
+			isAvailable(fileUtils.FILES[0]);
+		} catch (ArrayIndexOutOfBoundsException e) {
+			return false;
+		}
+
+		return true;
+	}
+	// Read and buffer file
+	public void loadFile(String filename, int addr) {
+		// read file stream
+		InputStream file = openFile(filename);
+		// piece container
+		short read;
+		try
+		{
+			while ((read = (short) file.read()) != -1) {
+				cpu.memory[addr++] = read;
+			}
+		} catch (IOException e) {
+			OUT_MSG = filename + " cannot be read!";
+		}	
+	}
+
+	private byte loadSplitFiles() {
+		int counter = 0;
+		for (String files : fileUtils.FILES) {
+			if (isAvailable(files)) {
+				loadFile(files, fileUtils.ROM_ADDRESS[counter++]);
+			} else {
+				display.isDrawing = true;
+				System.out.println(OUT_MSG);
+				return 1; // ERROR
 			}
 		}
-
-		return holder;
+		return 0; // SUCCESS
 	}
 
-	// Check file availability
-	private boolean isAvailable(String[] filename) {
-		
-		if (fileUtils.FILE_NAME.length == 0) {
+	// File check
+	private boolean isAvailable(String filename) {
+		if (fileUtils.FILES.length == 0) {
 			OUT_MSG = "No files specified.";
 			return false;
 		}
-		
 		if (fileUtils.ROM_ADDRESS.length == 0) {
 			OUT_MSG = "File online, but no starting memory address specified.";
 			return false;
 		}
-		
-		if (fileUtils.ROM_ADDRESS.length != fileUtils.FILE_NAME.length) {
+		if (fileUtils.ROM_ADDRESS.length != fileUtils.FILES.length) {
 			OUT_MSG = "File online, but roms and memory address unaligned.";
 			return false;
 		}
-		
 		try
 		{
-			for (int i = 0; i < fileUtils.FILE_NAME.length; i++) {
-				if (openFile(fileUtils.FILE_NAME[i]) == null) {
-					OUT_MSG = "File \"" + fileUtils.FILE_NAME[i] + "\" could not be found.";
-					return false;
-				}
+			if (openFile(filename) == null) {
+				OUT_MSG = "File \"" + filename + "\" could not be found.";
+				return false;
 			}
-
 		} catch (ArrayIndexOutOfBoundsException e) {
 			e.printStackTrace();
 			return false;
 		}
-
 		OUT_MSG = "File online , loaded successfully!";
-		
 		return true;
+	}
+
+	private boolean isTestFile() {
+		for(String name : fileUtils.FILES) {
+			switch (name) {
+				case "cpudiag.bin":
+				case "8080EX1.COM":
+				case "8080EXER.COM":
+				case "CPUTEST.COM":
+				case "8080EXM.COM":
+				case "8080PRE.COM":
+				case "TST8080.COM":
+					return true;
+			}
+		}
+		return false;
+	}
+	
+	// Machine scenarios
+	public void appPause() {
+		
+	}
+	
+	public void appResume() {
+		
+	}
+	
+	// Master control
+	public static void setStateMaster(boolean state) {
+		isRunning = state;
+	}
+	
+	public static boolean getStateMaster() {
+		return isRunning;
 	}
 }

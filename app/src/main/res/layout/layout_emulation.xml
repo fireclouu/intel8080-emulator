@@ -1,8 +1,54 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:orientation="vertical">
-    
-	<!--  REFERENCE TEMPLATE, USE ON-THE-FLY LAYOUT | FIRECLOUU !-->
-	
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="fill_parent"
+	android:layout_height="fill_parent"
+	android:orientation="vertical">
+
+	<com.fireclouu.intel8080emu.AppDisplay
+		android:layout_width="match_parent"
+		android:layout_height="600dp"
+		android:id="@+id/mainDisplay"/>
+
+	<LinearLayout
+		android:orientation="horizontal"
+		android:layout_width="match_parent"
+		android:layout_height="wrap_content">
+
+		<Button
+			android:layout_width="wrap_content"
+			style="?android:attr/buttonBarButtonStyle"
+			android:layout_height="wrap_content"
+			android:text="Insert Coin"
+			android:id="@+id/btn_p1_coin"/>
+
+		<Button
+			android:layout_width="wrap_content"
+			style="?android:attr/buttonStyleSmall"
+			android:layout_height="wrap_content"
+			android:text="START"
+			android:id="@+id/btn_p1_start"/>
+
+		<Button
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="←"
+			android:id="@+id/bt_p1_left"/>
+
+		<Button
+			android:layout_width="wrap_content"
+			style="?android:attr/buttonStyleSmall"
+			android:layout_height="wrap_content"
+			android:text="↑"
+			android:id="@+id/btn_p1_fire"/>
+
+		<Button
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:text="→"
+			android:id="@+id/btn_p1_right"/>
+
+	</LinearLayout>
+
 </LinearLayout>
+
