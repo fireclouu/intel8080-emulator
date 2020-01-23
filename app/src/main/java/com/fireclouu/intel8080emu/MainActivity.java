@@ -9,10 +9,13 @@ import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
 import android.widget.*;
 import android.widget.FrameLayout.*;
 import com.fireclouu.intel8080emu.Emulator.*;
+import android.media.*;
 
 public class MainActivity extends Activity implements OnTouchListener
 {
 	AppDisplay mDisplay;
+	SoundManager media;
+	
 	Platform ms; // machine specific
 	WakelockApplication wl;
 	public static final int INTENT_FLAG_SINGLE_ACTIVITY = Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP;
@@ -25,7 +28,7 @@ public class MainActivity extends Activity implements OnTouchListener
 		mButtonP1Left,
 		mButtonP1Right,
 		mButtonP1Fire;
-	
+
 	boolean firstCall = true;
 	
     @Override
@@ -60,9 +63,10 @@ public class MainActivity extends Activity implements OnTouchListener
 			return;
 		} else if (!firstCall & !PlatformAdapter.master.isAlive()) {
 			initAndStart();
-		} else {
+		} else if (!firstCall) {
 			DisplayAdapter.runState = true;
 			mDisplay.startView();
+			ms.appResume();
 		}
 	}
 
@@ -70,7 +74,17 @@ public class MainActivity extends Activity implements OnTouchListener
 	protected void onPause() {
 		super.onPause();
 		DisplayAdapter.runState = false;
+		ms.appPause();
 	}
+
+	@Override
+	protected void onDestroy() {
+		ms.setStateMaster(false);
+		media.releaseResource();
+		super.onDestroy();
+	}
+	
+	
 	
 	// ontouch
 	@Override
@@ -141,7 +155,24 @@ public class MainActivity extends Activity implements OnTouchListener
 	}
 	
 	private void initAndStart() {
-		ms = new Platform(this, mDisplay);
+		
+		// Display and media
+		media = new SoundManager(getApplicationContext());
+		
+		// Media
+		media.setEffectAlienFast(R.raw.alien_fast);
+		media.setEffectAlienKilled(R.raw.alien_killed);
+		media.setEffectAlienMove(
+			R.raw.enemy_move_1,
+			R.raw.enemy_move_2,
+			R.raw.enemy_move_3,
+			R.raw.enemy_move_4
+			);
+		media.setEffectFire(R.raw.fire);
+		media.setEffectPlayerExploded(R.raw.explosion);
+		media.setEffectShipIncoming(R.raw.ship_incoming);
+		
+		ms = new Platform(this, mDisplay, media);
 		wl = new WakelockApplication(this);
 		
 		// Buttons
@@ -160,4 +191,6 @@ public class MainActivity extends Activity implements OnTouchListener
 		// Run
 		ms.startOp();
 	}
+	
+	
 }

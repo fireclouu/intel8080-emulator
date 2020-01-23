@@ -2,6 +2,7 @@ package com.fireclouu.intel8080emu.Emulator;
 
 import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
 import java.util.*;
+import com.fireclouu.intel8080emu.*;
 
 public class Emulator implements IOAdapter
 {
@@ -40,7 +41,7 @@ public class Emulator implements IOAdapter
 	
 	short readPort;
 	public static volatile short[] port = new short[8];
-	
+	public static volatile short[] last_port_value = new short[8];
 	
 	// can be removed
 	double checkNow = 0;
@@ -78,21 +79,78 @@ public class Emulator implements IOAdapter
 	}
 
 	@Override
-	public void handleOUT(CpuComponents cpu, short port, short value) {
+	public void handleOUT(CpuComponents cpu, final MediaAdapter media, short port, final short value) {
 		switch(port) {
 			case 2: // SHIFT AMOUNT 
 				shift_offset = (byte) (value & 0x7);    
 				break;  
 			case 3: // SOUND 1
+				/*for (int i = 0; i < 8; i++) {
+					byte bit = (byte) ((value >> i) & 0x1);
+					if (bit != 1) continue;
+					
+					switch (i) {
+						case 0:
+							media.play(MediaAdapter.MEDIA_EFFECT_SHIP_INCOMING);
+							break;
+						case 1:
+							media.play(MediaAdapter.MEDIA_EFFECT_FIRE);
+							break;
+						case 2:
+							media.play(MediaAdapter.MEDIA_EFFECT_PLAYER_EXPLODED);
+							break;
+						case 3:
+							media.play(MediaAdapter.MEDIA_EFFECT_ALIEN_KILLED);
+							break;
+					}
+				}
+				*/
+				
+				// stop looping execution
+				if (value != last_port_value[3]) {
+					
+					if((value & 0x2) > 0 && (last_port_value[3] & 0x2) == 0) {
+						media.play(MediaAdapter.MEDIA_EFFECT_FIRE);
+					}
+					if((value & 0x4) > 0 && (last_port_value[3] & 0x4) == 0) {
+						media.play(MediaAdapter.MEDIA_EFFECT_PLAYER_EXPLODED);
+					}
+					if((value & 0x8) > 0 && (last_port_value[3] & 0x8) == 0) {
+						media.play(MediaAdapter.MEDIA_EFFECT_ALIEN_KILLED);
+					}
+					// assign if not equal
+					last_port_value[3] = value;
+				}
+				
 				break;
+				
 			case 4:    
 				shift0 = shift1;    
-				shift1 = value;    
-				break;    
+				shift1 = value;
+				break;
+				
+			case 5:
+				// alien moving sound
+				// bit 0 (0)
+				if (value != last_port_value[5]) {
+					if ((value & 0x1) > 0 && (last_port_value[5] & 0x1) == 0) {
+						media.play(MediaAdapter.MEDIA_EFFECT_ALIEN_MOVE_1);
+					}
+					if ((value & 0x2) > 0 && (last_port_value[5] & 0x2) == 0) {
+						media.play(MediaAdapter.MEDIA_EFFECT_ALIEN_MOVE_2);
+					}
+					if ((value & 0x4) > 0 && (last_port_value[5] & 0x4) == 0) {
+						media.play(MediaAdapter.MEDIA_EFFECT_ALIEN_MOVE_3);
+					}
+					if ((value & 0x8) > 0 && (last_port_value[5] & 0x8) == 0) {
+						media.play(MediaAdapter.MEDIA_EFFECT_ALIEN_MOVE_4);
+					}
+					last_port_value[5] = value;
+				}
 		}
 	}
 	
-	public void ioHandler(CpuComponents cpu, int opcode) {
+	public void ioHandler(CpuComponents cpu, MediaAdapter media, int opcode) {
 		readPort = 0;
 		switch(cpu.memory[opcode])  {
 			case 0xdb: // IN
@@ -101,26 +159,17 @@ public class Emulator implements IOAdapter
 				break;
 			case 0xd3: // OUT
 				readPort = cpu.memory[opcode + 1];
-				handleOUT(cpu, readPort, cpu.A);
+				handleOUT(cpu, media, readPort, cpu.A);
 				break;
 		}
 	}
 	
-	public void startEmulation(final CpuComponents cpu, final DisplayAdapter display) {
+	public void startEmulation(CpuComponents cpu, DisplayAdapter display, MediaAdapter media) {
 		
 		if (AppUtils.Component.DEBUG) {
 			runTests(cpu);
 			return;
 		}
-		
-		// Display
-		new Thread() {
-			@Override
-			public void run() {
-				
-			}
-		}.start();
-		
 		
 		while(PlatformAdapter.getStateMaster()) {	
 
@@ -128,7 +177,7 @@ public class Emulator implements IOAdapter
 			checkNow = timerNow;
 			
 			// 60hz
-			if((timerHz + VBLANK_START < timerNow)/* && !display.isDrawing*/) {
+			if ((timerHz + VBLANK_START < timerNow)) {
 				display.updateView(cpu.memory);
 				timerHz = timerNow;
 			}
@@ -149,7 +198,7 @@ public class Emulator implements IOAdapter
 				// cycle catch-up
 				while((checkNow > checkLast + (NANO_SEC)) && interpreter.cycle <= machineUtils.MAX_CYCLE_SPEED_PER_SECOND) {
 					// IO
-					ioHandler(cpu, cpu.PC);
+					ioHandler(cpu, media, cpu.PC);
 					
 					interpreter.cycle += interpreter.emulate8080(cpu);
 					sys_cycle++;
@@ -167,7 +216,7 @@ public class Emulator implements IOAdapter
 				// normal cycle (?)
 				if(timerNow >= timerLast + customMhz) {
 					// IO
-					ioHandler(cpu, cpu.PC);
+					ioHandler(cpu, media, cpu.PC);
 					
 					interpreter.cycle += interpreter.emulate8080(cpu);
 					sys_cycle++;

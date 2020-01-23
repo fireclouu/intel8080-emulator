@@ -12,6 +12,7 @@ public abstract class PlatformAdapter implements Runnable
 	protected Emulator emulator;
 	protected CpuComponents cpu;
 	protected DisplayAdapter display;
+	protected MediaAdapter media;
 	protected AppUtils.File fileUtils;
 	protected AppUtils.Component machineUtils;
 	
@@ -20,17 +21,19 @@ public abstract class PlatformAdapter implements Runnable
 	public static String BUILD_MSG[];
 	public static int MSG_COUNT = 0;
 	
+	public Object pauseLock;
 	
 	// Stream file
 	public abstract InputStream openFile(String romName);
-
+	
 	@Override
 	public void run() {
-		emulator.startEmulation(cpu, display);
+		emulator.startEmulation(cpu, display, media);
 	}
 	
-	public PlatformAdapter(DisplayAdapter display) {
+	public PlatformAdapter(DisplayAdapter display, MediaAdapter media) {
 		this.display = display;
+		this.media = media;
 	}
 	
 	// Main
@@ -215,11 +218,13 @@ public abstract class PlatformAdapter implements Runnable
 	
 	// Machine scenarios
 	public void appPause() {
-		
+		/*/try {
+			pauseLock.wait();
+		} catch (InterruptedException e) {}*/
 	}
-	
+
 	public void appResume() {
-		
+		//pauseLock.notify();
 	}
 	
 	// Master control

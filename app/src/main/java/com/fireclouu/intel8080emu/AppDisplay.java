@@ -15,9 +15,6 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 	// get float value only
 	// on emulation class devise array that can hold 0x2400 - 0x3fff and pass it here
 	// do the loop here! instead of looping on another class
-	ArrayList<Float> pixelHolder;
-	private float[] pixels;
-	
 	Thread master;
 	
 	Canvas canvas;
@@ -46,6 +43,11 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 	// TOUCH
 	String touchSample = "";
 	
+	LinkedList<Long> times = new LinkedList<Long>(){{
+			add(System.nanoTime());
+		}};
+	
+	
 	public AppDisplay(Context context) {
 		super(context); 
 		init();
@@ -69,15 +71,12 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 		display = new float[(DISPLAY_HEIGHT * DISPLAY_WIDTH)];
 		memory = new short[AppUtils.Component.PROGRAM_LENGTH];
 		
-		pixelHolder = new ArrayList<Float>();
-		
 		runState = true;
 	}
 	
 	@Override
 	public void updateView(short[] memory) {
 		this.memory = memory;
-		isDrawing = true;
 	}
 
 	@Override
@@ -184,11 +183,27 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 		canvas.drawText(text, x, y, paintwhite);
 	}
 	
+	private final int MAX_SIZE = 100;
+	private final double NANOS = 1000000000.0;
+	
+	// https://stackoverflow.com/questions/10210439/how-to-count-the-framerate-with-which-a-surfaceview-refreshes
+	/** Calculates and returns frames per second */
+	private double fps() {
+		long lastTime = System.nanoTime();
+		double difference = (lastTime - times.getFirst()) / NANOS;
+		times.addLast(lastTime);
+		int size = times.size();
+		if (size > MAX_SIZE) {
+			times.removeFirst();
+		}
+		return difference > 0 ? times.size() / difference : 0.0;
+	}
+	
 	class DrawThread implements Runnable {
 	@Override
 	public void run() {
 		while(PlatformAdapter.getStateMaster() && runState) {
-			if (!holder.getSurface().isValid() || !isDrawing ) continue;
+			if (!holder.getSurface().isValid()) continue;
 
 			frameCount++;
 
@@ -205,7 +220,7 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 			}
 			
 			canvas.drawText(
-				"Hardware accelerated: " + isHardwareAccelerated(), 0, 
+				"Hardware accelerated: " + isHardwareAccelerated() + " | fps: " + fps(), 0, 
 				getHeight() - 10,
 				paintwhite);
 
@@ -236,8 +251,6 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 			canvas.drawText(touchSample, 0, 70, paintwhite);
 			
 			holder.unlockCanvasAndPost(canvas);
-
-			isDrawing = false;
 		}
 	}
 	
@@ -246,7 +259,7 @@ class DebugThread implements Runnable {
 		@Override
 		public void run() {
 			while(PlatformAdapter.getStateMaster() && runState) {
-				if (!holder.getSurface().isValid() || !isDrawing ) continue;
+				if (!holder.getSurface().isValid()) continue;
 				
 				canvas = holder.lockCanvas();
 				
