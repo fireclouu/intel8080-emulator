@@ -10,5 +10,6 @@ public interface DisplayAdapter
 	public boolean isDrawing;
 	
 	public void updateView(short[] memory);
-	public void startView();
+	public float[] getPos(int orientation);
+	public void startDisplay();
 }

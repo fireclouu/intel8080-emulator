@@ -11,7 +11,7 @@ public class Platform extends PlatformAdapter
 	Context context;
 	CpuComponents cpu;
 	
-	public Platform(Context context, DisplayAdapter display, MediaAdapter media) {
+	public Platform(Context context, DisplayAdapter display, ApiAdapter media) {
 		super(display, media);
 		this.context = context;
 	}

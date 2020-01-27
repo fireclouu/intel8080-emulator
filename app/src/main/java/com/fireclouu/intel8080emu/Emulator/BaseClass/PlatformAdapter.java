@@ -6,15 +6,14 @@ import java.io.*;
 public abstract class PlatformAdapter implements Runnable
 {
 	public static Thread master;
-	
 	private static boolean isRunning = true;
 	
 	protected Emulator emulator;
 	protected CpuComponents cpu;
 	protected DisplayAdapter display;
-	protected MediaAdapter media;
-	protected AppUtils.File fileUtils;
-	protected AppUtils.Component machineUtils;
+	protected ApiAdapter media;
+	protected StringUtils.File fileUtils;
+	protected StringUtils.Component machineUtils;
 	
 	public static String OUT_MSG = "System OK!";
 	public static String TEST_NAME;
@@ -31,7 +30,7 @@ public abstract class PlatformAdapter implements Runnable
 		emulator.startEmulation(cpu, display, media);
 	}
 	
-	public PlatformAdapter(DisplayAdapter display, MediaAdapter media) {
+	public PlatformAdapter(DisplayAdapter display, ApiAdapter media) {
 		this.display = display;
 		this.media = media;
 	}
@@ -73,7 +72,7 @@ public abstract class PlatformAdapter implements Runnable
 		// reset objects
 		init();
 		// set view
-		display.startView();
+		display.startDisplay();
 		// load and start emulation
 		if(loadSplitFiles() == 0) {
 			master = new Thread(this);
@@ -85,7 +84,7 @@ public abstract class PlatformAdapter implements Runnable
 		// init
 		init();
 		// trigger debug
-		AppUtils.Component.DEBUG = true;
+		StringUtils.Component.DEBUG = true;
 		// view
 		//display.readyToDraw = true;
 		// dummy
@@ -99,7 +98,7 @@ public abstract class PlatformAdapter implements Runnable
 			TEST_NAME = name;
 			// reset objects
 			init();
-			display.startView();
+			display.startDisplay();
 			display.isDrawing = true;
 			
 			// load file and injects

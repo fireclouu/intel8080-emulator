@@ -14,7 +14,10 @@ import android.media.*;
 public class MainActivity extends Activity implements OnTouchListener
 {
 	AppDisplay mDisplay;
-	SoundManager media;
+	public static SoundManager media;
+	
+	// need to optimize / on separate class
+	public static Vibrator vibrator;
 	
 	Platform ms; // machine specific
 	WakelockApplication wl;
@@ -39,10 +42,11 @@ public class MainActivity extends Activity implements OnTouchListener
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		
 		// render to hardware
-		getWindow().addFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 		
 		// set window first
 		
+		vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
 		
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_emulation);
@@ -65,7 +69,7 @@ public class MainActivity extends Activity implements OnTouchListener
 			initAndStart();
 		} else if (!firstCall) {
 			DisplayAdapter.runState = true;
-			mDisplay.startView();
+			mDisplay.startDisplay();
 			ms.appResume();
 		}
 	}
@@ -97,9 +101,11 @@ public class MainActivity extends Activity implements OnTouchListener
 				{
 					case MotionEvent.ACTION_DOWN:
 						Emulator.port[1] |= 0b_0000_0001;
+						mButtonCoin.setTextSize(8);
 						break;
 					case MotionEvent.ACTION_UP:
 						Emulator.port[1] &= 0b_1111_1110;
+						mButtonCoin.setTextSize(10);
 						break;
 				}
 				
@@ -109,9 +115,11 @@ public class MainActivity extends Activity implements OnTouchListener
 				{
 					case MotionEvent.ACTION_DOWN:
 						Emulator.port[1] |= 0b_0000_0100;
+						mButtonP1Start.setTextSize(8);
 						break;
 					case MotionEvent.ACTION_UP:
 						Emulator.port[1] &= 0b_1111_1011;
+						mButtonP1Start.setTextSize(10);
 						break;
 				}
 
@@ -121,9 +129,11 @@ public class MainActivity extends Activity implements OnTouchListener
 				{
 					case MotionEvent.ACTION_DOWN:
 						Emulator.port[1] |= 0b_0010_0000;
+						mButtonP1Left.setTextSize(8);
 						break;
 					case MotionEvent.ACTION_UP:
 						Emulator.port[1] &= 0b_1101_1111;
+						mButtonP1Left.setTextSize(10);
 						break;
 				}
 
@@ -133,9 +143,11 @@ public class MainActivity extends Activity implements OnTouchListener
 				{
 					case MotionEvent.ACTION_DOWN:
 						Emulator.port[1] |= 0b_0001_0000;
+						mButtonP1Fire.setTextSize(8);
 						break;
 					case MotionEvent.ACTION_UP:
 						Emulator.port[1] &= 0b_1110_1111;
+						mButtonP1Fire.setTextSize(10);
 						break;
 				}
 
@@ -145,9 +157,11 @@ public class MainActivity extends Activity implements OnTouchListener
 				{
 					case MotionEvent.ACTION_DOWN:
 						Emulator.port[1] |= 0b_0100_0000;
+						mButtonP1Right.setTextSize(8);
 						break;
 					case MotionEvent.ACTION_UP:
 						Emulator.port[1] &= 0b_1011_1111;
+						mButtonP1Right.setTextSize(10);
 						break;
 				}
 		}
@@ -160,17 +174,18 @@ public class MainActivity extends Activity implements OnTouchListener
 		media = new SoundManager(getApplicationContext());
 		
 		// Media
-		media.setEffectAlienFast(R.raw.alien_fast);
+		media.setEffectShipHit(R.raw.ship_hit);
 		media.setEffectAlienKilled(R.raw.alien_killed);
 		media.setEffectAlienMove(
 			R.raw.enemy_move_1,
 			R.raw.enemy_move_2,
 			R.raw.enemy_move_3,
 			R.raw.enemy_move_4
-			);
+		);
 		media.setEffectFire(R.raw.fire);
 		media.setEffectPlayerExploded(R.raw.explosion);
 		media.setEffectShipIncoming(R.raw.ship_incoming);
+		loadResources();
 		
 		ms = new Platform(this, mDisplay, media);
 		wl = new WakelockApplication(this);
@@ -192,5 +207,8 @@ public class MainActivity extends Activity implements OnTouchListener
 		ms.startOp();
 	}
 	
+	public static void loadResources() {
+		media.setEffectShipIncoming(R.raw.ship_incoming);
+	}
 	
 }

@@ -3,21 +3,36 @@ import android.content.*;
 import android.media.*;
 import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
 
-public class SoundManager implements MediaAdapter
+public class SoundManager implements ApiAdapter
 {
 	Context context;
-	SoundPool soundPool;
+	SoundPool soundPool, spShipFX;
 	
 	public SoundManager(Context context) {
 		this.context = context;
 		
 		soundPool = new SoundPool(10, AudioManager.STREAM_MUSIC, 0);
+		spShipFX = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
 	}
 	
 	@Override
-	public void play(final int id) {
-		soundPool.play(id, 1, 1, 0, 0, 1);
+	public void playSound(int id, int loop)
+	{
+		soundPool.play(id, 1, 1, 0, loop, 1);
 	}
+
+	@Override
+	public void stop(int id)
+	{
+		// Do not use!
+	}
+
+	@Override
+	public void reloadResource()
+	{
+		MainActivity.loadResources();
+	}
+	
 	
 	@Override
 	public void setEffectFire(int id) {
@@ -31,7 +46,7 @@ public class SoundManager implements MediaAdapter
 
 	@Override
 	public void setEffectShipIncoming(int id) {
-		this.MEDIA_EFFECT_SHIP_INCOMING = soundPool.load(context, id, 1);
+		this.MEDIA_EFFECT_SHIP_INCOMING = spShipFX.load(context, id, 1);
 	}
 
 	@Override
@@ -48,8 +63,30 @@ public class SoundManager implements MediaAdapter
 	}
 
 	@Override
-	public void setEffectAlienFast(int id) {
-		this.MEDIA_EFFECT_ALIEN_FAST = soundPool.load(context, id, 1);
+	public void setEffectShipHit(int id) {
+		this.MEDIA_EFFECT_SHIP_HIT = soundPool.load(context, id, 1);
+	}
+	
+	// Hacks for SoundPool bug
+
+	@Override
+	public void playShipFX() {
+		spShipFX.play(MEDIA_EFFECT_SHIP_INCOMING, 1, 1, 0, -1, 1);
+	}
+
+	@Override
+	public void releaseShipFX() {
+		spShipFX.stop(MEDIA_EFFECT_SHIP_INCOMING);
+		spShipFX.unload(MEDIA_EFFECT_SHIP_INCOMING);
+		spShipFX.release();
+		
+		initShipFX();
+	}
+
+	@Override
+	public void initShipFX() {
+		spShipFX = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
+		reloadResource();
 	}
 	
 	
@@ -57,4 +94,6 @@ public class SoundManager implements MediaAdapter
 		soundPool.release();
 		soundPool = null;
 	}
+	
+	
 }

@@ -9,24 +9,22 @@ public class Emulator implements IOAdapter
 	private Interpreter interpreter;
 	private PrintTrace print;
 	
-	AppUtils.Component machineUtils;
+	StringUtils.Component machineUtils;
 	
 	private final double NANO_SEC = 1_000_000.0; // template
 	private final double VBLANK_START = (1.0 / 60.0) * (NANO_SEC);
 	private final double MIDFRAME = VBLANK_START / 2.0;
-	private byte whichInterrupt;
 	private double nextInterrupt;
 	
 	private double timerHz;
 
 	private boolean test_finished = false;
-	private boolean done = false;
 	private short
 		shift0 = 0,
 		shift1 = 0;
 	private byte shift_offset = 0;
 	
-	private final double WHEN_TO_RUN_CYCLE = 1.0/2_000_000.0;
+	private final double WHEN_TO_RUN_CYCLE = 1.0 / 2_000_000.0;
 	private double timerNow = 0;
 	private double timerLast = 0;
 	private double customMhz = (WHEN_TO_RUN_CYCLE * (NANO_SEC * 10.0)) ;
@@ -46,7 +44,6 @@ public class Emulator implements IOAdapter
 	// can be removed
 	double checkNow = 0;
 	double checkLast = 0;
-	int sys_cycle = 0;
 	public static int ac = 0, actual_cycle = 0;
 	
 	public static String cycleInfo = ""; // avoid null
@@ -79,7 +76,7 @@ public class Emulator implements IOAdapter
 	}
 
 	@Override
-	public void handleOUT(CpuComponents cpu, final MediaAdapter media, short port, final short value) {
+	public void handleOUT(CpuComponents cpu, ApiAdapter media, short port, short value) {
 		switch(port) {
 			case 2: // SHIFT AMOUNT 
 				shift_offset = (byte) (value & 0x7);    
@@ -109,15 +106,25 @@ public class Emulator implements IOAdapter
 				// stop looping execution
 				if (value != last_port_value[3]) {
 					
+					if ((value & 0x1) > 0 && (last_port_value[3] & 0x1) == 0)    
+					{
+						media.playShipFX();
+					} else if ((value & 0x1) == 0 && (last_port_value[3] & 0x1) > 0) {
+						media.releaseShipFX();
+					}
+					
 					if((value & 0x2) > 0 && (last_port_value[3] & 0x2) == 0) {
-						media.play(MediaAdapter.MEDIA_EFFECT_FIRE);
+						media.playSound(ApiAdapter.MEDIA_EFFECT_FIRE, 0);
 					}
 					if((value & 0x4) > 0 && (last_port_value[3] & 0x4) == 0) {
-						media.play(MediaAdapter.MEDIA_EFFECT_PLAYER_EXPLODED);
+						media.playSound(ApiAdapter.MEDIA_EFFECT_PLAYER_EXPLODED, 0);
 					}
 					if((value & 0x8) > 0 && (last_port_value[3] & 0x8) == 0) {
-						media.play(MediaAdapter.MEDIA_EFFECT_ALIEN_KILLED);
+						media.playSound(ApiAdapter.MEDIA_EFFECT_ALIEN_KILLED, 0);
+						// MOD PLAY
+						//cpu.memory[0x21ff] = 4;
 					}
+					
 					// assign if not equal
 					last_port_value[3] = value;
 				}
@@ -134,23 +141,39 @@ public class Emulator implements IOAdapter
 				// bit 0 (0)
 				if (value != last_port_value[5]) {
 					if ((value & 0x1) > 0 && (last_port_value[5] & 0x1) == 0) {
-						media.play(MediaAdapter.MEDIA_EFFECT_ALIEN_MOVE_1);
+						media.playSound(ApiAdapter.MEDIA_EFFECT_ALIEN_MOVE_1, 0);
+						
+						// not safe
+						MainActivity.vibrator.vibrate(10);
 					}
 					if ((value & 0x2) > 0 && (last_port_value[5] & 0x2) == 0) {
-						media.play(MediaAdapter.MEDIA_EFFECT_ALIEN_MOVE_2);
+						media.playSound(ApiAdapter.MEDIA_EFFECT_ALIEN_MOVE_2, 0);
+
+						// not safe
+						MainActivity.vibrator.vibrate(10);
 					}
 					if ((value & 0x4) > 0 && (last_port_value[5] & 0x4) == 0) {
-						media.play(MediaAdapter.MEDIA_EFFECT_ALIEN_MOVE_3);
+						media.playSound(ApiAdapter.MEDIA_EFFECT_ALIEN_MOVE_3, 0);
+						
+						// not safe
+						MainActivity.vibrator.vibrate(10);
 					}
 					if ((value & 0x8) > 0 && (last_port_value[5] & 0x8) == 0) {
-						media.play(MediaAdapter.MEDIA_EFFECT_ALIEN_MOVE_4);
+						media.playSound(ApiAdapter.MEDIA_EFFECT_ALIEN_MOVE_4, 0);
+						
+						// not safe
+						MainActivity.vibrator.vibrate(10);
+					}
+					// next byte
+					if ((value & 0x10) > 0 && (last_port_value[5] & 0x10) == 0) {
+						media.playSound(ApiAdapter.MEDIA_EFFECT_SHIP_HIT, 0);
 					}
 					last_port_value[5] = value;
 				}
 		}
 	}
 	
-	public void ioHandler(CpuComponents cpu, MediaAdapter media, int opcode) {
+	public void ioHandler(CpuComponents cpu, ApiAdapter media, int opcode) {
 		readPort = 0;
 		switch(cpu.memory[opcode])  {
 			case 0xdb: // IN
@@ -164,9 +187,9 @@ public class Emulator implements IOAdapter
 		}
 	}
 	
-	public void startEmulation(CpuComponents cpu, DisplayAdapter display, MediaAdapter media) {
+	public void startEmulation(CpuComponents cpu, DisplayAdapter display, ApiAdapter media) {
 		
-		if (AppUtils.Component.DEBUG) {
+		if (StringUtils.Component.DEBUG) {
 			runTests(cpu);
 			return;
 		}
@@ -182,7 +205,6 @@ public class Emulator implements IOAdapter
 				timerHz = timerNow;
 			}
 			
-			
 			// interrupt for space invaders
 			// Check midframe interrupt and rst 1 if true
 			// check final frame interrupt and rst 2 if true
@@ -192,7 +214,6 @@ public class Emulator implements IOAdapter
 				nextInterrupt = timerNow + (MIDFRAME);
 			}
 			
-			
 				// run at 2 MHz
 				
 				// cycle catch-up
@@ -201,16 +222,15 @@ public class Emulator implements IOAdapter
 					ioHandler(cpu, media, cpu.PC);
 					
 					interpreter.cycle += interpreter.emulate8080(cpu);
-					sys_cycle++;
 				}
 				// cycle reset
 				if (checkNow > checkLast + (NANO_SEC)) {
 					actual_cycle = ac;
+					ac = 0;
 					
 					getCycle = interpreter.cycle;
-					cycleInfo = "Emulation: " + getCycle + " | Android (strict): " + sys_cycle;
+					cycleInfo = "Emulation speed: " + getCycle;
 					interpreter.cycle = 0; // reset
-					sys_cycle = ac = 0;
 					checkLast = checkNow;
 				}
 				// normal cycle (?)
@@ -219,7 +239,6 @@ public class Emulator implements IOAdapter
 					ioHandler(cpu, media, cpu.PC);
 					
 					interpreter.cycle += interpreter.emulate8080(cpu);
-					sys_cycle++;
 					timerLast = timerNow;
 				}	
 				
@@ -244,11 +263,11 @@ public class Emulator implements IOAdapter
 	}
 
 	private void runTests(CpuComponents cpu) {
-		System.out.println("Test: " + PlatformAdapter.TEST_NAME + "\nSTART: " + AppUtils.getTime());
+		System.out.println("Test: " + PlatformAdapter.TEST_NAME + "\nSTART: " + StringUtils.getTime());
 		System.out.println("______________________________");
 
 		addMsg("Test: " + PlatformAdapter.TEST_NAME);
-		addMsg("START: " + AppUtils.getTime());
+		addMsg("START: " + StringUtils.getTime());
 		addMsg("______________________________");
 		addMsg("");
 
@@ -269,12 +288,12 @@ public class Emulator implements IOAdapter
 
 		System.out.println();
 		System.out.println("______________________________");
-		System.out.println("END:   " + AppUtils.getTime());
+		System.out.println("END:   " + StringUtils.getTime());
 		System.out.println("\n***\n");
 		
 		addMsg();
 		addMsg("______________________________");
-		addMsg("END:   " + AppUtils.getTime());
+		addMsg("END:   " + StringUtils.getTime());
 		addMsg();
 		addMsg("***");
 		addMsg();

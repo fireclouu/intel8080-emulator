@@ -1,6 +1,6 @@
 package com.fireclouu.intel8080emu.Emulator;
 
-import com.fireclouu.intel8080emu.Emulator.BaseClass.AppUtils;
+import com.fireclouu.intel8080emu.Emulator.BaseClass.StringUtils;
 
 public class CpuComponents
 {
@@ -50,7 +50,7 @@ public class CpuComponents
 		int_enable = 0;
 
 		// load file on memory
-		memory = new short[AppUtils.Component.PROGRAM_LENGTH];
+		memory = new short[StringUtils.Component.PROGRAM_LENGTH];
 
 		// init flags (bit)
 		cc.init();

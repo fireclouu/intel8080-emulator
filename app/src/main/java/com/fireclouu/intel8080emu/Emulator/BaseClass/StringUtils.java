@@ -2,9 +2,9 @@ package com.fireclouu.intel8080emu.Emulator.BaseClass;
 
 import java.util.*;
 
-public final class AppUtils
+public final class StringUtils
 {
-	private AppUtils() { } // prevent instatiation
+	private StringUtils() { } // prevent instatiation
 
 	public static final String getTime() {
 		Date date = new Date();
