@@ -4,8 +4,11 @@ import java.util.*;
 
 public final class StringUtils
 {
-	private StringUtils() { } // prevent instatiation
+	public static final String ITEM_HISCORE_MSB = "hsm";
+	public static final String ITEM_HISCORE_LSB = "hsl";
 
+	private StringUtils() { } // prevent instatiation
+	
 	public static final String getTime() {
 		Date date = new Date();
 		return String.format("%02d", date.getHours()) + ":" +

@@ -5,26 +5,18 @@ import android.content.*;
 import android.content.pm.*;
 import android.os.*;
 import android.view.*;
-import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
+import android.view.View.*;
 import android.widget.*;
-import android.widget.FrameLayout.*;
 import com.fireclouu.intel8080emu.Emulator.*;
-import android.media.*;
+import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
 
 public class MainActivity extends Activity implements OnTouchListener
 {
 	AppDisplay mDisplay;
-	public static SoundManager media;
-	
-	// need to optimize / on separate class
-	public static Vibrator vibrator;
-	
-	Platform ms; // machine specific
+	Platform platform;
 	WakelockApplication wl;
-	public static final int INTENT_FLAG_SINGLE_ACTIVITY = Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP;
 	
 	// Buttons
-	
 	private Button
 		mButtonCoin,
 		mButtonP1Start,
@@ -45,9 +37,6 @@ public class MainActivity extends Activity implements OnTouchListener
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
 		
 		// set window first
-		
-		vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-		
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_emulation);
 		
@@ -60,37 +49,38 @@ public class MainActivity extends Activity implements OnTouchListener
 	@Override
 	protected void onResume() {
 		super.onResume();
-		ms.setStateMaster(true);
+		platform.setStateMaster(true);
 		
 		if (firstCall) {
 			firstCall = false;
 			return;
-		} else if (!firstCall & !PlatformAdapter.master.isAlive()) {
+		} else if (!firstCall & !PlatformAdapter.isMasterRunning()) {
+			PlatformAdapter.setStateMaster(true);
+			DisplayAdapter.runState = false;
 			initAndStart();
 		} else if (!firstCall) {
 			DisplayAdapter.runState = true;
 			mDisplay.startDisplay();
-			ms.appResume();
+			platform.appResume();
 		}
 	}
 
 	@Override
 	protected void onPause() {
+		platform.appPause();
+		
 		super.onPause();
 		DisplayAdapter.runState = false;
-		ms.appPause();
 	}
 
 	@Override
 	protected void onDestroy() {
-		ms.setStateMaster(false);
-		media.releaseResource();
+		platform.appPause();
+		platform.setStateMaster(false);
+		platform.releaseResource();
 		super.onDestroy();
 	}
 	
-	
-	
-	// ontouch
 	@Override
 	public boolean onTouch(View p1, MotionEvent p2)
 	{
@@ -169,25 +159,7 @@ public class MainActivity extends Activity implements OnTouchListener
 	}
 	
 	private void initAndStart() {
-		
-		// Display and media
-		media = new SoundManager(getApplicationContext());
-		
-		// Media
-		media.setEffectShipHit(R.raw.ship_hit);
-		media.setEffectAlienKilled(R.raw.alien_killed);
-		media.setEffectAlienMove(
-			R.raw.enemy_move_1,
-			R.raw.enemy_move_2,
-			R.raw.enemy_move_3,
-			R.raw.enemy_move_4
-		);
-		media.setEffectFire(R.raw.fire);
-		media.setEffectPlayerExploded(R.raw.explosion);
-		media.setEffectShipIncoming(R.raw.ship_incoming);
-		loadResources();
-		
-		ms = new Platform(this, mDisplay, media);
+		platform = new Platform(this, mDisplay);
 		wl = new WakelockApplication(this);
 		
 		// Buttons
@@ -204,11 +176,7 @@ public class MainActivity extends Activity implements OnTouchListener
 		mButtonP1Right.setOnTouchListener(this);
 		
 		// Run
-		ms.startOp();
-	}
-	
-	public static void loadResources() {
-		media.setEffectShipIncoming(R.raw.ship_incoming);
+		platform.startOp();
 	}
 	
 }

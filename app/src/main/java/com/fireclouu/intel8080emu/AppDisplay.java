@@ -2,13 +2,11 @@ package com.fireclouu.intel8080emu;
 
 import android.content.*;
 import android.graphics.*;
-import android.opengl.*;
 import android.util.*;
 import android.view.*;
 import com.fireclouu.intel8080emu.Emulator.*;
 import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
 import java.util.*;
-import android.view.SurfaceHolder.*;
 
 public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, DisplayAdapter
 {
@@ -17,7 +15,6 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 	// do the loop here! instead of looping on another class
 	
 	// make tests for display
-	
 	Thread master;
 	Canvas canvas;
 	
@@ -25,29 +22,21 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 	private float PIXEL_SIZE = 3.18f;
 	private float PIXEL_SIZE_WIDTH = PIXEL_SIZE;
 	private float PIXEL_SIZE_HEIGHT = PIXEL_SIZE;
-	
-	private final int DISPLAY_WIDTH = (32 * 8); // 256 (0x2400 to 0x2407 = bit 0 to bit 7)
-	private final int DISPLAY_HEIGHT = (224);   // 224
-	
-	private final int vramloc = 0x2400;
-	
+
 	Paint paintred;
 	Paint paintwhite;
 	Paint paintgreen;
 	Paint textPaint;
 	
 	private short[] memory;
-	
 	ArrayList<Float> plotList;
 	
 	private boolean isStarting = true;
-	long frameCount = 0;
 	SurfaceHolder holder;
 	
-	LinkedList<Long> times = new LinkedList<Long>(){{
+	private LinkedList<Long> times = new LinkedList<Long>(){{
 			add(System.nanoTime());
 		}};
-	
 	
 	public AppDisplay(Context context) {
 		super(context); 
@@ -78,7 +67,7 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 		
 		//holder.setFormat(holder.SURFACE_TYPE_GPU);
 		//holder.setFixedSize(480, 858);
-		///holder.setFixedSize(240, 352);
+		//holder.setFixedSize(240, 352);
 		
 		paintred = setPaint(Color.RED);
 		paintwhite = setPaint(Color.WHITE);
@@ -99,71 +88,62 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 	public float[] getPos(int orientation) {
 		
 		plotList = new ArrayList<Float>();
-		
-		short vram = 0x2400;
-		float[] plot; /*= new float[0x10_000];*/
+
+		short vram = INIT_VRAM;
+		float[] plot;
 		int counter = 0;
 		
+		int x = 0, y = 0;
+		int cond_x;
+		int cond_y;
+		
+		boolean swap = false;
+		int setBit;
+		
 		switch (orientation) {
-			case ORIENTATION_COUNTERCLOCK: // clockwise
-				for (int x = 0; x < DISPLAY_HEIGHT; x++)
-				{
-					for (int y = DISPLAY_WIDTH; 0 < y; y -= 8) 
-					{
-						short data = this.memory[vram++];
-						if (data == 0) continue;
-
-						// flip bit
-						for (byte bitPos = 0; bitPos < 8; bitPos++) 
-						{
-							if (((data >> bitPos) & 1) == 1)
-							{
-								/*
-								plot[counter++] = x * PIXEL_SIZE_WIDTH;
-								plot[counter++] = (y - bitPos) * PIXEL_SIZE_HEIGHT;
-								*/
-								plotList.add(x * PIXEL_SIZE_WIDTH);
-								plotList.add((y - bitPos) * PIXEL_SIZE_HEIGHT);
-							}
-						}
-					}
-				}
+			case ORIENTATION_COUNTERCLOCK:
+				x = -DISPLAY_WIDTH;
+				y = 0;
+				setBit = -1;
 				
+				// swap
+				swap = true;
 				break;
-				
-			default: // default
-				for (int y = 0; y < DISPLAY_HEIGHT; y++)
-				{
-					for (int x = 0; x < DISPLAY_WIDTH; x += 8) 
-					{
-						short data = this.memory[vram++];
-
-						// flip bit
-						for (byte bitPos = 0; bitPos < 8; bitPos++) 
-						{
-							if (((data >> bitPos) & 1) == 1)
-							{
-								/*
-								plot[counter++] = (x + bitPos) * PIXEL_SIZE_WIDTH;
-								plot[counter++] = y * PIXEL_SIZE_HEIGHT;
-								*/
-								plotList.add((x + bitPos) * PIXEL_SIZE_WIDTH);
-								plotList.add(y * PIXEL_SIZE_HEIGHT);
-								
-							}
-						}
-					}
-				}
+			default:
+				x = 0;
+				y = 0;
+				setBit = 1;
 		}
 		
-		// unraise flag
-		isStarting = false;
+		// automate
+		cond_x = (x == 0) ? DISPLAY_WIDTH  : 0;
+		cond_y = (y == 0) ? DISPLAY_HEIGHT : 0;
+		
+		for (int ty = y; ty < cond_y; ty += 1)
+		{
+			for (int tx = x; tx < cond_x; tx += 8)
+			{
+				short data = this.memory[vram++];	// increment location of vram to decode
+				for (int bit = 0; bit < 8; bit++)
+				{
+					if (( (data >> bit) & 1) == 1)
+					{
+						if (swap) {
+							plotList.add((Math.abs(ty)) * PIXEL_SIZE_HEIGHT);
+							plotList.add((Math.abs(tx)  + (bit * setBit)) * PIXEL_SIZE_WIDTH);
+						} else {
+							plotList.add((Math.abs(tx)  + (bit * setBit)) * PIXEL_SIZE_WIDTH);
+							plotList.add((Math.abs(ty)) * PIXEL_SIZE_HEIGHT);
+						}
+					}
+				}
+			}	
+		}
 		
 		plot = new float[plotList.size()];
+		for (float pos : plotList) plot[counter++] = pos;
 		
-		for (float pos : plotList) {
-			plot[counter++] = pos;
-		}
+		isStarting = false;	// unraise flag
 		
 		return plot;
 	}
@@ -178,13 +158,13 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 		
 		master.start();
 	}
-
+	
 	private Paint setPaint(int color) {
 		Paint mPaint;
 		mPaint = new Paint();
 		mPaint.setStyle(Paint.Style.FILL);
 		mPaint.setColor(color);
-
+		
 		return mPaint;
 	}
 	
@@ -210,7 +190,9 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 	}
 	
 	private float getAdaptiveSize() {
-		return ((float) getHeight() / 100.0f) / 4.0f;
+		float adapt_h = ( ((float) getHeight()) / 100.0f) / 5.0f;
+		float adapt_w = ( ((float)  getWidth()) / 100.0f) / 5.0f;
+		return (adapt_h + adapt_w) / 1.25f;
 	}
 	
 	class DrawThread implements Runnable {
@@ -226,49 +208,31 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 		
 		while (memory == null) continue;
 		
-		while(PlatformAdapter.getStateMaster() && runState) {
+		while(PlatformAdapter.isMasterRunning() && runState) {
 			
 			if (!holder.getSurface().isValid() & !holder.isCreating()) continue;
-			frameCount++;
 			
 			// canvas
 			canvas = holder.lockCanvas();
 			canvas.drawColor(Color.BLACK);		
-			canvas.drawPoints(getPos(1), paintwhite);
+			canvas.drawPoints(getPos(ORIENTATION_COUNTERCLOCK), paintwhite);
 			
-			if (isStarting) {
-				canvas.drawText(
-					Platform.OUT_MSG, 0, 
-					10,
-					paintwhite);
-			}
+			if (isStarting) canvas.drawText(Platform.OUT_MSG, 0, 10, paintwhite);
 			
-			// 
-			canvas.drawText(
-				parseFps(fps()), 0, getHeight() - 10, paintwhite);
-
-			canvas.drawText(
-				"frames: " + frameCount, 0, getHeight() - 25, paintwhite);
-				
+			// fps
+			canvas.drawText(parseFps(fps()), 0, getHeight() - 10, paintwhite);
+			// Emulation thread speed
+			canvas.drawText("Thread speed: " + Emulator.actual_cycle, 0, getHeight() - 25, paintwhite);
+			//cycle
 			if (Emulator.isCycleCorrect()) {
-				canvas.drawText(
-					Emulator.cycleInfo, 0,
-					getHeight() - 40, paintgreen);
+				canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintgreen);
 			} else {
-				canvas.drawText(
-					Emulator.cycleInfo, 0,
-					getHeight() - 40, paintred);
+				canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintred);
 			}
-				
-			canvas.drawText(
-				"Thread speed: " + Emulator.actual_cycle, 0,
-				getHeight() - 55, paintwhite);
 			
-			canvas.drawText(
-				"fireclouu", (int) (getWidth() / 1.1), 
-				getHeight() - 10,
-				paintwhite);
+			canvas.drawText("fireclouu", (int) (getWidth() / 1.1), getHeight() - 10, paintwhite);
 			
+			// release
 			holder.unlockCanvasAndPost(canvas);
 		}
 	}
@@ -277,7 +241,7 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 class DebugThread implements Runnable {
 		@Override
 		public void run() {
-			while(PlatformAdapter.getStateMaster() && runState) {
+			while(PlatformAdapter.isMasterRunning() && runState) {
 				if (!holder.getSurface().isValid()) continue;
 				
 				canvas = holder.lockCanvas();

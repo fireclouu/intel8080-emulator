@@ -1,17 +1,18 @@
 package com.fireclouu.intel8080emu.Emulator.BaseClass;
 
+import com.fireclouu.intel8080emu.*;
 import com.fireclouu.intel8080emu.Emulator.*;
 import java.io.*;
+import java.util.*;
 
-public abstract class PlatformAdapter implements Runnable
+public abstract class PlatformAdapter implements Runnable, ApiAdapter
 {
-	public static Thread master;
-	private static boolean isRunning = true;
+	private Thread master;
+	public static boolean stateMaster = true;
 	
 	protected Emulator emulator;
 	protected CpuComponents cpu;
 	protected DisplayAdapter display;
-	protected ApiAdapter media;
 	protected StringUtils.File fileUtils;
 	protected StringUtils.Component machineUtils;
 	
@@ -20,43 +21,38 @@ public abstract class PlatformAdapter implements Runnable
 	public static String BUILD_MSG[];
 	public static int MSG_COUNT = 0;
 	
-	public Object pauseLock;
-	
 	// Stream file
 	public abstract InputStream openFile(String romName);
 	
 	@Override
 	public void run() {
-		emulator.startEmulation(cpu, display, media);
+		while (isMasterRunning()) {
+			emulator.startEmulation(cpu, display, this);
+		}
 	}
 	
-	public PlatformAdapter(DisplayAdapter display, ApiAdapter media) {
+	public PlatformAdapter(DisplayAdapter display) {
 		this.display = display;
-		this.media = media;
 	}
 	
 	// Main
 	public void startOp() {
-		// set master state
+		// init master state flag
 		setStateMaster(true);
 		
 		// initial file check
-		/*if(!isAllFileOK()) {
-			OUT_MSG = "Some files could be corrupted, or no files specified";
-			display.setView();
-			display.readyToDraw = true;
-			
-			System.out.println(OUT_MSG);
-			return;
-		}*/
-
-		// check if file is test file
-		if (isTestFile()) {
-			startTest();
+		if (!isTestFile()) {
+				if(!isAllFileOK()) {
+				OUT_MSG = "Some files could be corrupted, or no files specified";
+				System.out.println(OUT_MSG);
+				return;
+			}	
+			// Start emulation
+			startMain();
 			return;
 		}
-		// Start emulation
-		startMain();
+		// test file
+		startTest();
 	}
 
 	public void init() {
@@ -66,6 +62,18 @@ public abstract class PlatformAdapter implements Runnable
 		emulator = new Emulator();
 		// display draw signal
 		display.isDrawing = false;
+		// media
+		setEffectShipHit(R.raw.ship_hit);
+		setEffectAlienKilled(R.raw.alien_killed);
+		setEffectAlienMove(
+			R.raw.enemy_move_1,
+			R.raw.enemy_move_2,
+			R.raw.enemy_move_3,
+			R.raw.enemy_move_4
+		);
+		setEffectFire(R.raw.fire);
+		setEffectPlayerExploded(R.raw.explosion);
+		setEffectShipIncoming(R.raw.ship_incoming);
 	}
 
 	private void startMain() {
@@ -79,52 +87,35 @@ public abstract class PlatformAdapter implements Runnable
 			master.start();
 		}
 	}
-
+	
+	public static short[][] tf = new short[StringUtils.File.FILES.length][0x10_000];
 	private void startTest() {
 		// init
 		init();
 		// trigger debug
 		StringUtils.Component.DEBUG = true;
-		// view
-		//display.readyToDraw = true;
-		// dummy
-		String name = "8080EXM.COM";
+		// testfiles container
+		int counter = 0;
+		for (String files : StringUtils.File.FILES)
+		{
+			tf[counter] = loadFile(files, 0x100, false);
+			counter++;
+		}
 		
-		//for (String name : fileUtils.FILES) {
-			// BUILD MSG
-			BUILD_MSG = new String[5000];
-			BUILD_MSG[0] = "";
-			// get test filename
-			TEST_NAME = name;
-			// reset objects
-			init();
-			display.startDisplay();
-			display.isDrawing = true;
-			
-			// load file and injects
-			// SOURCE: superzazu — intel 8080 c99
-			// inject "out 1,a" at 0x0000 (signal to stop the test)
-			cpu.memory[0x0000] = 0xD3;
-			cpu.memory[0x0001] = 0x00;
-			// inject "in a,0" at 0x0005 (signal to output some characters)
-			cpu.memory[0x0005] = 0xDB;
-			cpu.memory[0x0006] = 0x00;
-			cpu.memory[0x0007] = 0xC9;
-			// jump pc to 0x100 (to avoid executing test_finished to true);
-			cpu.PC = 0x0100;
-			loadFile(name, 0x100);
-			// start emulation
-			master = new Thread(this);
-			master.start();
-			// avoid overlaps
-			/*try {
-				mainThread.join();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}*/
+	
+		// BUILD MSG
+		BUILD_MSG = new String[65355];
+		BUILD_MSG[0] = "";
 
-			System.out.println(BUILD_MSG);
-		//}
+		// reset objects
+		init();
+		display.startDisplay();
+		display.isDrawing = true;
+
+		// start emulation
+		master = new Thread(this);
+		master.start();
+		
 	}
 
 	// check all files
@@ -132,21 +123,48 @@ public abstract class PlatformAdapter implements Runnable
 		for (String files : fileUtils.FILES) {
 			if (!isAvailable(files)) return false;
 		}
-		try
-		{
-			isAvailable(fileUtils.FILES[0]);
-		} catch (ArrayIndexOutOfBoundsException e) {
-			return false;
-		}
-
+		
 		return true;
 	}
+	// Read and buffer file
+	public short[] loadFile(String filename, int addr, boolean sizeActual) {
+		// holder
+		short[] holder = null;
+		short[] tmp = new short[0x10_000];
+		// read file stream
+		InputStream file = openFile(filename);
+		// piece container
+		short read;
+		int counter = 0;
+		try
+		{
+			while ((read = (short) file.read()) != -1) {
+				tmp[addr++] = read;
+				counter++;
+			}
+		} catch (IOException e) {
+			OUT_MSG = filename + " cannot be read!";
+			return null;
+		}
+		
+		holder = new short[(sizeActual ? counter : machineUtils.PROGRAM_LENGTH)];
+		
+		counter = 0;
+		for (short tmp2 : tmp)
+		{
+			holder[counter++] = tmp2;
+		}
+		
+		return holder;
+	}
+	
 	// Read and buffer file
 	public void loadFile(String filename, int addr) {
 		// read file stream
 		InputStream file = openFile(filename);
 		// piece container
 		short read;
+		
 		try
 		{
 			while ((read = (short) file.read()) != -1) {
@@ -154,9 +172,8 @@ public abstract class PlatformAdapter implements Runnable
 			}
 		} catch (IOException e) {
 			OUT_MSG = filename + " cannot be read!";
-		}	
+		}
 	}
-
 	private byte loadSplitFiles() {
 		int counter = 0;
 		for (String files : fileUtils.FILES) {
@@ -217,21 +234,27 @@ public abstract class PlatformAdapter implements Runnable
 	
 	// Machine scenarios
 	public void appPause() {
-		/*/try {
-			pauseLock.wait();
-		} catch (InterruptedException e) {}*/
+		Emulator.stateMaster = false;
+		
+		// store highscore
+		if ((cpu.memory[0x20f5] << 8 | cpu.memory[0x20f4])
+				> (getPrefs("hsm") << 8 | getPrefs("hsl")))
+			{
+				putPrefs(StringUtils.ITEM_HISCORE_MSB, cpu.memory[0x20f5]);
+				putPrefs(StringUtils.ITEM_HISCORE_LSB, cpu.memory[0x20f4]);
+			}
 	}
 
 	public void appResume() {
-		//pauseLock.notify();
+		Emulator.stateMaster = true;
 	}
 	
 	// Master control
 	public static void setStateMaster(boolean state) {
-		isRunning = state;
+		stateMaster = state;
 	}
 	
-	public static boolean getStateMaster() {
-		return isRunning;
+	public static boolean isMasterRunning() {
+		return stateMaster;
 	}
 }

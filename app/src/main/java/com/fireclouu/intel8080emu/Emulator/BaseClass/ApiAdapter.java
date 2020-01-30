@@ -2,7 +2,7 @@ package com.fireclouu.intel8080emu.Emulator.BaseClass;
 
 public interface ApiAdapter
 {
-	// INVADERS
+	/////   MEDIA   /////
 	public static int MEDIA_EFFECT_FIRE;
 	public static int MEDIA_EFFECT_PLAYER_EXPLODED;
 	public static int MEDIA_EFFECT_SHIP_INCOMING; // separate
@@ -28,5 +28,12 @@ public interface ApiAdapter
 	// special stream for looping sfx
 	public void playShipFX();
 	public void releaseShipFX();
-	public void initShipFX()
+	public void initShipFX();
+	
+	/////   SAVED PREFS   //////
+	public void putPrefs(String name, int value);
+	public int getPrefs(String name);
+	
+	/////   ACCESORIES   //////
+	public void vibrate(long milli);
 }
