@@ -80,7 +80,9 @@ public class MainActivity extends Activity implements OnTouchListener
 		platform.releaseResource();
 		super.onDestroy();
 	}
-	
+
+  // separate interrupt from platform-specific data
+  // move in implementation
 	@Override
 	public boolean onTouch(View p1, MotionEvent p2)
 	{
@@ -90,25 +92,24 @@ public class MainActivity extends Activity implements OnTouchListener
 				switch(p2.getAction() & MotionEvent.ACTION_MASK)
 				{
 					case MotionEvent.ACTION_DOWN:
-						Emulator.port[1] |= 0b_0000_0001;
+						Emulator.port[1] |= Interrupts.KEY_COIN;
 						mButtonCoin.setTextSize(8);
 						break;
 					case MotionEvent.ACTION_UP:
-						Emulator.port[1] &= 0b_1111_1110;
+						Emulator.port[1] &= ~Interrupts.KEY_COIN;
 						mButtonCoin.setTextSize(10);
 						break;
 				}
-				
 				break;
 			case R.id.btn_p1_start:
 				switch(p2.getAction() & MotionEvent.ACTION_MASK)
 				{
 					case MotionEvent.ACTION_DOWN:
-						Emulator.port[1] |= 0b_0000_0100;
+						Emulator.port[1] |= Interrupts.KEY_START;
 						mButtonP1Start.setTextSize(8);
 						break;
 					case MotionEvent.ACTION_UP:
-						Emulator.port[1] &= 0b_1111_1011;
+						Emulator.port[1] &= ~Interrupts.KEY_START;
 						mButtonP1Start.setTextSize(10);
 						break;
 				}
@@ -118,46 +119,45 @@ public class MainActivity extends Activity implements OnTouchListener
 				switch(p2.getAction() & MotionEvent.ACTION_MASK)
 				{
 					case MotionEvent.ACTION_DOWN:
-						Emulator.port[1] |= 0b_0010_0000;
+						Emulator.port[1] |= Interrupts.KEY_LEFT;
 						mButtonP1Left.setTextSize(8);
 						break;
 					case MotionEvent.ACTION_UP:
-						Emulator.port[1] &= 0b_1101_1111;
+						Emulator.port[1] &= ~Interrupts.KEY_LEFT;
 						mButtonP1Left.setTextSize(10);
 						break;
 				}
-
 				break;
 			case R.id.btn_p1_fire:
 				switch(p2.getAction() & MotionEvent.ACTION_MASK)
 				{
 					case MotionEvent.ACTION_DOWN:
-						Emulator.port[1] |= 0b_0001_0000;
+						Emulator.port[1] |= Interrupts.KEY_FIRE;
 						mButtonP1Fire.setTextSize(8);
 						break;
 					case MotionEvent.ACTION_UP:
-						Emulator.port[1] &= 0b_1110_1111;
+						Emulator.port[1] &= ~Interrupts.KEY_FIRE;
 						mButtonP1Fire.setTextSize(10);
 						break;
 				}
-
 				break;
 			case R.id.btn_p1_right:
 				switch(p2.getAction() & MotionEvent.ACTION_MASK)
 				{
 					case MotionEvent.ACTION_DOWN:
-						Emulator.port[1] |= 0b_0100_0000;
+						Emulator.port[1] |= Interrupts.KEY_RIGHT;
 						mButtonP1Right.setTextSize(8);
 						break;
 					case MotionEvent.ACTION_UP:
-						Emulator.port[1] &= 0b_1011_1111;
+						Emulator.port[1] &= ~Interrupts.KEY_RIGHT;
 						mButtonP1Right.setTextSize(10);
 						break;
 				}
 		}
 		return false;
 	}
-	
+
+
 	private void initAndStart() {
 		platform = new Platform(this, mDisplay);
 		wl = new WakelockApplication(this);
