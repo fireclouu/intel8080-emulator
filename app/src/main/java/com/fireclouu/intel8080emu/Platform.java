@@ -1,14 +1,25 @@
 package com.fireclouu.intel8080emu;
 
-import android.content.*;
-import android.media.*;
-import android.os.*;
-import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
-import java.io.*;
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.media.AudioManager;
+import android.media.SoundPool;
+import android.os.Vibrator;
+import android.util.Log;
 
-public class Platform extends PlatformAdapter implements ApiAdapter
+import com.fireclouu.intel8080emu.Emulator.BaseClass.DisplayAdapter;
+import com.fireclouu.intel8080emu.Emulator.BaseClass.MachineResources;
+import com.fireclouu.intel8080emu.Emulator.BaseClass.PlatformAdapter;
+import com.fireclouu.intel8080emu.Emulator.BaseClass.ResourceAdapter;
+import com.fireclouu.intel8080emu.Emulator.BaseClass.StringUtils;
+
+import java.io.IOException;
+import java.io.InputStream;
+
+public class Platform extends PlatformAdapter implements ResourceAdapter
 {
-	private Context context;
+	private final Context context;
 	private SharedPreferences sp;
 	private SoundPool soundPool, spShipFX;
 	private SharedPreferences.Editor editor;
@@ -17,13 +28,13 @@ public class Platform extends PlatformAdapter implements ApiAdapter
 	public Platform(Context context, DisplayAdapter display) {
 		super(display);
 		this.context = context;
-		platformInits();
+		platformInit();
 	}
 	
-	private void platformInits() {
+	private void platformInit() {
 		soundPool = new SoundPool(10, AudioManager.STREAM_MUSIC, 0);
 		spShipFX = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
-		vibrator = (Vibrator) context.getSystemService(context.VIBRATOR_SERVICE);
+		vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 		sp = context.getSharedPreferences("si_prefs", 0);
 		editor = sp.edit();
 	}
@@ -34,7 +45,8 @@ public class Platform extends PlatformAdapter implements ApiAdapter
 		{
 			return context.getAssets().open(romName);
 		} catch (IOException e) {
-			e.printStackTrace();
+			String exception = e.getMessage() == null ? "openFile: Message is null" : e.getMessage();
+			Log.e(StringUtils.TAG, exception);
 			return null;
 		}
 	}
@@ -60,48 +72,48 @@ public class Platform extends PlatformAdapter implements ApiAdapter
 
 	@Override
 	public void setEffectFire(int id) {
-		this.MEDIA_EFFECT_FIRE = soundPool.load(context, id, 1);
+		MachineResources.MEDIA_EFFECT_FIRE = soundPool.load(context, id, 1);
 	}
 
 	@Override
 	public void setEffectPlayerExploded(int id) {
-		this.MEDIA_EFFECT_PLAYER_EXPLODED = soundPool.load(context, id, 1);
+		MachineResources.MEDIA_EFFECT_PLAYER_EXPLODED = soundPool.load(context, id, 1);
 	}
 
 	@Override
 	public void setEffectShipIncoming(int id) {
-		this.MEDIA_EFFECT_SHIP_INCOMING = spShipFX.load(context, id, 1);
+		MachineResources.MEDIA_EFFECT_SHIP_INCOMING = spShipFX.load(context, id, 1);
 	}
 
 	@Override
 	public void setEffectAlienMove(int id1, int id2, int id3, int id4) {
-		this.MEDIA_EFFECT_ALIEN_MOVE_1 = soundPool.load(context, id1, 1);
-		this.MEDIA_EFFECT_ALIEN_MOVE_2 = soundPool.load(context, id2, 1);
-		this.MEDIA_EFFECT_ALIEN_MOVE_3 = soundPool.load(context, id3, 1);
-		this.MEDIA_EFFECT_ALIEN_MOVE_4 = soundPool.load(context, id4, 1);
+		MachineResources.MEDIA_EFFECT_ALIEN_MOVE_1 = soundPool.load(context, id1, 1);
+		MachineResources.MEDIA_EFFECT_ALIEN_MOVE_2 = soundPool.load(context, id2, 1);
+		MachineResources.MEDIA_EFFECT_ALIEN_MOVE_3 = soundPool.load(context, id3, 1);
+		MachineResources.MEDIA_EFFECT_ALIEN_MOVE_4 = soundPool.load(context, id4, 1);
 	}
 
 	@Override
 	public void setEffectAlienKilled(int id) {
-		this.MEDIA_EFFECT_ALIEN_KILLED = soundPool.load(context, id, 1);
+		MachineResources.MEDIA_EFFECT_ALIEN_KILLED = soundPool.load(context, id, 1);
 	}
 
 	@Override
 	public void setEffectShipHit(int id) {
-		this.MEDIA_EFFECT_SHIP_HIT = soundPool.load(context, id, 1);
+		MachineResources.MEDIA_EFFECT_SHIP_HIT = soundPool.load(context, id, 1);
 	}
 
 	// Hacks for SoundPool bug
 
 	@Override
 	public void playShipFX() {
-		spShipFX.play(MEDIA_EFFECT_SHIP_INCOMING, 1, 1, 0, -1, 1);
+		spShipFX.play(MachineResources.MEDIA_EFFECT_SHIP_INCOMING, 1, 1, 0, -1, 1);
 	}
 
 	@Override
 	public void releaseShipFX() {
-		spShipFX.stop(MEDIA_EFFECT_SHIP_INCOMING);
-		spShipFX.unload(MEDIA_EFFECT_SHIP_INCOMING);
+		spShipFX.stop(MachineResources.MEDIA_EFFECT_SHIP_INCOMING);
+		spShipFX.unload(MachineResources.MEDIA_EFFECT_SHIP_INCOMING);
 		spShipFX.release();
 
 		initShipFX();

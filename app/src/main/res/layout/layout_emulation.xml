@@ -4,7 +4,7 @@
 	android:layout_width="fill_parent"
 	android:layout_height="fill_parent">
 
-	<com.fireclouu.intel8080emu.AppDisplay
+	<com.fireclouu.intel8080emu.Display
 		android:layout_width="match_parent"
 		android:layout_height="match_parent"
 		android:id="@+id/mainDisplay"/>
@@ -34,7 +34,7 @@
 		android:layout_width="100dp"
 		android:layout_height="100dp"
 		android:text="←"
-		android:id="@+id/bt_p1_left"
+		android:id="@+id/btn_p1_left"
 		android:background="@drawable/arcade_button"
 		android:layout_alignParentBottom="true"
 		android:layout_marginLeft="20dp"
@@ -46,8 +46,8 @@
 		android:text="→"
 		android:id="@+id/btn_p1_right"
 		android:background="@drawable/arcade_button"
-		android:layout_toRightOf="@id/bt_p1_left"
-		android:layout_alignBottom="@id/bt_p1_left"
+		android:layout_toRightOf="@id/btn_p1_left"
+		android:layout_alignBottom="@id/btn_p1_left"
 		android:layout_marginLeft="10dp"/>
 
 	<Button

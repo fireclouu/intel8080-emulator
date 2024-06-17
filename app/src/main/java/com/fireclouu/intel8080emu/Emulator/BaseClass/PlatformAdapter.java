@@ -1,24 +1,22 @@
 package com.fireclouu.intel8080emu.Emulator.BaseClass;
 
-import com.fireclouu.intel8080emu.*;
-import com.fireclouu.intel8080emu.Emulator.*;
-import java.io.*;
-import java.util.*;
+import com.fireclouu.intel8080emu.Emulator.CpuComponents;
+import com.fireclouu.intel8080emu.Emulator.Emulator;
+import com.fireclouu.intel8080emu.R;
 
-public abstract class PlatformAdapter implements Runnable, ApiAdapter
+import java.io.IOException;
+import java.io.InputStream;
+
+public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 {
 	private Thread master;
-	public static boolean stateMaster = true;
-	
+
 	protected Emulator emulator;
 	protected CpuComponents cpu;
 	protected DisplayAdapter display;
-	protected StringUtils.File fileUtils;
-	protected StringUtils.Component machineUtils;
-	
+
 	public static String OUT_MSG = "System OK!";
-	public static String TEST_NAME;
-	public static String BUILD_MSG[];
+	public static String[] BUILD_MSG;
 	public static int MSG_COUNT = 0;
 	
 	// Stream file
@@ -26,9 +24,7 @@ public abstract class PlatformAdapter implements Runnable, ApiAdapter
 	
 	@Override
 	public void run() {
-		while (isMasterRunning()) {
-			emulator.startEmulation(cpu, display, this);
-		}
+		emulator.startEmulation(cpu, display, this);
 	}
 	
 	public PlatformAdapter(DisplayAdapter display) {
@@ -37,9 +33,6 @@ public abstract class PlatformAdapter implements Runnable, ApiAdapter
 	
 	// Main
 	public void startOp() {
-		// init master state flag
-		setStateMaster(true);
-		
 		// initial file check
 		if (!isTestFile()) {
 				if(!isAllFileOK()) {
@@ -61,7 +54,6 @@ public abstract class PlatformAdapter implements Runnable, ApiAdapter
 		// initialize emulator
 		emulator = new Emulator();
 		// display draw signal
-		display.isDrawing = false;
 		// media
 		setEffectShipHit(R.raw.ship_hit);
 		setEffectAlienKilled(R.raw.alien_killed);
@@ -110,7 +102,6 @@ public abstract class PlatformAdapter implements Runnable, ApiAdapter
 		// reset objects
 		init();
 		display.startDisplay();
-		display.isDrawing = true;
 
 		// start emulation
 		master = new Thread(this);
@@ -120,7 +111,7 @@ public abstract class PlatformAdapter implements Runnable, ApiAdapter
 
 	// check all files
 	private boolean isAllFileOK() {
-		for (String files : fileUtils.FILES) {
+		for (String files : StringUtils.File.FILES) {
 			if (!isAvailable(files)) return false;
 		}
 		
@@ -147,7 +138,7 @@ public abstract class PlatformAdapter implements Runnable, ApiAdapter
 			return null;
 		}
 		
-		holder = new short[(sizeActual ? counter : machineUtils.PROGRAM_LENGTH)];
+		holder = new short[(sizeActual ? counter : StringUtils.Component.PROGRAM_LENGTH)];
 		
 		counter = 0;
 		for (short tmp2 : tmp)
@@ -176,11 +167,10 @@ public abstract class PlatformAdapter implements Runnable, ApiAdapter
 	}
 	private byte loadSplitFiles() {
 		int counter = 0;
-		for (String files : fileUtils.FILES) {
+		for (String files : StringUtils.File.FILES) {
 			if (isAvailable(files)) {
-				loadFile(files, fileUtils.ROM_ADDRESS[counter++]);
+				loadFile(files, StringUtils.File.ROM_ADDRESS[counter++]);
 			} else {
-				display.isDrawing = true;
 				System.out.println(OUT_MSG);
 				return 1; // ERROR
 			}
@@ -190,15 +180,15 @@ public abstract class PlatformAdapter implements Runnable, ApiAdapter
 
 	// File check
 	private boolean isAvailable(String filename) {
-		if (fileUtils.FILES.length == 0) {
+		if (StringUtils.File.FILES.length == 0) {
 			OUT_MSG = "No files specified.";
 			return false;
 		}
-		if (fileUtils.ROM_ADDRESS.length == 0) {
+		if (StringUtils.File.ROM_ADDRESS.length == 0) {
 			OUT_MSG = "File online, but no starting memory address specified.";
 			return false;
 		}
-		if (fileUtils.ROM_ADDRESS.length != fileUtils.FILES.length) {
+		if (StringUtils.File.ROM_ADDRESS.length != StringUtils.File.FILES.length) {
 			OUT_MSG = "File online, but roms and memory address unaligned.";
 			return false;
 		}
@@ -217,7 +207,7 @@ public abstract class PlatformAdapter implements Runnable, ApiAdapter
 	}
 
 	private boolean isTestFile() {
-		for(String name : fileUtils.FILES) {
+		for(String name : StringUtils.File.FILES) {
 			switch (name) {
 				case "cpudiag.bin":
 				case "8080EX1.COM":
@@ -235,8 +225,7 @@ public abstract class PlatformAdapter implements Runnable, ApiAdapter
 	// Machine scenarios
 	public void appPause() {
 		Emulator.stateMaster = false;
-		
-		// store highscore
+		// store high score
 		if ((cpu.memory[0x20f5] << 8 | cpu.memory[0x20f4])
 				> (getPrefs("hsm") << 8 | getPrefs("hsl")))
 			{
@@ -247,14 +236,5 @@ public abstract class PlatformAdapter implements Runnable, ApiAdapter
 
 	public void appResume() {
 		Emulator.stateMaster = true;
-	}
-	
-	// Master control
-	public static void setStateMaster(boolean state) {
-		stateMaster = state;
-	}
-	
-	public static boolean isMasterRunning() {
-		return stateMaster;
 	}
 }

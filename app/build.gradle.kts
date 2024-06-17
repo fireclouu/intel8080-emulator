@@ -17,31 +17,26 @@ android {
         targetSdk = 33
 
         // Defines the version number of your app.
-        versionCode = 1
+        versionCode = 3
 
         // Defines a user-friendly version name for your app.
-        versionName = "1.0"
+        versionName = "1.3"
     }
 
     buildTypes {
-
-        /**
-         * By default, Android Studio configures the release build type to enable code
-         * shrinking, using minifyEnabled, and specifies the default ProGuard rules file.
-         */
-
         getByName("release") {
             isMinifyEnabled = true // Enables code shrinking for the release build type.
             proguardFiles(
                 getDefaultProguardFile("proguard-android.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
 
 dependencies {
-    /*implementation(project(":lib"))*/
-    implementation("androidx.appcompat:appcompat:1.7.0")
+    // implementation(project(":lib"))
+    // implementation("androidx.appcompat:appcompat:1.7.0")
     implementation(fileTree(mapOf("dir" to "libs", "include" to listOf("*.jar"))))
 }

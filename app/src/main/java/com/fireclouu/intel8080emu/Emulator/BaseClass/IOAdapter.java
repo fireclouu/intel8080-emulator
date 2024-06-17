@@ -12,5 +12,5 @@ public interface IOAdapter
 	public static final int PORT_COIN      = 5;
 	
 	public short handleIN(CpuComponents cpu, short port);
-	public void handleOUT(CpuComponents cpu, ApiAdapter media, short port, short value);
+	public void handleOUT(CpuComponents cpu, ResourceAdapter media, short port, short value);
 }

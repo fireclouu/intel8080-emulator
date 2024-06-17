@@ -6,7 +6,7 @@ public class Emulator implements IOAdapter
 {
 	// states
 	public static boolean stateMaster = true;
-	private boolean stateTestDisplay = !true;
+	private boolean stateTestDisplay = false;
 	private boolean stateTest = false;
 	boolean triggered = false;
 	
@@ -78,7 +78,7 @@ public class Emulator implements IOAdapter
 	}
 
 	@Override
-	public void handleOUT(CpuComponents cpu, ApiAdapter api, short port, short value) {
+	public void handleOUT(CpuComponents cpu, ResourceAdapter api, short port, short value) {
 		switch(port) {
 			case 2: // SHIFT AMOUNT 
 				shift_offset = (byte) (value & 0x7);    
@@ -94,15 +94,15 @@ public class Emulator implements IOAdapter
 					}
 					
 					if((value & 0x2) > 0 && (last_port_value[3] & 0x2) == 0) {
-						api.playSound(ApiAdapter.MEDIA_EFFECT_FIRE, 0);
+						api.playSound(MachineResources.MEDIA_EFFECT_FIRE, 0);
 					}
 					if((value & 0x4) > 0 && (last_port_value[3] & 0x4) == 0) {
-						api.playSound(ApiAdapter.MEDIA_EFFECT_PLAYER_EXPLODED, 0);
+						api.playSound(MachineResources.MEDIA_EFFECT_PLAYER_EXPLODED, 0);
 						api.vibrate(300);
 						
 					}
 					if((value & 0x8) > 0 && (last_port_value[3] & 0x8) == 0) {
-						api.playSound(ApiAdapter.MEDIA_EFFECT_ALIEN_KILLED, 0);
+						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_KILLED, 0);
 						// MOD PLAY
 						//cpu.memory[0x21ff] = 4;
 					}
@@ -122,24 +122,24 @@ public class Emulator implements IOAdapter
 				// bit 0 (0)
 				if (value != last_port_value[5]) {
 					if ((value & 0x1) > 0 && (last_port_value[5] & 0x1) == 0) {
-						api.playSound(ApiAdapter.MEDIA_EFFECT_ALIEN_MOVE_1, 0);
+						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_1, 0);
 						
 						api.vibrate(20);
 					}
 					if ((value & 0x2) > 0 && (last_port_value[5] & 0x2) == 0) {
-						api.playSound(ApiAdapter.MEDIA_EFFECT_ALIEN_MOVE_2, 0);
+						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_2, 0);
 						api.vibrate(20);
 					}
 					if ((value & 0x4) > 0 && (last_port_value[5] & 0x4) == 0) {
-						api.playSound(ApiAdapter.MEDIA_EFFECT_ALIEN_MOVE_3, 0);
+						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_3, 0);
 						api.vibrate(20);
 					}
 					if ((value & 0x8) > 0 && (last_port_value[5] & 0x8) == 0) {
-						api.playSound(ApiAdapter.MEDIA_EFFECT_ALIEN_MOVE_4, 0);
+						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_4, 0);
 						api.vibrate(20);
 					}
 					if ((value & 0x10) > 0 && (last_port_value[5] & 0x10) == 0) {
-						api.playSound(ApiAdapter.MEDIA_EFFECT_SHIP_HIT, 0);
+						api.playSound(MachineResources.MEDIA_EFFECT_SHIP_HIT, 0);
 					}
 					
 					last_port_value[5] = value;
@@ -147,7 +147,7 @@ public class Emulator implements IOAdapter
 		}
 	}
 	
-	public void ioHandler(CpuComponents cpu, ApiAdapter media, int opcode) {
+	public void ioHandler(CpuComponents cpu, ResourceAdapter media, int opcode) {
 		readPort = 0;
 		switch(cpu.memory[opcode])  {
 			case 0xdb: // IN
@@ -161,7 +161,7 @@ public class Emulator implements IOAdapter
 		}
 	}
 	
-	public void startEmulation(CpuComponents cpu, DisplayAdapter display, ApiAdapter api) {
+	public void startEmulation(CpuComponents cpu, DisplayAdapter display, ResourceAdapter api) {
 		
 		if (StringUtils.Component.DEBUG) {
 			runTest(cpu);
@@ -327,11 +327,6 @@ public class Emulator implements IOAdapter
 			
 			counter++;
 		}
-		
-		// kill threads and possible fallthroughs
-		PlatformAdapter.setStateMaster(false);
-		stateMaster = false;
-		
 	}
 
 	private void debug_handleIN(CpuComponents cpu) 

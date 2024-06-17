@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">intel8080emu2</string>
+    <string name="app_name">Space Invaders</string>
     <string name="warn_file_error">File Error!</string>
 
 </resources>

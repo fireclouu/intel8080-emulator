@@ -1,14 +1,23 @@
 package com.fireclouu.intel8080emu;
 
-import android.content.*;
-import android.graphics.*;
-import android.util.*;
-import android.view.*;
-import com.fireclouu.intel8080emu.Emulator.*;
-import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
-import java.util.*;
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.util.AttributeSet;
+import android.util.Log;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 
-public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, DisplayAdapter
+import com.fireclouu.intel8080emu.Emulator.BaseClass.DisplayAdapter;
+import com.fireclouu.intel8080emu.Emulator.BaseClass.PlatformAdapter;
+import com.fireclouu.intel8080emu.Emulator.BaseClass.StringUtils;
+import com.fireclouu.intel8080emu.Emulator.Emulator;
+import com.fireclouu.intel8080emu.Emulator.Interpreter;
+
+import java.util.ArrayList;
+
+public class Display extends SurfaceView implements SurfaceHolder.Callback, DisplayAdapter
 {
 	// get float value only
 	// on emulation class devise array that can hold 0x2400 - 0x3fff and pass it here
@@ -19,28 +28,25 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 	Canvas canvas;
 	
 	// make adaptive
+	private float GUEST_MACHINE_WIDTH = 224f;
+	private float GUEST_MACHINE_HEIGHT = 256f;
 	private float PIXEL_SIZE = 3.18f;
 	private float PIXEL_SIZE_WIDTH = PIXEL_SIZE;
 	private float PIXEL_SIZE_HEIGHT = PIXEL_SIZE;
 
-	Paint paintred;
-	Paint paintwhite;
-	Paint paintgreen;
-	Paint textPaint;
+	Paint paintRed, paintWhite, paintGreen, paintText;
 	
 	private short[] memory;
 	ArrayList<Float> plotList;
-	
-	private boolean isStarting = true;
 	SurfaceHolder holder;
 	
 	
-	public AppDisplay(Context context) {
+	public Display(Context context) {
 		super(context); 
 		init();
 	}
 	
-	public AppDisplay(Context context, AttributeSet attrs) {
+	public Display(Context context, AttributeSet attrs) {
 		super(context, attrs);
 		init();
 	}
@@ -62,14 +68,12 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 	private void init() {
 		holder = getHolder();
 		
-		paintred = setPaint(Color.RED);
-		paintwhite = setPaint(Color.WHITE);
-		paintgreen = setPaint(Color.GREEN);
+		paintRed = setPaint(Color.RED);
+		paintWhite = setPaint(Color.WHITE);
+		paintGreen = setPaint(Color.GREEN);
 
-		textPaint = setPaint(Color.WHITE);
-		textPaint.setTextSize(12);
-		
-		runState = true;
+		paintText = setPaint(Color.WHITE);
+		paintText.setTextSize(12);
 	}
 	
 	@Override
@@ -123,9 +127,9 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 					{
 						if (swap) {
 							plotList.add((Math.abs(ty)) * PIXEL_SIZE_HEIGHT);
-							plotList.add((Math.abs(tx)  + (bit * setBit)) * PIXEL_SIZE_WIDTH);
+							plotList.add((Math.abs(tx) + (bit * setBit)) * PIXEL_SIZE_WIDTH);
 						} else {
-							plotList.add((Math.abs(tx)  + (bit * setBit)) * PIXEL_SIZE_WIDTH);
+							plotList.add((Math.abs(tx) + (bit * setBit)) * PIXEL_SIZE_WIDTH);
 							plotList.add((Math.abs(ty)) * PIXEL_SIZE_HEIGHT);
 						}
 					}
@@ -135,9 +139,6 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 		
 		plot = new float[plotList.size()];
 		for (float pos : plotList) plot[counter++] = pos;
-		
-		isStarting = false;	// unraise flag
-		
 		return plot;
 	}
 	
@@ -164,15 +165,16 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 	private double fps() {
 		return 0;
 	}
-	
 	private String parseFps(double fps) {
 		return String.format("fps: %.2f", fps);
 	}
 	
 	private float getAdaptiveSize() {
-		float adapt_h = ( ((float) getHeight()) / 100.0f) / 5.0f;
-		float adapt_w = ( ((float)  getWidth()) / 100.0f) / 5.0f;
-		return (adapt_h + adapt_w) / 1.25f;
+		float width = getWidth();
+		float height = getHeight();
+		Log.i(StringUtils.TAG, "WIDTH: " + width + " HEIGHT: " + height);
+		// preserve aspect ration by not calculating height
+		return width / GUEST_MACHINE_WIDTH;
 	}
 	
 	class DrawThread implements Runnable {
@@ -183,34 +185,31 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 			PIXEL_SIZE = getAdaptiveSize();
 			PIXEL_SIZE_WIDTH = PIXEL_SIZE;
 			PIXEL_SIZE_HEIGHT = PIXEL_SIZE;
-			paintwhite.setStrokeWidth(PIXEL_SIZE);
+			paintWhite.setStrokeWidth(PIXEL_SIZE);
 		}
 		
 		while (memory == null) continue;
-		
-		while(PlatformAdapter.isMasterRunning() && runState) {
-			
+		while(Emulator.stateMaster) {
 			if (!holder.getSurface().isValid() & !holder.isCreating()) continue;
 			
 			// canvas
 			canvas = holder.lockCanvas();
-			canvas.drawColor(Color.BLACK);		
-			canvas.drawPoints(getPos(ORIENTATION_COUNTERCLOCK), paintwhite);
-			
-			if (isStarting) canvas.drawText(Platform.OUT_MSG, 0, 10, paintwhite);
+			canvas.drawColor(Color.BLACK);
+			canvas.drawPoints(getPos(ORIENTATION_COUNTERCLOCK), paintWhite);
+			canvas.drawText(Platform.OUT_MSG, 0, 10, paintWhite);
 			
 			// fps
-			canvas.drawText(parseFps(fps()), 0, getHeight() - 10, paintwhite);
+			canvas.drawText(parseFps(fps()), 0, getHeight() - 10, paintWhite);
 			// Emulation thread speed
-			canvas.drawText("Thread speed: " + Emulator.actual_cycle, 0, getHeight() - 25, paintwhite);
+			canvas.drawText("Thread speed: " + Emulator.actual_cycle, 0, getHeight() - 25, paintWhite);
 			//cycle
 			if (Emulator.isCycleCorrect()) {
-				canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintgreen);
+				canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintGreen);
 			} else {
-				canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintred);
+				canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintRed);
 			}
 			
-			canvas.drawText("fireclouu", (int) (getWidth() / 1.1), getHeight() - 10, paintwhite);
+			canvas.drawText("fireclouu", (int) (getWidth() / 1.1), getHeight() - 10, paintWhite);
 			
 			// release
 			holder.unlockCanvasAndPost(canvas);
@@ -221,58 +220,56 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 class DebugThread implements Runnable {
 		@Override
 		public void run() {
-			while(PlatformAdapter.isMasterRunning() && runState) {
+			while(Emulator.stateMaster) {
 				if (!holder.getSurface().isValid()) continue;
 				
 				canvas = holder.lockCanvas();
 				
 				canvas.drawColor(Color.BLACK);
-				if (isStarting) {
-					canvas.drawText(
-						Platform.OUT_MSG, 0, 
-						10,
-						paintwhite);
-				}
-				
 				canvas.drawText(
-					StringUtils.getTime(), getWidth() - 60, 15, paintwhite);
+					Platform.OUT_MSG, 0,
+					10,
+						paintWhite);
+				canvas.drawText(
+					StringUtils.getTime(), getWidth() - 60, 15, paintWhite);
 				
-				long expected = 23_803_381_171_L; // 24 billion
+				long expected = 23803381171L; // 24 billion
 				try {
 				int startingpoint = 20;
 				for (String msg : PlatformAdapter.BUILD_MSG) {
-					canvas.drawText(msg, 0, startingpoint += 20, textPaint);
+					canvas.drawText(msg, 0, startingpoint += 20, paintText);
 				} 
 					
 				}catch (NullPointerException e) {
-					e.printStackTrace();
+					String exception = e.getMessage() != null ? e.getMessage() : "DebugThread: Message is null";
+					Log.e(StringUtils.TAG, exception);
 				}
 				
 				
 				canvas.drawText(
 					"Hardware accelerated: " + isHardwareAccelerated(), 0, 
 					getHeight() - 10,
-					paintwhite);
+						paintWhite);
 
 				canvas.drawText(
 					"Expected Cpu Cycle: " + expected, 0, 
 					getHeight() - 25,
-					paintwhite);
+						paintWhite);
 					
 				canvas.drawText(
 					"Remaining Cpu Cycle: " + (expected - Interpreter.cycle), 0, 
 					getHeight() - 40,
-					paintwhite);
+						paintWhite);
 					
 				canvas.drawText(
 					"Current Cpu Cycle: " + Interpreter.cycle, 0, 
 					getHeight() - 55,
-					paintwhite);
+						paintWhite);
 					
 				canvas.drawText(
 					"fireclouu", (int) (getWidth() / 1.1), 
 					getHeight() - 10,
-					paintwhite);	
+						paintWhite);
 				
 				holder.unlockCanvasAndPost(canvas);
 			}
