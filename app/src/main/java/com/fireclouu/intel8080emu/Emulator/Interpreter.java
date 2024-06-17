@@ -137,7 +137,7 @@ public class Interpreter
 			case 0x3e: cpu.A = cpu.memory[opcode + 1]; cpu.PC++; break; // MVI A, D8
 
 			// B
-			case 0x40: cpu.B = cpu.B; break; // MOV B, B
+			case 0x40: break; // MOV B, B
 			case 0x41: cpu.B = cpu.C; break; // MOV B, C
 			case 0x42: cpu.B = cpu.D; break; // MOV B, D
 			case 0x43: cpu.B = cpu.E; break; // MOV B, E
@@ -148,7 +148,7 @@ public class Interpreter
 
 			// C
 			case 0x48: cpu.C = cpu.B; break; // MOV C, B
-			case 0x49: cpu.C = cpu.C; break; // MOV C, C
+			case 0x49: break; // MOV C, C
 			case 0x4a: cpu.C = cpu.D; break; // MOV C, D
 			case 0x4b: cpu.C = cpu.E; break; // MOV C, E
 			case 0x4c: cpu.C = cpu.H; break; // MOV C, H
@@ -159,7 +159,7 @@ public class Interpreter
 			// D
 			case 0x50: cpu.D = cpu.B; break; // MOV D, B
 			case 0x51: cpu.D = cpu.C; break; // MOV D, C
-			case 0x52: cpu.D = cpu.D; break; // MOV D, D
+			case 0x52: break; // MOV D, D
 			case 0x53: cpu.D = cpu.E; break; // MOV D, E
 			case 0x54: cpu.D = cpu.H; break; // MOV D, H
 			case 0x55: cpu.D = cpu.L; break; // MOV D, L
@@ -170,7 +170,7 @@ public class Interpreter
 			case 0x58: cpu.E = cpu.B; break; // MOV E, B
 			case 0x59: cpu.E = cpu.C; break; // MOV E, C
 			case 0x5a: cpu.E = cpu.D; break; // MOV E, D
-			case 0x5b: cpu.E = cpu.E; break; // MOV E, E
+			case 0x5b: break; // MOV E, E
 			case 0x5c: cpu.E = cpu.H; break; // MOV E, H
 			case 0x5d: cpu.E = cpu.L; break; // MOV E, L
 			case 0x5e: cpu.E = cpu.memory[addr]; break; // MOV E, M
@@ -181,7 +181,7 @@ public class Interpreter
 			case 0x61: cpu.H = cpu.C; break; // MOV H, C
 			case 0x62: cpu.H = cpu.D; break; // MOV H, D
 			case 0x63: cpu.H = cpu.E; break; // MOV H, E
-			case 0x64: cpu.H = cpu.H; break; // MOV H, H
+			case 0x64: break; // MOV H, H
 			case 0x65: cpu.H = cpu.L; break; // MOV H, L
 			case 0x66: cpu.H = cpu.memory[addr]; break; // MOV H, M
 			case 0x67: cpu.H = cpu.A; break; // MOV H, A
@@ -192,7 +192,7 @@ public class Interpreter
 			case 0x6a: cpu.L = cpu.D; break; // MOV L, D
 			case 0x6b: cpu.L = cpu.E; break; // MOV L, E
 			case 0x6c: cpu.L = cpu.H; break; // MOV L, H
-			case 0x6d: cpu.L = cpu.L; break; // MOV L, L
+			case 0x6d: break; // MOV L, L
 			case 0x6e: cpu.L = cpu.memory[addr]; break; // MOV L, M
 			case 0x6f: cpu.L = cpu.A; break; // MOV L, A
 
@@ -213,7 +213,7 @@ public class Interpreter
 			case 0x7c: cpu.A = cpu.H; break; // MOV A, H
 			case 0x7d: cpu.A = cpu.L; break; // MOV A, L
 			case 0x7e: cpu.A = cpu.memory[addr]; break; // MOV A, M
-			case 0x7f: cpu.A = cpu.A; break; // MOV A, A
+			case 0x7f: break; // MOV A, A
 
 			///  ALU  ///
 

@@ -2,7 +2,6 @@ package com.fireclouu.intel8080emu;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.res.Resources;
 import android.media.AudioManager;
 import android.media.SoundPool;
 import android.os.Vibrator;
