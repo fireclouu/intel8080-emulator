@@ -19,7 +19,7 @@ public class CpuComponents
 	public int PC, SP;
 
 	///  MEMORY  ///
-	public short memory[];
+	public short[] memory;
 
 	///  CONDITIONALS  ///
 	public ConditionCodes cc;

@@ -9,7 +9,7 @@ public class Interpreter
 	public static long cycle = 0;
 
 	// SOURCES: superzazu
-	static short OPCODES_CYCLES[] = {	//  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+	static short[] OPCODES_CYCLES = {	//  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
 		4,  10, 7,  5,  5,  5,  7,  4,  4,  10, 7,  5,  5,  5,  7,  4,  // 0
 		4,  10, 7,  5,  5,  5,  7,  4,  4,  10, 7,  5,  5,  5,  7,  4,  // 1
 		4,  10, 16, 5,  5,  5,  7,  4,  4,  10, 16, 5,  5,  5,  7,  4,  // 2

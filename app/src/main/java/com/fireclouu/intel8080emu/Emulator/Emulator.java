@@ -26,7 +26,7 @@ public class Emulator implements IOAdapter
 	
 	private double timerNow = 0;
 	private double timerLast = 0;
-	private double fixedMhz = (WHEN_TO_RUN_CYCLE * (NANO_SEC * 10.0)) ;
+	private final double fixedMhz = (WHEN_TO_RUN_CYCLE * (NANO_SEC * 10.0)) ;
 	private double updateHz;
 	private double nextInterrupt;
 	
@@ -66,7 +66,7 @@ public class Emulator implements IOAdapter
 			case 0: // ?
 				return 0;
 			case 1: // INPUTS
-				return this.port[1];
+				return Emulator.port[1];
 			case 2: // INPUTS
 				return 0;
 			case 3: // SHIFT REGISTER DATA (ROTATE)
@@ -175,7 +175,7 @@ public class Emulator implements IOAdapter
 		while(stateMaster) {
 			
 			// inject hiscore (one-time)
-			if (interpreter.cycle > 200 & !triggered) 
+			if (Interpreter.cycle > 200 & !triggered)
 			{
 				cpu.memory[0x20f5] = (short) api.getPrefs(StringUtils.ITEM_HISCORE_MSB);
 				cpu.memory[0x20f4] = (short) api.getPrefs(StringUtils.ITEM_HISCORE_LSB);
@@ -203,20 +203,20 @@ public class Emulator implements IOAdapter
 			
 				// 2MHz
 				// cycle catch-up
-				while((checkNow > checkLast + (NANO_SEC)) && interpreter.cycle <= machineUtils.MAX_CYCLE_SPEED_PER_SECOND) {
+				while((checkNow > checkLast + (NANO_SEC)) && Interpreter.cycle <= StringUtils.Component.MAX_CYCLE_SPEED_PER_SECOND) {
 					// IO
 					ioHandler(cpu, api, cpu.PC);
 					
-					interpreter.cycle += interpreter.emulate8080(cpu);
+					Interpreter.cycle += interpreter.emulate8080(cpu);
 				}
 				// cycle reset
 				if (checkNow > checkLast + (NANO_SEC)) {
 					actual_cycle = ac;
 					ac = 0;
 					
-					storeCycle = interpreter.cycle;
-					cycleInfo = "HiScore: " + "" + String.format("%02x", cpu.memory[0x20f5]) + String.format("%02x", cpu.memory[0x20f4]) + " | Emulation speed: " + storeCycle;
-					interpreter.cycle = 0; // reset
+					storeCycle = Interpreter.cycle;
+					cycleInfo = "HiScore: " + String.format("%02x", cpu.memory[0x20f5]) + String.format("%02x", cpu.memory[0x20f4]) + " | Emulation speed: " + storeCycle;
+					Interpreter.cycle = 0; // reset
 					checkLast = checkNow;
 				}
 				// normal cycle (?)
@@ -224,7 +224,7 @@ public class Emulator implements IOAdapter
 					// IO
 					ioHandler(cpu, api, cpu.PC);
 					
-					interpreter.cycle += interpreter.emulate8080(cpu);
+					Interpreter.cycle += interpreter.emulate8080(cpu);
 					timerLast = timerNow;
 				}	
 				
@@ -233,7 +233,7 @@ public class Emulator implements IOAdapter
 		
 	}
 	
-	private short[] testMemory = new short[0x10_000];
+	private final short[] testMemory = new short[0x10_000];
 	private int counter = 0x23ff;
 	private short i = 0;
 	private void runTestDisplay(DisplayAdapter display) {
@@ -308,7 +308,7 @@ public class Emulator implements IOAdapter
 						break;
 				}
 
-				interpreter.cycle += interpreter.emulate8080(cpu);
+				Interpreter.cycle += interpreter.emulate8080(cpu);
 				// print.printInstruction(cpu, AppUtils.Machine.PRINT_LESS);
 				print.check_overflow(cpu);
 			}

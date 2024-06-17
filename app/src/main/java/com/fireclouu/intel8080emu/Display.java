@@ -28,8 +28,8 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	Canvas canvas;
 	
 	// make adaptive
-	private float GUEST_MACHINE_WIDTH = 224f;
-	private float GUEST_MACHINE_HEIGHT = 256f;
+	private final float GUEST_MACHINE_WIDTH = 224f;
+	private final float GUEST_MACHINE_HEIGHT = 256f;
 	private float PIXEL_SIZE = 3.18f;
 	private float PIXEL_SIZE_WIDTH = PIXEL_SIZE;
 	private float PIXEL_SIZE_HEIGHT = PIXEL_SIZE;

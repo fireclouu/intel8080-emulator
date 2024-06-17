@@ -10,7 +10,7 @@ public final class StringUtils
 
 	private StringUtils() { } // prevent instatiation
 	
-	public static final String getTime() {
+	public static String getTime() {
 		Date date = new Date();
 		return String.format("%02d", date.getHours()) + ":" +
 			String.format("%02d", date.getMinutes()) + ":" +

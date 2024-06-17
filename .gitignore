@@ -1,4 +1,5 @@
-/build
-/app/build
 /.androidide
 /.gradle
+/app/build
+/app/release
+/build
