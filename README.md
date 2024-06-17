@@ -24,12 +24,13 @@ Version 0.1
 ### Description
 Playable Space Invaders machine emulation with Intel 8080 CPU interpreter written in Java.
 
-### Resources used
-Sound resources:
+### Assets
+Sound assets:
 - https://samples.mameworld.info/
 
-Button face Graphics resources:
+Button face Graphics assets:
 - https://ya-webdesign.com
 
 ### Resources
-Based on kpmiller's emulator101.com tutorial.
+- [emulator101](http://emulator101.com/)
+- [superzazu](https://github.com/superzazu/8080)
