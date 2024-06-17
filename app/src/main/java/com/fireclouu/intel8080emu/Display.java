@@ -178,7 +178,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	class DrawThread implements Runnable {
 	@Override
 	public void run() {
-    bool surfaceFlag = false;
+    boolean surfaceFlag = false;
 		while (!holder.getSurface().isValid()) {
       if (!surfaceFlag) {
           surfaceFlag = true;
