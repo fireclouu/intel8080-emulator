@@ -1,5 +1,5 @@
 # Space Invaders (Intel 8080 Emulation)
-
+[![Android CI](https://github.com/fireclouu/space_invaders_android/actions/workflows/android.yml/badge.svg?branch=master)](https://github.com/fireclouu/space_invaders_android/actions/workflows/android.yml)
 ### Screenshot
 <img src="https://i.ibb.co/w7NhRXJ/Screenshot-2024-06-08-11-14-13-913-com-fireclouu-spaceinvadersemu.jpg" width="200"/>
 
