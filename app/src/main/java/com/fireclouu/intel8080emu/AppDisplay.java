@@ -34,9 +34,6 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 	private boolean isStarting = true;
 	SurfaceHolder holder;
 	
-	private LinkedList<Long> times = new LinkedList<Long>(){{
-			add(System.nanoTime());
-		}};
 	
 	public AppDisplay(Context context) {
 		super(context); 
@@ -64,10 +61,6 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 	}
 	private void init() {
 		holder = getHolder();
-		
-		//holder.setFormat(holder.SURFACE_TYPE_GPU);
-		//holder.setFixedSize(480, 858);
-		//holder.setFixedSize(240, 352);
 		
 		paintred = setPaint(Color.RED);
 		paintwhite = setPaint(Color.WHITE);
@@ -168,21 +161,8 @@ public class AppDisplay extends SurfaceView implements SurfaceHolder.Callback, D
 		return mPaint;
 	}
 	
-	private final int MAX_SIZE = 100;
-	private final double NANOS = 1000000000.0;
-	
-	// https://stackoverflow.com/questions/10210439/how-to-count-the-framerate-with-which-a-surfaceview-refreshes
-	/** Calculates and returns frames per second */
 	private double fps() {
-		long lastTime = System.nanoTime();
-		double difference = (lastTime - times.getFirst()) / NANOS;
-		times.addLast(lastTime);
-		int size = times.size();
-		if (size > MAX_SIZE) {
-			times.removeFirst();
-		}
-		
-		return difference > 0 ? (int) ((times.size() / difference) * 100) / 100.0 : 0.0;
+		return 0;
 	}
 	
 	private String parseFps(double fps) {

@@ -1,0 +1,565 @@
+#
+# A fatal error has been detected by the Java Runtime Environment:
+#
+#  SIGSEGV (0xb) at pc=0x000000780fe77f5c, pid=9064, tid=9085
+#
+# JRE version:  (22.0+16) (build )
+# Java VM: OpenJDK 64-Bit Server VM (22-ea+16-Ubuntu-1, mixed mode, sharing, tiered, compressed oops, compressed class ptrs, g1 gc, linux-aarch64)
+# Problematic frame:
+# C  [libc.so.6+0x57f5c]
+#
+# Core dump will be written. Default location: core.9064 (may not exist)
+#
+#
+
+---------------  S U M M A R Y ------------
+
+Command Line: --illegal-access=permit --add-opens=java.base/java.lang=ALL-UNNAMED -Dorg.gradle.appname=gradle org.gradle.launcher.GradleMain
+
+Host: AArch64, 8 cores, 11G, Ubuntu 23.10
+Time: Mon Jun 17 00:15:20 2024 PST elapsed time: 0.042957 seconds (0d 0h 0m 0s)
+
+---------------  T H R E A D  ---------------
+
+Current thread (0x00000078080160c0):  JavaThread "Unknown thread" [_thread_in_vm, id=9085, stack(0x000000780e452000,0x000000780e650000) (2040K)]
+
+Stack: [0x000000780e452000,0x000000780e650000],  sp=0x000000780e64d7d0,  free space=2029k
+Native frames: (J=compiled Java code, j=interpreted, Vv=VM code, C=native code)
+C  [libc.so.6+0x57f5c]
+C  [libc.so.6+0x4de44]  __isoc23_fscanf+0x84
+V  [libjvm.so+0xc05864]
+V  [libjvm.so+0xc00120]
+V  [libjvm.so+0xb7f5bc]
+V  [libjvm.so+0xb84ec4]
+V  [libjvm.so+0xb864b0]
+V  [libjvm.so+0xb86a18]
+V  [libjvm.so+0xb7f9c4]
+V  [libjvm.so+0xe55098]
+V  [libjvm.so+0x82f9b4]
+V  [libjvm.so+0xe337d8]
+V  [libjvm.so+0x8f82a4]  JNI_CreateJavaVM+0x80
+C  [libjli.so+0x3d94]
+C  [libjli.so+0x7430]
+C  [libc.so.6+0x837d0]
+
+siginfo: si_signo: 11 (SIGSEGV), si_code: 1 (SEGV_MAPERR), si_addr: 0x00000000000000c0
+
+Registers:
+R0=0x0000003f0003fb88
+R1=0x0000000000000400
+R2=0x000000780ffcd1f8
+R3=0x0000000000000006
+R4=0x000000780e64f8e0
+R5=0x0000000000000010
+R6=0x000000780e649ea0
+R7=0x0000000000000000
+R8=0x000000780e64df00
+R9=0x0000003f0003fb88
+R10=0x00000000ffffff80
+R11=0x00000000ffffffd0
+R12=0x000000780e64dfe0
+R13=0x0000000000000000
+R14=0x0000000000000000
+R15=0x0000000000000000
+R16=0x0000000000003a30
+R17=0x000000780fe6ddc0
+R18=0x000000780ffd1410
+R19=0x000000780fdea000
+R20=0x000000780fdea460
+R21=0x0000000041000000
+R22=0x000000780fde6000
+R23=0x0000000041000000
+R24=0x000000780fdea000
+R25=0x0001000000000000
+R26=0x0000000000000000
+R27=0x000000780f97ccd0
+R28=0x000000780f2a8224
+R29=0x000000780e64dea0
+R30=0x000000780fe6de44
+
+
+Top of Stack: (sp=0x000000780e64d7d0)
+0x000000780e64d7d0:   00000000ffffffe0 70f5ff5c7339db00
+0x000000780e64d7e0:   000000780e64f8e0 0000007800000000
+0x000000780e64d7f0:   0000000000000000 70f5ff5c00000002
+0x000000780e64d800:   000000780e64d820 000000780ff1f4c4
+0x000000780e64d810:   000000780e64d950 000000780ff72e10
+0x000000780e64d820:   000000780ff72ef0 000000780e64dfd0
+0x000000780e64d830:   0000000dffffff80 000000780e64dfa0
+0x000000780e64d840:   000000780f9bfba8 000000780e64df00
+0x000000780e64d850:   000000780e64d8c8 0000000000000020
+0x000000780e64d860:   000000000f9d7d50 ffffffffffffffff
+0x000000780e64d870:   000000780e64d8b0 000000780f5c65a4
+0x000000780e64d880:   000000780e64d950 00000078080288e0
+0x000000780e64d890:   000000780f9bfbab 0000000000000001
+0x000000780e64d8a0:   00000000000007cf 00000000ffffffd0
+0x000000780e64d8b0:   000000780e64e120 000000780e64f8e0
+0x000000780e64d8c0:   000000780e64e350 000000780e64dfd0
+0x000000780e64d8d0:   000000780e64dfd0 000000780e64dfa0
+0x000000780e64d8e0:   ffffff80ffffffd8 000000780f982678
+0x000000780e64d8f0:   000000780fd97410 000000780e64e2b0
+0x000000780e64d900:   000000780e64e280 ffffff80ffffffd0
+0x000000780e64d910:   000000780e64e2d0 000000780e64e2d0
+0x000000780e64d920:   000000780e64e2a0 ffffff80ffffffd0
+0x000000780e64d930:   000000780e64e2d0 000000780e64e2d0
+0x000000780e64d940:   000000780e64e2a0 ffffff80ffffffd0
+0x000000780e64d950:   69646f6972655020 6944203a43472063
+0x000000780e64d960:   000a64656c626173 000000780f5c65a4
+0x000000780e64d970:   000000780f982678 0000007808028970
+0x000000780e64d980:   000000780e64da20 0000000000000000
+0x000000780e64d990:   000000780e64e470 00000000ffffffd0
+0x000000780e64d9a0:   000000780e64e210 000000780f5c6e2c
+0x000000780e64d9b0:   000000780e64e350 000000780fda6ba8
+0x000000780e64d9c0:   0000000000000000 0000007808028a00 
+
+Instructions: (pc=0x000000780fe77f5c)
+0x000000780fe77e5c:   42 04 00 91 82 00 00 f9 41 00 40 39 21 c0 00 51
+0x000000780fe77e6c:   3f 24 00 71 49 fe ff 54 c0 03 5f d6 00 00 80 12
+0x000000780fe77e7c:   f8 ff ff 17 fd 7b bd a9 fd 03 00 91 f3 53 01 a9
+0x000000780fe77e8c:   f3 03 00 aa 00 00 40 f9 00 02 00 b4 e0 03 13 aa
+0x000000780fe77e9c:   74 06 40 f9 f5 13 00 f9 35 1c 00 12 01 0c 41 f8
+0x000000780fe77eac:   94 02 01 cb f0 f9 00 94 60 01 00 36 60 0a 41 a9
+0x000000780fe77ebc:   03 00 14 8b 02 00 02 8b 63 04 00 91 63 0a 00 a9
+0x000000780fe77ecc:   15 68 34 38 f5 13 40 f9 f3 53 41 a9 fd 7b c3 a8
+0x000000780fe77edc:   c0 03 5f d6 f5 13 40 f9 7f 7e 00 a9 fb ff ff 17
+0x000000780fe77eec:   1f 20 03 d5 fd 7b ba a9 fd 03 00 91 f3 53 01 a9
+0x000000780fe77efc:   f5 5b 02 a9 f7 63 03 a9 f9 6b 04 a9 fb 73 05 a9
+0x000000780fe77f0c:   ff 43 1b d1 ff 03 02 f9 c5 0a 00 90 a5 94 47 f9
+0x000000780fe77f1c:   44 d0 3b d5 a6 13 40 d1 ef 03 00 aa fb 03 01 aa
+0x000000780fe77f2c:   c0 0a 00 90 00 34 47 f9 c2 d4 1c f9 92 68 65 f8
+0x000000780fe77f3c:   c4 0c 1d f9 40 04 40 ad 02 00 40 f9 a2 83 1f f8
+0x000000780fe77f4c:   02 00 80 d2 42 02 40 f9 01 80 80 d2 10 46 87 d2
+0x000000780fe77f5c:   e0 c1 40 b9 c2 bc 1c f9 e2 03 06 aa c1 ec 1d f9
+0x000000780fe77f6c:   c1 00 10 8b b4 83 10 d1 c3 80 39 b9 db 10 1d f9
+0x000000780fe77f7c:   d4 e8 1d f9 20 04 00 ad c0 1c 00 35 00 00 80 12
+0x000000780fe77f8c:   e0 c1 00 b9 e0 01 40 b9 a0 93 11 37 7b 0a 02 b4
+0x000000780fe77f9c:   42 06 40 f9 a3 13 40 d1 c1 0a 00 90 21 70 47 f9
+0x000000780fe77fac:   a0 13 40 d1 42 a4 43 a9 62 c4 1c f9 b6 c3 16 d1
+0x000000780fe77fbc:   12 00 1d f9 e0 03 16 aa 6f 04 1d f9 22 01 40 39
+0x000000780fe77fcc:   61 28 1d f9 5f 00 00 71 6f 2c 1d f9 29 11 9f 9a
+0x000000780fe77fdc:   69 08 1d f9 28 a0 00 94 a0 13 40 d1 a1 13 40 d1
+0x000000780fe77fec:   0f 04 5d f9 32 00 5d f9 e0 01 40 b9 29 08 5d f9
+0x000000780fe77ffc:   40 03 78 37 21 0c 5d f9 e0 0a 00 f0 f3 45 40 f9
+0x000000780fe7800c:   35 00 1d d1 01 60 62 39 60 06 40 f9 41 00 00 34
+0x000000780fe7801c:   a0 3b 00 b4 bf 02 00 eb a0 4f 00 54 a0 13 40 d1
+0x000000780fe7802c:   21 00 80 52 e2 03 13 aa 0f 00 1d f9 12 04 1d f9
+0x000000780fe7803c:   09 08 1d f9 00 00 80 52 e7 8f 03 94 a1 13 40 d1
+0x000000780fe7804c:   2f 00 5d f9 32 04 5d f9 29 08 5d f9 40 f8 00 35 
+
+
+
+---------------  P R O C E S S  ---------------
+
+Threads class SMR info:
+_java_thread_list=0x000000780fe092d8, length=0, elements={
+}
+
+Java Threads: ( => current thread )
+Total: 0
+
+Other Threads:
+  0x00000078080676e0 WorkerThread "GC Thread#0"                     [id=9090, stack(0x000000780ccbb000,0x000000780ceb9000) (2040K)]
+  0x0000007808073be0 ConcurrentGCThread "G1 Main Marker"            [id=9092, stack(0x000000780caad000,0x000000780ccab000) (2040K)]
+  0x0000007808074b90 WorkerThread "G1 Conc#0"                       [id=9093, stack(0x000000780c89f000,0x000000780ca9d000) (2040K)]
+  0x00000078080cbcc0 ConcurrentGCThread "G1 Refine#0"               [id=9095, stack(0x00000077edc3e000,0x00000077ede3c000) (2040K)]
+  0x00000078080ccc90 ConcurrentGCThread "G1 Service"                [id=9096, stack(0x00000077eda30000,0x00000077edc2e000) (2040K)]
+
+=>0x00000078080160c0 (exited) JavaThread "Unknown thread"    [_thread_in_vm, id=9085, stack(0x000000780e452000,0x000000780e650000) (2040K)]
+Total: 6
+
+Threads with active compile tasks:
+Total: 0
+
+VM state: not at safepoint (not fully initialized)
+
+VM Mutex/Monitor currently owned by a thread: None
+
+Heap address: 0x000000074fc00000, size: 2820 MB, Compressed Oops mode: Zero based, Oop shift amount: 3
+
+CDS archive(s) mapped at: [0x0000000000000000-0x0000000000000000-0x0000000000000000), size 0, SharedBaseAddress: 0x0000000800000000, ArchiveRelocationMode: 1.
+Narrow klass base: 0x0000000000000000, Narrow klass shift: 0, Narrow klass range: 0x0
+
+GC Precious Log:
+ CardTable entry size: 512
+ Card Set container configuration: InlinePtr #cards 4 size 8 Array Of Cards #cards 16 size 48 Howl #buckets 8 coarsen threshold 3686 Howl Bitmap #cards 512 size 80 coarsen threshold 460 Card regions per heap region 1 cards per card region 4096
+ CPUs: 8 total, 8 available
+ Memory: 11279M
+ Large Page Support: Disabled
+ NUMA Support: Disabled
+ Compressed Oops: Enabled (Zero based)
+ Heap Region Size: 2M
+ Heap Min Capacity: 8M
+ Heap Initial Capacity: 178M
+ Heap Max Capacity: 2820M
+ Pre-touch: Disabled
+ Parallel Workers: 8
+ Concurrent Workers: 2
+ Concurrent Refinement Workers: 8
+ Periodic GC: Disabled
+
+Heap:
+ garbage-first heap   total reserved 2887680K, committed 182272K, used 0K [0x000000074fc00000, 0x0000000800000000)
+  region size 2048K, 0 young (0K), 0 survivors (0K)
+
+[error occurred during error reporting (printing heap information), id 0xb, SIGSEGV (0xb) at pc=0x000000780f657090]
+GC Heap History (0 events):
+No events
+
+Dll operation events (1 events):
+Event: 0.020 Loaded shared library /usr/lib/jvm/java-22-openjdk-arm64/lib/libjava.so
+
+Deoptimization events (0 events):
+No events
+
+Classes loaded (0 events):
+No events
+
+Classes unloaded (0 events):
+No events
+
+Classes redefined (0 events):
+No events
+
+Internal exceptions (0 events):
+No events
+
+ZGC Phase Switch (0 events):
+No events
+
+VM Operations (0 events):
+No events
+
+Events (1 events):
+Event: 0.019 Protecting memory [0x000000780e452000,0x000000780e456000] with protection modes 0
+
+
+Dynamic libraries:
+00200000-00201000 r--p 00000000 fe:2a 246754                             /data/data/com.termux/files/usr/libexec/proot/loader
+74fc00000-75ae00000 rw-p 00000000 00:00 0 
+75ae00000-800000000 ---p 00000000 00:00 0 
+2000000000-2000001000 r-xp 00001000 fe:2a 246754                         /data/data/com.termux/files/usr/libexec/proot/loader
+2000001000-2000002000 r--p 00001000 fe:2a 246754                         /data/data/com.termux/files/usr/libexec/proot/loader
+3000000000-3000001000 r-xp 00000000 fe:2a 551081                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/bin/java
+300001f000-3000020000 r--p 0000f000 fe:2a 551081                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/bin/java
+3000020000-3000021000 rw-p 00010000 fe:2a 551081                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/bin/java
+3000021000-300006a000 rw-p 00000000 00:00 0 
+3f00000000-3f00026000 r-xp 00000000 fe:2a 679097                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1
+3f0003e000-3f00040000 r--p 0002e000 fe:2a 679097                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1
+3f00040000-3f00042000 rw-p 00030000 fe:2a 679097                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/ld-linux-aarch64.so.1
+77d0000000-77d0021000 rw-p 00000000 00:00 0 
+77d0021000-77d4000000 ---p 00000000 00:00 0 
+77d8000000-77d8021000 rw-p 00000000 00:00 0 
+77d8021000-77dc000000 ---p 00000000 00:00 0 
+77de000000-77e0021000 rw-p 00000000 00:00 0 
+77e0021000-77e4000000 ---p 00000000 00:00 0 
+77e4000000-77e4021000 rw-p 00000000 00:00 0 
+77e4021000-77e8000000 ---p 00000000 00:00 0 
+77e8000000-77e8021000 rw-p 00000000 00:00 0 
+77e8021000-77ec000000 ---p 00000000 00:00 0 
+77eda20000-77eda30000 ---p 00000000 00:00 0 
+77eda30000-77edc2e000 rw-p 00000000 00:00 0 
+77edc2e000-77edc3e000 ---p 00000000 00:00 0 
+77edc3e000-77ee104000 rw-p 00000000 00:00 0 
+77ee104000-77f0a4c000 ---p 00000000 00:00 0 
+77f0a4c000-77f0cbc000 rwxp 00000000 00:00 0 
+77f0cbc000-77f7f83000 ---p 00000000 00:00 0 
+77f7f83000-77f81f3000 rwxp 00000000 00:00 0 
+77f81f3000-77f8515000 ---p 00000000 00:00 0 
+77f8515000-77f8785000 rwxp 00000000 00:00 0 
+77f8785000-77ffa4c000 ---p 00000000 00:00 0 
+77ffa4c000-7808000000 r--s 00000000 fe:2a 586791                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/modules
+7808000000-78080f7000 rw-p 00000000 00:00 0 
+78080f7000-780c000000 ---p 00000000 00:00 0 
+780c087000-780c88f000 rw-p 00000000 00:00 0 
+780c88f000-780c89f000 ---p 00000000 00:00 0 
+780c89f000-780ca9d000 rw-p 00000000 00:00 0 
+780ca9d000-780caad000 ---p 00000000 00:00 0 
+780caad000-780ccab000 rw-p 00000000 00:00 0 
+780ccab000-780ccbb000 ---p 00000000 00:00 0 
+780ccbb000-780cf57000 rw-p 00000000 00:00 0 
+780cf57000-780d480000 ---p 00000000 00:00 0 
+780d480000-780d4d9000 rw-p 00000000 00:00 0 
+780d4d9000-780da02000 ---p 00000000 00:00 0 
+780da02000-780e20f000 rw-p 00000000 00:00 0 
+780e20f000-780e2f5000 ---p 00000000 00:00 0 
+780e2f5000-780e2fa000 rw-p 00000000 00:00 0 
+780e2fa000-780e3e0000 ---p 00000000 00:00 0 
+780e3e0000-780e401000 r-xp 00000000 fe:2a 584393                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/libjava.so
+780e401000-780e41f000 ---p 00021000 fe:2a 584393                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/libjava.so
+780e41f000-780e420000 r--p 0002f000 fe:2a 584393                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/libjava.so
+780e420000-780e421000 rw-p 00030000 fe:2a 584393                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/libjava.so
+780e421000-780e422000 rw-p 00000000 00:00 0 
+780e430000-780e435000 r-xp 00000000 fe:2a 584328                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/libjimage.so
+780e435000-780e44f000 ---p 00005000 fe:2a 584328                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/libjimage.so
+780e44f000-780e450000 r--p 0000f000 fe:2a 584328                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/libjimage.so
+780e450000-780e451000 rw-p 00010000 fe:2a 584328                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/libjimage.so
+780e452000-780e456000 ---p 00000000 00:00 0 
+780e456000-780e650000 rw-p 00000000 00:00 0 
+780e650000-780e668000 r-xp 00000000 fe:2a 127965                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libgcc_s.so.1
+780e668000-780e67f000 ---p 00018000 fe:2a 127965                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libgcc_s.so.1
+780e67f000-780e680000 r--p 0001f000 fe:2a 127965                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libgcc_s.so.1
+780e680000-780e681000 rw-p 00020000 fe:2a 127965                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libgcc_s.so.1
+780e690000-780e711000 r-xp 00000000 fe:2a 679121                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libm.so.6
+780e711000-780e72f000 ---p 00081000 fe:2a 679121                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libm.so.6
+780e72f000-780e730000 r--p 0008f000 fe:2a 679121                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libm.so.6
+780e730000-780e731000 rw-p 00090000 fe:2a 679121                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libm.so.6
+780e740000-780e989000 r-xp 00000000 fe:2a 130791                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.32
+780e989000-780e995000 ---p 00249000 fe:2a 130791                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.32
+780e995000-780e9a0000 r--p 00255000 fe:2a 130791                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.32
+780e9a0000-780e9a3000 rw-p 00260000 fe:2a 130791                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/aarch64-linux-gnu/libstdc++.so.6.0.32
+780e9a3000-780e9a7000 rw-p 00000000 00:00 0 
+780e9b0000-780fc72000 r-xp 00000000 fe:2a 576255                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/server/libjvm.so
+780fc72000-780fc87000 ---p 012c2000 fe:2a 576255                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/server/libjvm.so
+780fc87000-780fd60000 r--p 012c7000 fe:2a 576255                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/server/libjvm.so
+780fd60000-780fd91000 rw-p 013a0000 fe:2a 576255                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/server/libjvm.so
+780fd91000-780fe15000 rw-p 00000000 00:00 0 
+780fe20000-780ffb1000 r-xp 00000000 fe:2a 679109                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libc.so.6
+780ffb1000-780ffcd000 ---p 00191000 fe:2a 679109                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libc.so.6
+780ffcd000-780ffd0000 r--p 0019d000 fe:2a 679109                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libc.so.6
+780ffd0000-780ffd2000 rw-p 001a0000 fe:2a 679109                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libc.so.6
+780ffd2000-780ffdf000 rw-p 00000000 00:00 0 
+780ffe0000-780ffee000 r-xp 00000000 fe:2a 584606                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/libjli.so
+780ffee000-780ffff000 ---p 0000e000 fe:2a 584606                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/libjli.so
+780ffff000-7810000000 r--p 0000f000 fe:2a 584606                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/libjli.so
+7810000000-7810001000 rw-p 00010000 fe:2a 584606                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/usr/lib/jvm/java-22-openjdk-arm64/lib/libjli.so
+7810004000-7810009000 rw-p 00000000 00:00 0 
+7810009000-7810010000 ---p 00000000 00:00 0 
+7810010000-7810029000 r-xp 00000000 fe:2a 128718                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libz.so.1.2.13
+7810029000-781003f000 ---p 00019000 fe:2a 128718                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libz.so.1.2.13
+781003f000-7810040000 r--p 0001f000 fe:2a 128718                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libz.so.1.2.13
+7810040000-7810041000 rw-p 00020000 fe:2a 128718                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/lib/aarch64-linux-gnu/libz.so.1.2.13
+7810041000-7810049000 rw-s 00000000 fe:2a 592207                         /data/data/com.termux/files/usr/var/lib/proot-distro/installed-rootfs/ubuntu/tmp/hsperfdata_root/9064
+7810049000-781004d000 rw-p 00000000 00:00 0 
+781004f000-7810050000 ---p 00000000 00:00 0 
+7810050000-7810051000 r--p 00000000 00:00 0 
+7810051000-7810052000 ---p 00000000 00:00 0 
+7810052000-7810054000 r--p 00000000 00:00 0                              [vvar]
+7810054000-7810055000 r-xp 00000000 00:00 0                              [vdso]
+7fc0015000-7fc0037000 rw-p 00000000 00:00 0                              [stack]
+Total number of mappings: 102
+
+
+VM Arguments:
+jvm_args: --illegal-access=permit --add-opens=java.base/java.lang=ALL-UNNAMED -Dorg.gradle.appname=gradle 
+java_command: org.gradle.launcher.GradleMain
+java_class_path (initial): /usr/share/gradle/lib/gradle-launcher-4.4.1.jar
+Launcher Type: SUN_STANDARD
+
+[Global flags]
+     intx CICompilerCount                          = 4                                         {product} {ergonomic}
+     uint ConcGCThreads                            = 2                                         {product} {ergonomic}
+     uint G1ConcRefinementThreads                  = 8                                         {product} {ergonomic}
+   size_t G1HeapRegionSize                         = 2097152                                   {product} {ergonomic}
+   size_t InitialHeapSize                          = 186646528                                 {product} {ergonomic}
+   size_t MarkStackSize                            = 4194304                                   {product} {ergonomic}
+   size_t MaxHeapSize                              = 2956984320                                {product} {ergonomic}
+   size_t MaxNewSize                               = 1774190592                                {product} {ergonomic}
+   size_t MinHeapDeltaBytes                        = 2097152                                   {product} {ergonomic}
+   size_t MinHeapSize                              = 8388608                                   {product} {ergonomic}
+    uintx NonNMethodCodeHeapSize                   = 5839564                                {pd product} {ergonomic}
+    uintx NonProfiledCodeHeapSize                  = 122909338                              {pd product} {ergonomic}
+    uintx ProfiledCodeHeapSize                     = 122909338                              {pd product} {ergonomic}
+    uintx ReservedCodeCacheSize                    = 251658240                              {pd product} {ergonomic}
+     bool SegmentedCodeCache                       = true                                      {product} {ergonomic}
+   size_t SoftMaxHeapSize                          = 2956984320                             {manageable} {ergonomic}
+     bool UseCompressedOops                        = true                           {product lp64_product} {ergonomic}
+     bool UseG1GC                                  = true                                      {product} {ergonomic}
+
+Logging:
+Log output configuration:
+ #0: stdout all=warning uptime,level,tags foldmultilines=false
+ #1: stderr all=off uptime,level,tags foldmultilines=false
+
+Environment Variables:
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/games:/usr/games:/data/data/com.termux/files/usr/bin:/system/bin:/system/xbin
+LANG=en_US.UTF-8
+TERM=xterm-256color
+TMPDIR=/tmp
+
+Active Locale:
+LC_ALL=C
+LC_COLLATE=C
+LC_CTYPE=C
+LC_MESSAGES=C
+LC_MONETARY=C
+LC_NUMERIC=C
+LC_TIME=C
+
+Signal Handlers:
+   SIGSEGV: 0x000000780f861330 in libjvm.so+15405872, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+    SIGBUS: 0x000000780f861330 in libjvm.so+15405872, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+    SIGFPE: 0x000000780f861330 in libjvm.so+15405872, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+   SIGPIPE: 0x000000780f718ce0 in libjvm.so+14060768, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, blocked
+   SIGXFSZ: 0x000000780f718ce0 in libjvm.so+14060768, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, blocked
+    SIGILL: 0x000000780f861330 in libjvm.so+15405872, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+   SIGUSR2: 0x000000780f71a640 in libjvm.so+14067264, mask=00000000000000000000000000000000, flags=SA_RESTART|SA_SIGINFO, blocked
+    SIGHUP: SIG_DFL, mask=00000000000000000000000000000000, flags=none, blocked
+    SIGINT: SIG_DFL, mask=00000000000000000000000000000000, flags=none, blocked
+   SIGTERM: SIG_DFL, mask=00000000000000000000000000000000, flags=none, blocked
+   SIGQUIT: 0x000000780f718260 in libjvm.so+14058080, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, blocked
+   SIGTRAP: 0x000000780f861330 in libjvm.so+15405872, mask=11100100010111111101111111111110, flags=SA_RESTART|SA_SIGINFO, unblocked
+
+
+Periodic native trim disabled
+
+---------------  S Y S T E M  ---------------
+
+OS:
+DISTRIB_ID=Ubuntu
+DISTRIB_RELEASE=23.10
+DISTRIB_CODENAME=mantic
+DISTRIB_DESCRIPTION="Ubuntu 23.10"
+uname: Linux 6.2.1-PRoot-Distro #1 SMP PREEMPT Tue Jul 18 17:01:24 UTC 2023 aarch64
+OS uptime: 3 days 3:49 hours
+libc: glibc 2.38 NPTL 2.38 
+rlimit (soft/hard): STACK 8192k/infinity , CORE 0k/infinity , NPROC 43803/43803 , NOFILE 32768/32768 , AS infinity/infinity , CPU infinity/infinity , DATA infinity/infinity , FSIZE infinity/infinity , MEMLOCK 65536k/65536k
+load average: 1.54 3.05 3.45
+
+/proc/meminfo:
+MemTotal:       11550348 kB
+MemFree:          375156 kB
+MemAvailable:    3423656 kB
+Buffers:            3928 kB
+Cached:          3199260 kB
+SwapCached:       245412 kB
+Active:          2323064 kB
+Inactive:        3501660 kB
+Active(anon):    1307056 kB
+Inactive(anon):  2091936 kB
+Active(file):    1016008 kB
+Inactive(file):  1409724 kB
+Unevictable:      683500 kB
+Mlocked:           93244 kB
+SwapTotal:      12582908 kB
+SwapFree:        6072100 kB
+Dirty:               248 kB
+Writeback:             0 kB
+AnonPages:       3127872 kB
+Mapped:          1197476 kB
+Shmem:            691412 kB
+KReclaimable:     820772 kB
+Slab:            1188300 kB
+SReclaimable:     289048 kB
+SUnreclaim:       899252 kB
+KernelStack:      150496 kB
+ShadowCallStack:   37664 kB
+PageTables:       264500 kB
+NFS_Unstable:          0 kB
+Bounce:                0 kB
+WritebackTmp:          0 kB
+CommitLimit:    18358080 kB
+Committed_AS:   272863652 kB
+VmallocTotal:   263061440 kB
+VmallocUsed:      399056 kB
+VmallocChunk:          0 kB
+Percpu:            44512 kB
+AnonHugePages:         0 kB
+ShmemHugePages:        0 kB
+ShmemPmdMapped:        0 kB
+FileHugePages:         0 kB
+FilePmdMapped:         0 kB
+CmaTotal:         266240 kB
+CmaFree:               0 kB
+
+/sys/kernel/mm/transparent_hugepage/enabled: always madvise [never]
+/sys/kernel/mm/transparent_hugepage/defrag (defrag/compaction efforts parameter): always defer defer+madvise [madvise] never
+
+Process Memory:
+Virtual Size: 3811336K (peak: 3876872K)
+Resident Set Size: 16728K (peak: 16728K) (anon: 3212K, file: 13516K, shmem: 0K)
+Swapped out: 0K
+C-Heap outstanding allocations: 17544K, retained: 859K
+glibc malloc tunables: (default)
+
+/proc/sys/kernel/threads-max (system-wide limit on the number of threads): <Not Available>
+/proc/sys/vm/max_map_count (maximum number of memory map areas a process may have): <Not Available>
+/proc/sys/kernel/pid_max (system-wide limit on number of process identifiers): <Not Available>
+
+container information not found.
+Steal ticks since vm start: 0
+Steal ticks percentage since vm start:  0.000
+
+CPU: total 8 (initial active 8) 0x41:0x1:0xd41:2(0xd05), fp, asimd, evtstrm, aes, pmull, sha1, sha256, crc32, lse, dcpop
+/proc/cpuinfo:
+processor	: 0
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x2
+CPU part	: 0xd05
+CPU revision	: 0
+
+processor	: 1
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x2
+CPU part	: 0xd05
+CPU revision	: 0
+
+processor	: 2
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x2
+CPU part	: 0xd05
+CPU revision	: 0
+
+processor	: 3
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x2
+CPU part	: 0xd05
+CPU revision	: 0
+
+processor	: 4
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x1
+CPU part	: 0xd41
+CPU revision	: 2
+
+processor	: 5
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x1
+CPU part	: 0xd41
+CPU revision	: 2
+
+processor	: 6
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x1
+CPU part	: 0xd41
+CPU revision	: 2
+
+processor	: 7
+BogoMIPS	: 38.40
+Features	: fp asimd evtstrm aes pmull sha1 sha2 crc32 atomics fphp asimdhp cpuid asimdrdm lrcpc dcpop asimddp
+CPU implementer	: 0x41
+CPU architecture: 8
+CPU variant	: 0x1
+CPU part	: 0xd41
+CPU revision	: 2
+
+
+Online cpus: 0-7
+Offline cpus: 
+
+Memory: 4k page, physical 11550348k(3423656k free), swap 12582908k(6072100k free)
+Page Sizes: 4k
+
+vm_info: OpenJDK 64-Bit Server VM (22-ea+16-Ubuntu-1) for linux-aarch64 JRE (22-ea+16-Ubuntu-1), built on 2023-09-26T09:59:51Z by "buildd" with gcc 13.2.0
+
+END.

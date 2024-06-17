@@ -14,7 +14,6 @@ public class MainActivity extends Activity implements OnTouchListener
 {
 	AppDisplay mDisplay;
 	Platform platform;
-	WakelockApplication wl;
 	
 	// Buttons
 	private Button
@@ -43,7 +42,6 @@ public class MainActivity extends Activity implements OnTouchListener
 		mDisplay = findViewById(R.id.mainDisplay);
 		
 		initAndStart();
-		wl.startWakelock();
 	}
 	
 	@Override
@@ -160,7 +158,6 @@ public class MainActivity extends Activity implements OnTouchListener
 
 	private void initAndStart() {
 		platform = new Platform(this, mDisplay);
-		wl = new WakelockApplication(this);
 		
 		// Buttons
 		mButtonCoin = findViewById(R.id.btn_p1_coin);
