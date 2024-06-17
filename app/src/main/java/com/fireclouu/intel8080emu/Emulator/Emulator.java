@@ -12,9 +12,7 @@ public class Emulator implements IOAdapter
 	
 	private Interpreter interpreter;
 	private PrintTrace print;
-	
-	StringUtils.Component machineUtils;
-	
+
 	// Timer and interrupts
 	private final double NANO_SEC = 1_000_000.0; // template
 	
@@ -261,14 +259,6 @@ public class Emulator implements IOAdapter
 	}
 	
 	// DEBUGGING
-	public static void PAUSE_THREAD(int mills) {
-		try {
-			Thread.sleep(mills);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-
 	private void runTest(CpuComponents cpu) {
 		int counter = 0;
 		for (String name : StringUtils.File.FILES) {

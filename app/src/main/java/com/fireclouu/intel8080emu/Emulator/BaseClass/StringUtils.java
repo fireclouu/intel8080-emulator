@@ -1,5 +1,7 @@
 package com.fireclouu.intel8080emu.Emulator.BaseClass;
 
+import android.os.Environment;
+
 import java.util.*;
 
 public final class StringUtils
@@ -48,7 +50,7 @@ public final class StringUtils
 
 		public static final boolean PRINT_LESS = true;
 		public static final int PROGRAM_LENGTH = 0x10_000;
-		public static final String STORAGE_LOCATION = "/sdcard/Download/";
+		public static final String STORAGE_LOCATION = Environment.getExternalStorageDirectory().getPath() + "Download/";
 		public static final long MAX_CYCLE_SPEED_PER_SECOND = 2_000_000;
 	}
 }

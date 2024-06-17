@@ -1,8 +1,5 @@
 package com.fireclouu.intel8080emu.Emulator;
 
-import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
-import java.util.*;
-
 public class Interpreter
 {
 	static short cyc = 0;
@@ -30,9 +27,6 @@ public class Interpreter
 
 	/// MAIN EMULATION
 	public short emulate8080(CpuComponents cpu) {
-		// temporary containers
-		int res;
-
 		// opcode
 		int opcode = cpu.PC;
 

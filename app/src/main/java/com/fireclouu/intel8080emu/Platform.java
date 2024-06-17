@@ -59,12 +59,6 @@ public class Platform extends PlatformAdapter implements ResourceAdapter
 	}
 
 	@Override
-	public void stop(int id)
-	{
-		// Do not use!
-	}
-
-	@Override
 	public void reloadResource()
 	{
 		setEffectShipIncoming(R.raw.ship_incoming);

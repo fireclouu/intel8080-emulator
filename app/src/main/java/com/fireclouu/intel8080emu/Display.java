@@ -84,33 +84,32 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	@Override
 	public float[] getPos(int orientation) {
 		
-		plotList = new ArrayList<Float>();
+		plotList = new ArrayList<>();
 
 		short vram = INIT_VRAM;
 		float[] plot;
 		int counter = 0;
 		
-		int x = 0, y = 0;
+		int x = 0;
+		int y = 0;
 		int cond_x;
 		int cond_y;
 		
 		boolean swap = false;
 		int setBit;
-		
-		switch (orientation) {
-			case ORIENTATION_COUNTERCLOCK:
-				x = -DISPLAY_WIDTH;
-				y = 0;
-				setBit = -1;
-				
-				// swap
-				swap = true;
-				break;
-			default:
-				x = 0;
-				y = 0;
-				setBit = 1;
-		}
+
+        if (orientation == ORIENTATION_COUNTERCLOCK) {
+            x = -DISPLAY_WIDTH;
+            y = 0;
+            setBit = -1;
+
+            // swap
+            swap = true;
+        } else {
+            x = 0;
+            y = 0;
+            setBit = 1;
+        }
 		
 		// automate
 		cond_x = (x == 0) ? DISPLAY_WIDTH  : 0;

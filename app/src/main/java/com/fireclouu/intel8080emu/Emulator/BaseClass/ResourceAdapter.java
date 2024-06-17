@@ -10,8 +10,6 @@ public interface ResourceAdapter
 	void setEffectShipHit(int id);
 
 	void playSound(int id, int loop);
-	void stop(int id);
-
 	void reloadResource();
 
 	// special stream for looping sfx

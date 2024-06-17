@@ -22,7 +22,7 @@ public class CpuComponents
 	public short[] memory;
 
 	///  CONDITIONALS  ///
-	public ConditionCodes cc;
+	ConditionCodes cc;
 
 	///  INTERRUPT  ///
 	public byte int_enable;
