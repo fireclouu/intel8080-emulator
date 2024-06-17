@@ -5,8 +5,17 @@
 
 ### Platforms
 <strong>
-<a href="https://github.com/fireclouu/space_invaders_android/releases/download/0.1/app_min_android10_spaceinvader.apk">Android</a>
+  
+<a href="https://github.com/fireclouu/space_invaders_android/releases/download/release/app-release.apk">Android</a>
 </strong>
+
+
+```text
+Version 1.3
+- fixes to few deprecated libraries
+- optimizations by removing unused flags
+- fixed adaptive display size
+```
 
 ```text
 Version 0.1
