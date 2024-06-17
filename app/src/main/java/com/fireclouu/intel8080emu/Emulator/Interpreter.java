@@ -543,12 +543,7 @@ public class Interpreter
 	}
 	// ORA, ORI
 	private void ORA(CpuComponents cpu, int var) {
-		/*cpu.A |= var;
-		 flags_zsp(cpu, cpu.A);
-		 cpu.cc.CY = 0; // fixed value
-		 cpu.cc.AC = 0;*/
-
-		cpu.A |= (var & 0xff);
+		cpu.A |= (short) (var & 0xff);
 		cpu.cc.CY = cpu.cc.AC = 0;
 		flags_zsp(cpu, cpu.A);
 	}
@@ -577,12 +572,7 @@ public class Interpreter
 
 	// XRA, XRI
 	private void XRA(CpuComponents cpu, int var) {
-		/*cpu.A ^= var;
-		 flags_zsp(cpu, cpu.A);
-		 cpu.cc.CY = 0; // fixed value
-		 cpu.cc.AC = 0; */
-
-		cpu.A ^= (var & 0xff);
+		cpu.A ^= (short) (var & 0xff);
 		cpu.cc.CY = cpu.cc.AC = 0;
 		flags_zsp(cpu, cpu.A);
 	}
@@ -662,15 +652,14 @@ public class Interpreter
 		// prepare variable higher than 0xff, but with 0's in bit 0-7
 		// this way, it serves as flags' default state waiting to be flipped, like a template
 		// also helps to retain flags proper positioning
-		int PSW = 0x100;
 		// skip pos 5 and 3, it does not need to be flipped since it is by default, a 0 value
-		PSW =
+		int PSW =
 			(cpu.cc.S     <<  7)  |   // place sign flag status on pos 7
 			(cpu.cc.Z     <<  6)  |   // place zero flag status on pos 6
 			(cpu.cc.AC    <<  4)  |   // place aux. carry flag status on pos 4
 			(cpu.cc.P     <<  2)  |   // place parity flag status on pos 2
 			(1            <<  1)  |
-			(cpu.cc.CY    <<  0)  ;   // place carry flag status on pos 0
+			(cpu.cc.CY)  ;   // place carry flag status on pos 0
 		cpu.memory[(cpu.SP - 2) & 0xffff] = (short) (PSW & 0xff); // cut to 8 bit after
 		cpu.SP = (cpu.SP - 2) & 0xffff;
 	}
