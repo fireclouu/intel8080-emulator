@@ -10,6 +10,6 @@ public interface DisplayAdapter
 	byte ORIENTATION_COUNTERCLOCK = 1;
 	
 	void updateView(short[] memory);
-	float[] getPos(int orientation);
+	float[] convertVramToFloatPoints(int orientation);
 	void startDisplay();
 }

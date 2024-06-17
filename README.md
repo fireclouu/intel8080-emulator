@@ -37,3 +37,4 @@ Button face Graphics assets:
 ### Resources
 - [emulator101](http://emulator101.com/)
 - [superzazu](https://github.com/superzazu/8080)
+- <a href="https://www.flaticon.com/free-icons/space-invaders" title="space invaders icons">Space invaders icons created by IconMark - Flaticon</a>
