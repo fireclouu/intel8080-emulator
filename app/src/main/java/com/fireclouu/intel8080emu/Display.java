@@ -179,15 +179,11 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	class DrawThread implements Runnable {
 	@Override
 	public void run() {
-    boolean surfaceFlag = false;
 		while (!holder.getSurface().isValid()) {
-      if (!surfaceFlag) {
-          surfaceFlag = true;
-          PIXEL_SIZE = getAdaptiveSize();
-          PIXEL_SIZE_WIDTH = PIXEL_SIZE;
-          PIXEL_SIZE_HEIGHT = PIXEL_SIZE;
-          paintWhite.setStrokeWidth(PIXEL_SIZE);
-      }
+        PIXEL_SIZE = getAdaptiveSize();
+        PIXEL_SIZE_WIDTH = PIXEL_SIZE;
+        PIXEL_SIZE_HEIGHT = PIXEL_SIZE;
+        paintWhite.setStrokeWidth(PIXEL_SIZE);
 		}
 
 		while(Emulator.stateMaster) {
@@ -209,7 +205,6 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 			} else {
 				canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintRed);
 			}
-
 			// canvas.drawText("fireclouu", (int) (getWidth() / 1.1), getHeight() - 10, paintWhite);
 			// release
 			holder.unlockCanvasAndPost(canvas);
