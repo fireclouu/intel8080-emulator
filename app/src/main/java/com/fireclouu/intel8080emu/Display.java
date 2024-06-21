@@ -39,8 +39,8 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	public static final int DIMENSION_HEIGHT = 1;
 
 	// fix reverse
-	public static final int GUEST_WIDTH = 224;
-	public static final int GUEST_HEIGHT = 256;
+	public static final int GUEST_WIDTH = 256;
+	public static final int GUEST_HEIGHT = 224;
 
 	Paint paintRed, paintWhite, paintGreen, paintText;
 
@@ -128,49 +128,20 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		float[] plot;
 		int counter = 0;
 
-		int x = 0;
-		int y = 0;
-		int cond_x;
-		int cond_y;
-
 		boolean swap = false;
-		int setBit;
 
     if (orientation == ORIENTATION_COUNTERCLOCK) {
-        x = -DISPLAY_WIDTH;
-        y = 0;
-        setBit = -1;
-
-        // swap
-        swap = true;
-    } else {
-        x = 0;
-        y = 0;
-        setBit = 1;
-    }
-
-		// automate
-		cond_x = (x == 0) ? DISPLAY_WIDTH  : 0;
-		cond_y = (y == 0) ? DISPLAY_HEIGHT : 0;
-
 		int hostWidth = getWidth();
 		int hostHeight = getHeight();
 
-		for (int ty = y; ty < cond_y; ty++) {
-			for (int tx = x; tx < cond_x; tx += 8) {
+		for (int ty = 0; ty < GUEST_HEIGHT; ty++) {
+			for (int tx = 0; tx < GUEST_WIDTH; tx++) {
 				short data = this.memory[vram++];	// increment location of vram to decode
         if (data == 0) continue;
 				for (int bit = 0; bit < 8; bit++) {
 					if (((data >> bit) & 1) == 1) {
-							tx = (hostWidth / 3) + tx;
-							ty = (hostHeight / 3) + ty;
-						if (swap) {
+							plotList.add((Math.abs(tx) + (bit)) * PIXEL_SIZE_WIDTH);
 							plotList.add((Math.abs(ty)) * PIXEL_SIZE_HEIGHT);
-							plotList.add((Math.abs(tx) + (bit * setBit)) * PIXEL_SIZE_WIDTH);
-						} else {
-							plotList.add((Math.abs(tx) + (bit * setBit)) * PIXEL_SIZE_WIDTH);
-							plotList.add((Math.abs(ty)) * PIXEL_SIZE_HEIGHT);
-						}
 					}
 				}
 			}
