@@ -151,6 +151,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		for (float pos : plotList) plot[counter++] = pos;
 		return plot;
 	}
+	}
 
   public float[] convertVramToFloatPoints2(short[] memory) {
       float[] returnValue = null;
