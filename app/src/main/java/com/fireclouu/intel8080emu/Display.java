@@ -130,7 +130,6 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 
 		boolean swap = false;
 
-    if (orientation == ORIENTATION_COUNTERCLOCK) {
 		int hostWidth = getWidth();
 		int hostHeight = getHeight();
 
@@ -150,7 +149,6 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		plot = new float[plotList.size()];
 		for (float pos : plotList) plot[counter++] = pos;
 		return plot;
-	}
 	}
 
   public float[] convertVramToFloatPoints2(short[] memory) {
