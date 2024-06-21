@@ -153,12 +153,17 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		cond_x = (x == 0) ? DISPLAY_WIDTH  : 0;
 		cond_y = (y == 0) ? DISPLAY_HEIGHT : 0;
 
+		int hostWidth = getWidth();
+		int hostHeight = getHeight();
+
 		for (int ty = y; ty < cond_y; ty++) {
 			for (int tx = x; tx < cond_x; tx += 8) {
 				short data = this.memory[vram++];	// increment location of vram to decode
         if (data == 0) continue;
 				for (int bit = 0; bit < 8; bit++) {
 					if (((data >> bit) & 1) == 1) {
+							tx = (hostWidth / 3) + tx;
+							ty = (hostHeight / 3) + ty;
 						if (swap) {
 							plotList.add((Math.abs(ty)) * PIXEL_SIZE_HEIGHT);
 							plotList.add((Math.abs(tx) + (bit * setBit)) * PIXEL_SIZE_WIDTH);
