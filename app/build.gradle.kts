@@ -11,7 +11,7 @@ android {
         applicationId = "com.fireclouu.intel8080emu"
 
         // Defines the minimum API level required to run the app.
-        minSdk = 21
+        minSdk = 23
 
         // Specifies the API level used to test the app.
         targetSdk = 33
