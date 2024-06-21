@@ -137,8 +137,12 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
         if (data == 0) continue;
 				for (int bit = 0; bit < 8; bit++) {
 					if (((data >> bit) & 1) == 1) {
+						/*
 							plotList.add((Math.abs(tx)) * PIXEL_SIZE_WIDTH);
 							plotList.add((Math.abs(ty)) * PIXEL_SIZE_HEIGHT);
+							*/
+						plotList.add(tx);
+						plotList.add(ty);
 					}
 				}
 			}
