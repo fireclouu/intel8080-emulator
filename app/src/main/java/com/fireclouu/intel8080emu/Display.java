@@ -19,6 +19,7 @@ import java.util.ArrayList;
 
 public class Display extends SurfaceView implements SurfaceHolder.Callback, DisplayAdapter
 {
+
 	// get float value only
 	// on emulation class devise array that can hold 0x2400 - 0x3fff and pass it here
 	// do the loop here! instead of looping on another class
@@ -33,6 +34,13 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	private float PIXEL_SIZE = 3.18f;
 	private float PIXEL_SIZE_WIDTH = PIXEL_SIZE;
 	private float PIXEL_SIZE_HEIGHT = PIXEL_SIZE;
+
+	public static final int DIMENSION_WIDTH = 0;
+	public static final int DIMENSION_HEIGHT = 1;
+
+	// fix reverse
+	public static final int GUEST_WIDTH = 224;
+	public static final int GUEST_HEIGHT = 256;
 
 	Paint paintRed, paintWhite, paintGreen, paintText;
 
@@ -73,6 +81,40 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 
 		paintText = setPaint(Color.WHITE);
 		paintText.setTextSize(12);
+	}
+
+	public int getSurfaceMaxDimension() {
+		int returnValue = getWidth() > getHeight() ? DIMENSION_WIDTH : DIMENSION_HEIGHT;
+		return returnValue;
+	}
+	
+	public float getScaleValue(int orientation) {
+		float returnValue = orientation == DIMENSION_WIDTH ?
+			(float) (GUEST_WIDTH  / getWidth()) :
+			(float) (GUEST_HEIGHT / getHeight());
+		return returnValue;
+	}
+	
+	public boolean isScaleValueFits(float scale) {
+		boolean returnValue = false;
+		float newWidth  = scale * GUEST_WIDTH;
+		float newHeight = scale * GUEST_HEIGHT;
+		
+		returnValue = (newWidth < getWidth() && newHeight < getHeight()) ;
+		
+		return returnValue;
+	}
+	
+	public float getScaleValueLogical() {
+		int maxDimension = getSurfaceMaxDimension();
+		float scaleValue = getScaleValue(maxDimension);
+		boolean isFitToHostDisplay = isScaleValueFits(scaleValue);
+		if (!isFitToHostDisplay) {
+			maxDimension = maxDimension == DIMENSION_WIDTH ? DIMENSION_HEIGHT : DIMENSION_WIDTH;
+			scaleValue = getScaleValue(maxDimension);
+			// do not check fit host, return value immediately
+		}
+		return scaleValue;
 	}
 
 	@Override
@@ -180,7 +222,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	@Override
 	public void run() {
 		while (!holder.getSurface().isValid()) {
-        PIXEL_SIZE = getAdaptiveSize();
+        PIXEL_SIZE = getScaleValueLogical();
         PIXEL_SIZE_WIDTH = PIXEL_SIZE;
         PIXEL_SIZE_HEIGHT = PIXEL_SIZE;
         paintWhite.setStrokeWidth(PIXEL_SIZE);
