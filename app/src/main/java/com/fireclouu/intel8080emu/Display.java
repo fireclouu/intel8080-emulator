@@ -1,21 +1,12 @@
 package com.fireclouu.intel8080emu;
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.util.AttributeSet;
-import android.util.Log;
-import android.view.SurfaceHolder;
-import android.view.SurfaceView;
-
-import com.fireclouu.intel8080emu.Emulator.BaseClass.DisplayAdapter;
-import com.fireclouu.intel8080emu.Emulator.BaseClass.PlatformAdapter;
-import com.fireclouu.intel8080emu.Emulator.BaseClass.StringUtils;
-import com.fireclouu.intel8080emu.Emulator.Emulator;
-import com.fireclouu.intel8080emu.Emulator.Interpreter;
-
-import java.util.ArrayList;
+import android.content.*;
+import android.graphics.*;
+import android.util.*;
+import android.view.*;
+import com.fireclouu.intel8080emu.Emulator.*;
+import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
+import java.util.*;
 
 public class Display extends SurfaceView implements SurfaceHolder.Callback, DisplayAdapter
 {
@@ -28,20 +19,19 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	Thread master;
 	Canvas canvas;
 
-	// make adaptive
-	private final float GUEST_MACHINE_WIDTH = 224f;
-	private final float GUEST_MACHINE_HEIGHT = 256f;
 	private float PIXEL_SIZE = 3.18f;
 	private float PIXEL_SIZE_WIDTH = PIXEL_SIZE;
 	private float PIXEL_SIZE_HEIGHT = PIXEL_SIZE;
+	private int drawOrientation = DRAW_ORIENTATION_PORTRAIT;
 
 	public static final int DIMENSION_WIDTH = 0;
 	public static final int DIMENSION_HEIGHT = 1;
 
-	// fix reverse
 	public static final int GUEST_WIDTH = 256;
 	public static final int GUEST_HEIGHT = 224;
-
+	
+	private int orientationWidth, orientationHeight;
+	
 	Paint paintRed, paintWhite, paintGreen, paintText;
 
 	private short[] memory;
@@ -50,12 +40,12 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 
 	public Display(Context context) {
 		super(context);
-		init();
+		init(DRAW_ORIENTATION_PORTRAIT);
 	}
 
 	public Display(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		init();
+		init(DRAW_ORIENTATION_PORTRAIT);
 	}
 
 	@Override
@@ -72,7 +62,8 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	public void surfaceDestroyed(SurfaceHolder p1) {
 		// TODO: Implement this method
 	}
-	private void init() {
+	
+	private void init(int orientation) {
 		holder = getHolder();
 
 		paintRed = setPaint(Color.RED);
@@ -81,37 +72,54 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 
 		paintText = setPaint(Color.WHITE);
 		paintText.setTextSize(12);
+		
+		if (orientation == DRAW_ORIENTATION_PORTRAIT) {
+			orientationWidth = GUEST_HEIGHT;
+			orientationHeight = GUEST_WIDTH;
+		} else {
+			orientationWidth = GUEST_WIDTH;
+			orientationHeight = GUEST_HEIGHT;
+		}
 	}
 
-	public int getSurfaceMaxDimension() {
+	public int getHostMaxDimension() {
 		int returnValue = getWidth() > getHeight() ? DIMENSION_WIDTH : DIMENSION_HEIGHT;
 		return returnValue;
 	}
-	public float getScaleValue(int orientation) {
+	
+	public float getHostScalingValue(int orientation) {
 		float returnValue = orientation == DIMENSION_WIDTH ?
-			(float) ((float) getWidth() / (float) GUEST_WIDTH) :
-			(float) ((float) getHeight() /(float) GUEST_HEIGHT);
+			(float) ((float) getWidth() / (float) orientationWidth) :
+			(float) ((float) getHeight() /(float) orientationHeight);
 		return returnValue;
 	}
 	
 	public boolean isScaleValueFits(float scale) {
 		boolean returnValue = false;
-		float newWidth  = scale * GUEST_WIDTH;
-		float newHeight = scale * GUEST_HEIGHT;
-		
+		float newWidth  = scale * orientationWidth;
+		float newHeight = scale * orientationHeight;
 		returnValue = (newWidth < getWidth() && newHeight < getHeight()) ;
-		
 		return returnValue;
 	}
 	
+	private float getCenterOffset(float maxValue) {
+		float offset = 0;
+		
+		int dimensionSize = getHostMaxDimension() == DIMENSION_HEIGHT ? getWidth() : getHeight();
+		float centerPointHost = dimensionSize / 2;
+		float centerPointGuest = maxValue / 2;
+		offset = Math.abs(centerPointHost);
+		return offset;
+	}
+	
 	public float getScaleValueLogical() {
-		int maxDimension = getSurfaceMaxDimension();
-		float scaleValue = getScaleValue(maxDimension);
+		int maxDimension = getHostMaxDimension();
+		float scaleValue = getHostScalingValue(maxDimension);
 		boolean isFitToHostDisplay = isScaleValueFits(scaleValue);
 		if (!isFitToHostDisplay) {
 			maxDimension = maxDimension == DIMENSION_WIDTH ? DIMENSION_HEIGHT : DIMENSION_WIDTH;
-			scaleValue = getScaleValue(maxDimension);
-			// do not check fit host, return value immediately
+			scaleValue = getHostScalingValue(maxDimension);
+			// do not check if fit to host, return value immediately
 		}
 		return scaleValue;
 	}
@@ -121,43 +129,68 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		this.memory = memory;
 	}
 
-	@Override
-	public float[] convertVramToFloatPoints(int orientation) {
-	  ArrayList<Float> plotList = new ArrayList<>();
-		short vram = INIT_VRAM;
-		float[] plot;
+	public float[] convertVramToFloatPoints(int drawOrientation)
+	{
+		float centerOffset = getCenterOffset(orientationWidth + PIXEL_SIZE);
+		final float spacing = PIXEL_SIZE;
+		List<Float> plotList = new ArrayList<>();
+		float[] returnValue;
 		int counter = 0;
+		float mapX = 0;
+		float mapY = 0;
+		float translateX = 0;
+		float translateY = 0;
+		
+		int vramNormalized;
+		int data;
+		if (drawOrientation == DRAW_ORIENTATION_PORTRAIT) {
+			orientationWidth = GUEST_HEIGHT;
+			orientationHeight = GUEST_WIDTH;
+		} else {
+			orientationWidth = GUEST_WIDTH;
+			orientationHeight = GUEST_HEIGHT;
+		}
+		
+		// TODO: needs testing , if screen glitches
+		// change GUEST_WIDTH to orientationWidth
+		final int guestLinearDataLength = GUEST_WIDTH / 8;
+		
+		for (int vramPc = Machine.VRAM_START; vramPc <= Machine.VRAM_END; vramPc++) {
+			data = this.memory[vramPc];
+			vramNormalized = vramPc - Machine.VRAM_START;
 
-		// int hostWidth = getWidth();
-		// int hostHeight = getHeight();
-
-		for (int ty = 0; ty < GUEST_HEIGHT; ty++) {
-			for (int tx = 0; tx < GUEST_WIDTH; tx++) {
-				short data = this.memory[vram++];	// increment location of vram to decode
-        if (data == 0) continue;
-				for (int bit = 0; bit < 8; bit++) {
-					if (((data >> bit) & 1) == 1) {
-						/*
-							plotList.add((Math.abs(tx)) * PIXEL_SIZE_WIDTH);
-							plotList.add((Math.abs(ty)) * PIXEL_SIZE_HEIGHT);
-							*/
-						plotList.add(tx);
-						plotList.add(ty);
-					}
+			// draws
+			mapY = vramNormalized == 0 ? 0 : vramNormalized / guestLinearDataLength;
+			for (int bit = 0; bit < 8; bit++) {
+				int pixel = ((data >> bit) & 1);
+				if (pixel == 0) continue;
+				
+				mapX = bit + (8 * (vramNormalized % guestLinearDataLength));
+				
+				// translate pixel
+				if (drawOrientation == DRAW_ORIENTATION_PORTRAIT) {
+					translateX = mapY;
+					translateY = Math.abs(mapX - orientationHeight);
+				} else {
+					translateX = mapX;
+					translateY = mapY;
 				}
+				
+				// translateX *= pixel;
+				// translateY *= pixel;
+				
+				// translateX += centerOffset;
+				// translateY += centerOffset;
+				
+				plotList.add((translateX * spacing));
+				plotList.add((translateY * spacing));
 			}
 		}
 
-		plot = new float[plotList.size()];
-		for (float pos : plotList) plot[counter++] = pos;
-		return plot;
+		returnValue = new float[plotList.size()];
+		for (float pos : plotList) returnValue[counter++] = pos;
+		return returnValue;
 	}
-
-  public float[] convertVramToFloatPoints2(short[] memory) {
-      float[] returnValue = null;
-      ArrayList<Float> plotArray = new ArrayList<>();
-      return returnValue;
-  }
 
 	@Override
 	public void startDisplay() {
@@ -186,31 +219,21 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		return String.format("fps: %.2f", fps);
 	}
 
-	private float getAdaptiveSize() {
-		float width = getWidth();
-		float height = getHeight();
-		Log.i(StringUtils.TAG, "WIDTH: " + width + " HEIGHT: " + height);
-		// preserve aspect ration by not calculating height
-		return width / GUEST_MACHINE_WIDTH;
-	}
-
 	class DrawThread implements Runnable {
 	@Override
 	public void run() {
 		while (!holder.getSurface().isValid()) {
-        PIXEL_SIZE = getScaleValueLogical();
-        PIXEL_SIZE_WIDTH = PIXEL_SIZE;
-        PIXEL_SIZE_HEIGHT = PIXEL_SIZE;
-        paintWhite.setStrokeWidth(PIXEL_SIZE);
+        	PIXEL_SIZE = getScaleValueLogical();
+        	paintWhite.setStrokeWidth(PIXEL_SIZE + 0.5f);
 		}
 
 		while(Emulator.stateMaster) {
 			if (!holder.getSurface().isValid() && !holder.isCreating()) continue;
 
 			// canvas
-			canvas = holder.lockCanvas();
+			canvas = holder.getSurface().lockHardwareCanvas();
 			canvas.drawColor(Color.BLACK);
-			canvas.drawPoints(convertVramToFloatPoints(ORIENTATION_COUNTERCLOCK), paintWhite);
+			canvas.drawPoints(convertVramToFloatPoints(drawOrientation), paintWhite);
 			canvas.drawText(Platform.OUT_MSG, 0, 10, paintWhite);
 
 			// fps
@@ -225,7 +248,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 			}
 			// canvas.drawText("fireclouu", (int) (getWidth() / 1.1), getHeight() - 10, paintWhite);
 			// release
-			holder.unlockCanvasAndPost(canvas);
+			holder.getSurface().unlockCanvasAndPost(canvas);
 		}
 	}
 }
