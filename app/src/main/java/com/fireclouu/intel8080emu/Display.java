@@ -87,11 +87,10 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		int returnValue = getWidth() > getHeight() ? DIMENSION_WIDTH : DIMENSION_HEIGHT;
 		return returnValue;
 	}
-	
 	public float getScaleValue(int orientation) {
 		float returnValue = orientation == DIMENSION_WIDTH ?
-			(float) (GUEST_WIDTH  / getWidth()) :
-			(float) (GUEST_HEIGHT / getHeight());
+			(float) ((float) getWidth() / (float) GUEST_WIDTH) :
+			(float) ((float) getHeight() /(float) GUEST_HEIGHT);
 		return returnValue;
 	}
 	
