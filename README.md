@@ -12,6 +12,16 @@ Playable Space Invaders machine emulation with **Intel 8080 CPU interpreter**, w
 [![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/fireclouu/space_invaders_android/releases/download/release/app-release.apk)
 
 ```text
+Version latest-debug
+Android
+- rewrite and optimized surface draw function
+- accurately mapping VRAM pixel points to host
+- dyanmic orientation changes
+- performance boost by fixing incorrect hardware canvas implementation
+- correct aspect ratio display on dynamic windows
+- smoother canvas blits
+```
+```text
 Version 1.3
 Android
 - fixes to few deprecated libraries
