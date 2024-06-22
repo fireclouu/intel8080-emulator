@@ -13,7 +13,8 @@ Playable Space Invaders machine emulation with **Intel 8080 CPU interpreter**, w
 
 ```text
 Version latest-debug
-Android
+- MMU feature implemented
+- fixed persistent highscore feature
 - rewrite and optimized surface draw function
 - accurately mapping VRAM pixel points to host
 - dyanmic orientation changes
