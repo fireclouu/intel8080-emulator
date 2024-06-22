@@ -28,11 +28,8 @@ Android
 > You can also get latest builds via [Actions](https://github.com/fireclouu/space_invaders_android/actions) tab.
 
 ### Assets
-Sound assets:
-- https://samples.mameworld.info/
-
-Button face Graphics assets:
-- https://ya-webdesign.com
+- [Sound assets](https://samples.mameworld.info/)
+- [Button face Graphics assets](https://ya-webdesign.com)
 
 ### Resources
 - [emulator101](http://emulator101.com/)
