@@ -15,6 +15,7 @@ Playable Space Invaders machine emulation with **Intel 8080 CPU interpreter**, w
 Version latest-debug
 - MMU feature implemented
 - fixed persistent highscore feature
+- fixed button drawable statelists
 - rewrite and optimized surface draw function
 - accurately mapping VRAM pixel points to host
 - dyanmic orientation changes
