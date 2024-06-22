@@ -1,17 +1,12 @@
 package com.fireclouu.intel8080emu;
 
-import android.app.Activity;
-import android.content.Intent;
-import android.os.Bundle;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.WindowManager;
-import android.widget.Button;
+import android.app.*;
+import android.os.*;
+import android.view.*;
+import android.widget.*;
+import com.fireclouu.intel8080emu.Emulator.*;
 
-import com.fireclouu.intel8080emu.Emulator.Emulator;
-import com.fireclouu.intel8080emu.Emulator.Interrupts;
-
-public class MainActivity extends Activity implements View.OnTouchListener
+public class MainActivity extends Activity implements Button.OnTouchListener
 {
 	Display mDisplay;
 	Platform platform;
@@ -23,33 +18,26 @@ public class MainActivity extends Activity implements View.OnTouchListener
 		mButtonP1Left,
 		mButtonP1Right,
 		mButtonP1Fire;
-
-	boolean firstCall = true;
+	
+	private boolean programStarted = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
-		getWindow().addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
-
-		// render to hardware
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED, WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED);
-		
-		// set window first
         super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_emulation);
-		mDisplay = findViewById(R.id.mainDisplay);
 		initAndStart();
 	}
 	
 	@Override
 	protected void onResume() {
-//		platform.appResume();
+		// platform.appResume();
 		super.onResume();
 	}
 
 	@Override
 	protected void onPause() {
-//		platform.appPause();
+		// platform.appPause();
 		super.onPause();
 	}
 
@@ -64,86 +52,74 @@ public class MainActivity extends Activity implements View.OnTouchListener
 	@Override
 	public boolean onTouch(View view, MotionEvent motionEvent)
 	{
+		view.performClick();
 		if (view.getId() == R.id.btn_p1_coin) {
 			switch(motionEvent.getAction() & MotionEvent.ACTION_MASK)
 			{
 				case MotionEvent.ACTION_DOWN:
 					Emulator.port[1] |= Interrupts.KEY_COIN;
-					mButtonCoin.setTextSize(8);
 					break;
 				case MotionEvent.ACTION_UP:
 					Emulator.port[1] &= ~Interrupts.KEY_COIN;
-					mButtonCoin.setTextSize(10);
 					break;
 			}
-			view.performClick();
-			return true;
 		}
 		if (view.getId() == R.id.btn_p1_start) {
 			switch(motionEvent.getAction() & MotionEvent.ACTION_MASK)
 			{
 				case MotionEvent.ACTION_DOWN:
 					Emulator.port[1] |= Interrupts.KEY_START;
-					mButtonP1Start.setTextSize(8);
 					break;
 				case MotionEvent.ACTION_UP:
 					Emulator.port[1] &= ~Interrupts.KEY_START;
-					mButtonP1Start.setTextSize(10);
 					break;
 			}
-			view.performClick();
-			return true;
 		}
 		if (view.getId() == R.id.btn_p1_left) {
 			switch(motionEvent.getAction() & MotionEvent.ACTION_MASK)
 			{
 				case MotionEvent.ACTION_DOWN:
 					Emulator.port[1] |= Interrupts.KEY_LEFT;
-					mButtonP1Left.setTextSize(8);
 					break;
 				case MotionEvent.ACTION_UP:
 					Emulator.port[1] &= ~Interrupts.KEY_LEFT;
-					mButtonP1Left.setTextSize(10);
 					break;
 			}
-			view.performClick();
-			return true;
 		}
 		if (view.getId() == R.id.btn_p1_fire) {
 			switch(motionEvent.getAction() & MotionEvent.ACTION_MASK)
 			{
 				case MotionEvent.ACTION_DOWN:
 					Emulator.port[1] |= Interrupts.KEY_FIRE;
-					mButtonP1Fire.setTextSize(8);
 					break;
 				case MotionEvent.ACTION_UP:
 					Emulator.port[1] &= ~Interrupts.KEY_FIRE;
-					mButtonP1Fire.setTextSize(10);
 					break;
 			}
-			view.performClick();
-			return true;
 		}
 		if (view.getId() == R.id.btn_p1_right) {
 			switch(motionEvent.getAction() & MotionEvent.ACTION_MASK)
 			{
 				case MotionEvent.ACTION_DOWN:
 					Emulator.port[1] |= Interrupts.KEY_RIGHT;
-					mButtonP1Right.setTextSize(8);
 					break;
 				case MotionEvent.ACTION_UP:
 					Emulator.port[1] &= ~Interrupts.KEY_RIGHT;
-					mButtonP1Right.setTextSize(10);
 					break;
 			}
-			view.performClick();
-			return true;
 		}
 		return false;
 	}
-
+	
 	private void initAndStart() {
-		platform = new Platform(this, mDisplay);
+		mDisplay = findViewById(R.id.mainDisplay);
+		
+		if (platform == null) {
+			platform = new Platform(this, mDisplay);
+			Mmu.platform = platform;
+		} else {
+			platform.setDisplay(mDisplay);
+		}
 		
 		// Buttons
 		mButtonCoin = findViewById(R.id.btn_p1_coin);
@@ -159,7 +135,10 @@ public class MainActivity extends Activity implements View.OnTouchListener
 		mButtonP1Right.setOnTouchListener(this);
 		
 		// Run
-		platform.startOp();
+		if (!programStarted) {
+			programStarted = true;
+			platform.startOp();
+		}
 	}
 	
 }

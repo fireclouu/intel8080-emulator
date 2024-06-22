@@ -1,11 +1,11 @@
 package com.fireclouu.intel8080emu.Emulator;
 
-public class PrintTrace
+public class Disassembler
 {
 	///  PRINT INST.  ///
 
 	// SOURCE: superzazu
-	static String[] DISASSEMBLE_TABLE= {
+	public final static String[] DISASSEMBLE_TABLE = {
 		"nop", "lxi b,#", "stax b", "inx b", "inr b", "dcr b", "mvi b,#", "rlc",
 		"ill", "dad b", "ldax b", "dcx b", "inr c", "dcr c", "mvi c,#", "rrc",
 		"ill", "lxi d,#", "stax d", "inx d", "inr d", "dcr d", "mvi d,#", "ral",
@@ -42,13 +42,13 @@ public class PrintTrace
 		"rst 6", "rm", "sphl", "jm $", "ei", "cm $", "ill", "cpi #", "rst 7"
 	};
 
-	public void printInstruction(CpuComponents cpu, boolean printLess) {
+	public void print(CpuComponents cpu, boolean verbose) {
 
-		int opcode = cpu.PC;
+		int pc = cpu.PC;
+		short data = Mmu.readMemory(cpu, pc);
+		String inst = DISASSEMBLE_TABLE[data];
 
-		String inst = DISASSEMBLE_TABLE[cpu.memory[opcode]];
-
-		switch(cpu.memory[opcode]) {
+		switch(data) {
 				// byte
 			case 0x06: case 0x0e:
 			case 0x16: case 0x1e:
@@ -58,7 +58,7 @@ public class PrintTrace
 			case 0xd3: case 0xd6: case 0xdb: case 0xde:
 			case 0xe6: case 0xee:
 			case 0xf6: case 0xfe:
-				inst += toHex02(cpu.memory[opcode + 1]);
+				inst += toHex02(Mmu.readMemory(cpu, pc + 1));
 				break;
 
 				// word
@@ -70,12 +70,13 @@ public class PrintTrace
 			case 0xd2: case 0xd4: case 0xda: case 0xdc:
 			case 0xe2: case 0xe4: case 0xea: case 0xec:
 			case 0xf2: case 0xf4: case 0xfa: case 0xfc:
-				inst += toHex04((cpu.memory[opcode + 2] << 8) | cpu.memory[opcode + 1]);
+				inst += toHex04((Mmu.readMemory(cpu, pc + 2) << 8) 
+					| Mmu.readMemory(cpu, pc + 1));
 				break;	
 		}
 
-		if (printLess) {
-			System.out.println(toHex04(opcode) + "  " + inst);
+		if (verbose) {
+			System.out.println(toHex04(pc) + "  " + inst);
 		} else {
 
 			// PSW (Flags)
@@ -101,7 +102,7 @@ public class PrintTrace
 
 			// Print Stack Pointer
 
-			System.out.println("PC: " + toHex04(opcode) + " (" + toHex02(cpu.memory[opcode]) + ")" + " " + inst + " | CYCLE: " + Interpreter.cycle);
+			System.out.println("PC: " + toHex04(pc) + " (" + toHex02(Mmu.readMemory(cpu, pc)) + ")" + " " + inst + " | CYCLE: " + Interpreter.machineTotalCycle);
 
 			// Print Separator
 			System.out.println();
@@ -113,7 +114,7 @@ public class PrintTrace
 			cpu.E > 0xff | cpu.H > 0xff | cpu.L > 0xff | cpu.PC > 0xffff | cpu.SP > 0xffff |
 			cpu.cc.AC > 0x1 | cpu.cc.CY > 0x1 | cpu.cc.P > 0x1 |
 			cpu.cc.S > 0x1 | cpu.cc.Z > 0x1) {
-			printInstruction(cpu, false);
+			print(cpu, false);
 		}
 	}
 

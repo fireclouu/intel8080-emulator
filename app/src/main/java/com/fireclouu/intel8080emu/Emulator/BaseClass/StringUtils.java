@@ -7,8 +7,7 @@ import java.util.*;
 public final class StringUtils
 {
 	public static final String TAG = "FRCL_SPACE_INVADERS";
-	public static final String ITEM_HISCORE_MSB = "hsm";
-	public static final String ITEM_HISCORE_LSB = "hsl";
+	public static final String ITEM_HISCORE = "HISCORE";
 
 	private StringUtils() { } // prevent instatiation
 	

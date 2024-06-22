@@ -6,6 +6,7 @@ import com.fireclouu.intel8080emu.R;
 
 import java.io.IOException;
 import java.io.InputStream;
+import com.fireclouu.intel8080emu.Emulator.*;
 
 public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 {
@@ -31,8 +32,14 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		this.display = display;
 	}
 	
+	public void setDisplay (DisplayAdapter display) {
+		this.display = display;
+	}
+	
 	// Main
 	public void startOp() {
+		// mmu inject
+		Mmu.resource = this;
 		// initial file check
 		if (!isTestFile()) {
 				if(!isAllFileOK()) {
@@ -53,7 +60,6 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		cpu = new CpuComponents();
 		// initialize emulator
 		emulator = new Emulator();
-		// display draw signal
 		// media
 		setEffectShipHit(R.raw.ship_hit);
 		setEffectAlienKilled(R.raw.alien_killed);
@@ -71,8 +77,6 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 	private void startMain() {
 		// reset objects
 		init();
-		// set view
-		display.startDisplay();
 		// load and start emulation
 		if(loadSplitFiles() == 0) {
 			master = new Thread(this);
@@ -94,19 +98,16 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 			counter++;
 		}
 		
-	
 		// BUILD MSG
 		BUILD_MSG = new String[65355];
 		BUILD_MSG[0] = "";
 
 		// reset objects
 		init();
-		display.startDisplay();
 
 		// start emulation
 		master = new Thread(this);
 		master.start();
-		
 	}
 
 	// check all files
@@ -159,12 +160,13 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		try
 		{
 			while ((read = (short) file.read()) != -1) {
-				cpu.memory[addr++] = read;
+				Mmu.writeMemory(cpu, addr++, read);
 			}
 		} catch (IOException e) {
 			OUT_MSG = filename + " cannot be read!";
 		}
 	}
+	
 	private byte loadSplitFiles() {
 		int counter = 0;
 		for (String files : StringUtils.File.FILES) {
@@ -225,13 +227,16 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 	// Machine scenarios
 	public void appPause() {
 		Emulator.stateMaster = false;
-		// store high score
-		if ((cpu.memory[0x20f5] << 8 | cpu.memory[0x20f4])
-				> (getPrefs("hsm") << 8 | getPrefs("hsl")))
-			{
-				putPrefs(StringUtils.ITEM_HISCORE_MSB, cpu.memory[0x20f5]);
-				putPrefs(StringUtils.ITEM_HISCORE_LSB, cpu.memory[0x20f4]);
-			}
+	}
+	
+	public void setHighscore(int data) {
+		
+		int storedHiscore = getPrefs(StringUtils.ITEM_HISCORE);
+		
+		if (data > storedHiscore)
+		{
+			putPrefs(StringUtils.ITEM_HISCORE, data);
+		}
 	}
 
 	public void appResume() {

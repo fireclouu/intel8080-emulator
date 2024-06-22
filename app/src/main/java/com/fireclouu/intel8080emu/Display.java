@@ -19,9 +19,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	Thread master;
 	Canvas canvas;
 
-	private float PIXEL_SIZE = 3.18f;
-	private float PIXEL_SIZE_WIDTH = PIXEL_SIZE;
-	private float PIXEL_SIZE_HEIGHT = PIXEL_SIZE;
+	private float pixelHostSize = 3.18f;
 	private int drawOrientation = DRAW_ORIENTATION_PORTRAIT;
 
 	public static final int DIMENSION_WIDTH = 0;
@@ -31,11 +29,8 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	public static final int GUEST_HEIGHT = 224;
 	
 	private int orientationWidth, orientationHeight;
-	
-	Paint paintRed, paintWhite, paintGreen, paintText;
-
-	private short[] memory;
-	SurfaceHolder holder;
+	private Paint paintRed, paintWhite, paintGreen, paintText;
+	private SurfaceHolder holder;
 
 
 	public Display(Context context) {
@@ -124,15 +119,10 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		return scaleValue;
 	}
 
-	@Override
-	public void updateView(short[] memory) {
-		this.memory = memory;
-	}
-
-	public float[] convertVramToFloatPoints(int drawOrientation)
+	public float[] convertVramToFloatPoints(int drawOrientation, short[] memory)
 	{
-		float centerOffset = getCenterOffset(orientationWidth + PIXEL_SIZE);
-		final float spacing = PIXEL_SIZE;
+		float centerOffset = getCenterOffset(orientationWidth + pixelHostSize);
+		final float spacing = pixelHostSize;
 		List<Float> plotList = new ArrayList<>();
 		float[] returnValue;
 		int counter = 0;
@@ -156,7 +146,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		final int guestLinearDataLength = GUEST_WIDTH / 8;
 		
 		for (int vramPc = Machine.VRAM_START; vramPc <= Machine.VRAM_END; vramPc++) {
-			data = this.memory[vramPc];
+			data = memory[vramPc];
 			vramNormalized = vramPc - Machine.VRAM_START;
 
 			// draws
@@ -192,17 +182,6 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		return returnValue;
 	}
 
-	@Override
-	public void startDisplay() {
-		if(StringUtils.Component.DEBUG) {
-			master = new Thread(new DebugThread());
-		} else {
-			master = new Thread(new DrawThread());
-		}
-
-		master.start();
-	}
-
 	private Paint setPaint(int color) {
 		Paint mPaint;
 		mPaint = new Paint();
@@ -218,41 +197,37 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	private String parseFps(double fps) {
 		return String.format("fps: %.2f", fps);
 	}
-
-	class DrawThread implements Runnable {
+	
 	@Override
-	public void run() {
+	public void draw(short[] memory) {
 		while (!holder.getSurface().isValid()) {
-        	PIXEL_SIZE = getScaleValueLogical();
-        	paintWhite.setStrokeWidth(PIXEL_SIZE + 0.5f);
+        	pixelHostSize = getScaleValueLogical();
+        	paintWhite.setStrokeWidth(pixelHostSize + 0.5f);
 		}
+		
+		while (!holder.getSurface().isValid() && !holder.isCreating()) continue;
 
-		while(Emulator.stateMaster) {
-			if (!holder.getSurface().isValid() && !holder.isCreating()) continue;
+		// canvas
+		canvas = holder.getSurface().lockHardwareCanvas();
+		canvas.drawColor(Color.BLACK);
+		canvas.drawPoints(convertVramToFloatPoints(drawOrientation, memory), paintWhite);
+		canvas.drawText(Platform.OUT_MSG, 0, 10, paintWhite);
 
-			// canvas
-			canvas = holder.getSurface().lockHardwareCanvas();
-			canvas.drawColor(Color.BLACK);
-			canvas.drawPoints(convertVramToFloatPoints(drawOrientation), paintWhite);
-			canvas.drawText(Platform.OUT_MSG, 0, 10, paintWhite);
-
-			// fps
-			canvas.drawText(parseFps(fps()), 0, getHeight() - 10, paintWhite);
-			// Emulation thread speed
-			canvas.drawText("Thread speed: " + Emulator.actual_cycle, 0, getHeight() - 25, paintWhite);
-			//cycle
-			if (Emulator.isCycleCorrect()) {
-				canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintGreen);
-			} else {
-				canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintRed);
-			}
-			// canvas.drawText("fireclouu", (int) (getWidth() / 1.1), getHeight() - 10, paintWhite);
-			// release
-			holder.getSurface().unlockCanvasAndPost(canvas);
+		// fps
+		canvas.drawText(parseFps(fps()), 0, getHeight() - 10, paintWhite);
+		// Emulation thread speed
+		canvas.drawText("Thread speed: " + Emulator.actual_cycle, 0, getHeight() - 25, paintWhite);
+		//cycle
+		if (Emulator.isCycleCorrect()) {
+			canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintGreen);
+		} else {
+			canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintRed);
 		}
+		canvas.drawText("fireclouu", (int) (getWidth() / 1.1), getHeight() - 10, paintWhite);
+		// release
+		holder.getSurface().unlockCanvasAndPost(canvas);
 	}
-}
-
+	
 class DebugThread implements Runnable {
 		@Override
 		public void run() {
@@ -292,12 +267,12 @@ class DebugThread implements Runnable {
 						paintWhite);
 
 				canvas.drawText(
-					"Remaining Cpu Cycle: " + (expected - Interpreter.cycle), 0,
+					"Remaining Cpu Cycle: " + (expected - Interpreter.machineTotalCycle), 0,
 					getHeight() - 40,
 						paintWhite);
 
 				canvas.drawText(
-					"Current Cpu Cycle: " + Interpreter.cycle, 0,
+					"Current Cpu Cycle: " + Interpreter.machineTotalCycle, 0,
 					getHeight() - 55,
 						paintWhite);
 

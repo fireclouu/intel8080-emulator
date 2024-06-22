@@ -8,10 +8,9 @@ public class Emulator implements IOAdapter
 	public static boolean stateMaster = true;
 	private boolean stateTestDisplay = false;
 	private boolean stateTest = false;
-	boolean triggered = false;
 	
 	private Interpreter interpreter;
-	private PrintTrace print;
+	private Disassembler print;
 
 	// Timer and interrupts
 	private final double NANO_SEC = 1_000_000.0; // template
@@ -54,7 +53,7 @@ public class Emulator implements IOAdapter
 	
 	private void init() {
 		interpreter = new Interpreter();
-		print = new PrintTrace();
+		print = new Disassembler();
 	}
 	
 	@Override
@@ -101,8 +100,6 @@ public class Emulator implements IOAdapter
 					}
 					if((value & 0x8) > 0 && (last_port_value[3] & 0x8) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_KILLED, 0);
-						// MOD PLAY
-						//cpu.memory[0x21ff] = 4;
 					}
 					
 					last_port_value[3] = value;
@@ -147,13 +144,15 @@ public class Emulator implements IOAdapter
 	
 	public void ioHandler(CpuComponents cpu, ResourceAdapter media, int opcode) {
 		readPort = 0;
-		switch(cpu.memory[opcode])  {
+		short dataPort = Mmu.readMemory(cpu, opcode + 1);
+		int data = Mmu.readMemory(cpu, opcode);
+		switch(data)  {
 			case 0xdb: // IN
-				readPort = cpu.memory[opcode + 1];
+				readPort = dataPort;
 				cpu.A = handleIN(cpu, readPort);
 				break;
 			case 0xd3: // OUT
-				readPort = cpu.memory[opcode + 1];
+				readPort = dataPort;
 				handleOUT(cpu, media, readPort, cpu.A);
 				break;
 		}
@@ -171,22 +170,12 @@ public class Emulator implements IOAdapter
 		}
 		
 		while(stateMaster) {
-			
-			// inject hiscore (one-time)
-			if (Interpreter.cycle > 200 & !triggered)
-			{
-				cpu.memory[0x20f5] = (short) api.getPrefs(StringUtils.ITEM_HISCORE_MSB);
-				cpu.memory[0x20f4] = (short) api.getPrefs(StringUtils.ITEM_HISCORE_LSB);
-				
-				triggered = true;
-			}
-			
 			timerNow = getNano();
 			checkNow = timerNow;
 			
 			// 60hz
 			if ((updateHz + VBLANK_START < timerNow)) {
-				display.updateView(cpu.memory);
+				display.draw(Mmu.getMemory(cpu));
 				updateHz = timerNow;
 			}
 			
@@ -194,35 +183,36 @@ public class Emulator implements IOAdapter
 			// Check midframe interrupt and rst 1 if true
 			// check final frame interrupt and rst 2 if true
 			if ((cpu.int_enable == 1) && (timerNow > nextInterrupt)) {
-				interpreter.GenerateInterrupt(cpu, fireInterrupt);
+				interpreter.sendInterrupt(cpu, fireInterrupt);
 				fireInterrupt = (fireInterrupt == INTERRUPT_MID) ? INTERRUPT_FULL : INTERRUPT_MID;
 				nextInterrupt = timerNow + (MIDFRAME);
 			}
 			
 				// 2MHz
 				// cycle catch-up
-				while((checkNow > checkLast + (NANO_SEC)) && Interpreter.cycle <= StringUtils.Component.MAX_CYCLE_SPEED_PER_SECOND) {
+				while((checkNow > checkLast + (NANO_SEC)) && Interpreter.machineTotalCycle <= StringUtils.Component.MAX_CYCLE_SPEED_PER_SECOND) {
 					// IO
 					ioHandler(cpu, api, cpu.PC);
-					
-					Interpreter.cycle += interpreter.emulate8080(cpu);
+					Interpreter.machineTotalCycle += interpreter.interpret(cpu);
 				}
 				// cycle reset
 				if (checkNow > checkLast + (NANO_SEC)) {
+					short guestHighScoreMsb = Mmu.readMemory(cpu, 0x20f5);
+					short guestHighScoreLsb = Mmu.readMemory(cpu, 0x20f4);
+					
 					actual_cycle = ac;
 					ac = 0;
 					
-					storeCycle = Interpreter.cycle;
-					cycleInfo = "HiScore: " + String.format("%02x", cpu.memory[0x20f5]) + String.format("%02x", cpu.memory[0x20f4]) + " | Emulation speed: " + storeCycle;
-					Interpreter.cycle = 0; // reset
+					storeCycle = Interpreter.machineTotalCycle;
+					cycleInfo = "HiScore: " + String.format("%02x", guestHighScoreMsb) + String.format("%02x", guestHighScoreLsb) + " | Emulation speed: " + storeCycle;
+					Interpreter.machineTotalCycle = 0; // reset
 					checkLast = checkNow;
 				}
 				// normal cycle (?)
 				if(timerNow >= timerLast + fixedMhz) {
 					// IO
 					ioHandler(cpu, api, cpu.PC);
-					
-					Interpreter.cycle += interpreter.emulate8080(cpu);
+					Interpreter.machineTotalCycle += interpreter.interpret(cpu);
 					timerLast = timerNow;
 				}	
 				
@@ -244,7 +234,7 @@ public class Emulator implements IOAdapter
 			i = 0;
 		}
 		
-		display.updateView(testMemory);
+		display.draw(testMemory);
 		cycleInfo = "Performing display test... | Current Memory: 0x" + String.format("%04x", counter);
 		
 		if(counter > 0x4000) stateTestDisplay = false;
@@ -266,16 +256,17 @@ public class Emulator implements IOAdapter
 			stateTest = false;
 			
 			cpu.init();
-			cpu.memory = PlatformAdapter.tf[counter];
+			Mmu.setMemory(cpu, PlatformAdapter.tf[counter]);
+			
 			// load file and injects
 			// SOURCE: superzazu — intel 8080 c99
 			// inject "out 1,a" at 0x0000 (signal to stop the test)
-			cpu.memory[0x0000] = 0xD3;
-			cpu.memory[0x0001] = 0x00;
+			Mmu.writeMemory(cpu, 0x0000, (short) 0xD3);
+			Mmu.writeMemory(cpu, 0x0001, (short) 0x00);
+			Mmu.writeMemory(cpu, 0x0005, (short) 0xDB);
+			Mmu.writeMemory(cpu, 0x0006, (short) 0x00);
+			Mmu.writeMemory(cpu, 0x0007, (short) 0xC9);
 			// inject "in a,0" at 0x0005 (signal to output some characters)
-			cpu.memory[0x0005] = 0xDB;
-			cpu.memory[0x0006] = 0x00;
-			cpu.memory[0x0007] = 0xC9;
 			// jump pc to 0x100
 			cpu.PC = 0x0100;
 			
@@ -298,7 +289,7 @@ public class Emulator implements IOAdapter
 						break;
 				}
 
-				Interpreter.cycle += interpreter.emulate8080(cpu);
+				Interpreter.machineTotalCycle += interpreter.interpret(cpu);
 				// print.printInstruction(cpu, AppUtils.Machine.PRINT_LESS);
 				print.check_overflow(cpu);
 			}
@@ -336,16 +327,18 @@ public class Emulator implements IOAdapter
 			}
 		} else if (operation == 9) {
 			int addr = (cpu.D << 8) | cpu.E;
+			int data;
 			do {
-				System.out.printf("%c", cpu.memory[addr]);
-				addMsg((char) cpu.memory[addr]);
-				if((char) cpu.memory[addr] == 10) {
+				data = Mmu.readMemory(cpu, addr);
+				System.out.printf("%c", data);
+				addMsg((char) data);
+				if((char) data == 10) {
 
 					PlatformAdapter.MSG_COUNT++;
 					PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT] = "";
 				}
 				addr++;
-			} while (cpu.memory[addr] != '$');
+			} while (data != '$');
 		}
 		cpu.A = 0xff;
 	}

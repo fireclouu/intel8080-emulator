@@ -9,7 +9,6 @@ public interface DisplayAdapter
 	byte DRAW_ORIENTATION_PORTRAIT = 1;
 	byte DRAW_ORIENTATION_LANDSCAPE = 1;
 	
-	void updateView(short[] memory);
-	float[] convertVramToFloatPoints(int drawOrientation);
-	void startDisplay();
+	float[] convertVramToFloatPoints(int drawOrientation, short[] memory);
+	void draw(short[] memory);
 }
