@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import android.os.*;
 import java.util.concurrent.*;
+import com.fireclouu.intel8080emu.Emulator.*;
 
 public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 {
@@ -16,6 +17,7 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 	private CpuComponents cpu;
 	private DisplayAdapter display;
 	private Handler handler;
+	private KeyInterrupts keyInterrupts;
 	private ExecutorService executor;
 	
 	public static String OUT_MSG = "System OK!";
@@ -60,6 +62,7 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 	public void init() {
 		cpu = new CpuComponents();
 		emulator = new Emulator();
+		keyInterrupts = new KeyInterrupts(emulator);
 		executor = Executors.newSingleThreadExecutor();
 		// media
 		setEffectShipHit(R.raw.ship_hit);
@@ -79,13 +82,11 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		handler = new Handler(Looper.getMainLooper());
 		init();
 		
-		// load and start emulation
 		if(loadSplitFiles() == 0) {
 			executor.execute(this);
 		}
 	}
 	
-	public static short[][] tf = new short[StringUtils.File.FILES.length][0x10_000];
 	private void startTest() {
 		// init
 		init();
@@ -95,7 +96,7 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		int counter = 0;
 		for (String files : StringUtils.File.FILES)
 		{
-			tf[counter] = loadFile(files, 0x100, false);
+			// tf[counter] = loadFile(files, 0x100, false);
 			counter++;
 		}
 		
@@ -219,6 +220,17 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 			}
 		}
 		return false;
+	}
+	
+	public void sendInput(int port, byte key, boolean isDown) {
+		keyInterrupts.sendInput(port, key, isDown);
+	}
+	
+	public byte getPlayerPort() {
+		return keyInterrupts.getPlayerPort();
+	}
+	public void setPlayerPort(byte playerPort) {
+		keyInterrupts.setPlayerPort(playerPort);
 	}
 	
 	public void pause() {

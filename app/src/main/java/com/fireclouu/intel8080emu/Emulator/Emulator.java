@@ -63,9 +63,9 @@ public class Emulator implements IOAdapter
 			case 0: // ?
 				return 0;
 			case 1: // INPUTS
-				return Emulator.port[1];
+				return Emulator.port[KeyInterrupts.INPUT_PORT_1];
 			case 2: // INPUTS
-				return 0;
+				return Emulator.port[KeyInterrupts.INPUT_PORT_2];
 			case 3: // SHIFT REGISTER DATA (ROTATE)
 				int v = (shift_msb << 8) | shift_lsb;    
 				a = (short) ((v >> (8-shift_offset)) & 0xff);  
@@ -204,6 +204,7 @@ public class Emulator implements IOAdapter
 					Interpreter.machineTotalCycle = 0; // reset
 					checkLast = checkNow;
 				}
+				
 				// normal cycle (?)
 				if(timerNow >= timerLast + fixedMhz) {
 					// IO
@@ -211,7 +212,6 @@ public class Emulator implements IOAdapter
 					Interpreter.machineTotalCycle += interpreter.interpret(cpu);
 					timerLast = timerNow;
 				}	
-				
 			ac++;
 		}
 	}
@@ -244,7 +244,7 @@ public class Emulator implements IOAdapter
 			stateTest = false;
 			
 			cpu.init();
-			Mmu.setMemory(cpu, PlatformAdapter.tf[counter]);
+			// Mmu.setMemory(cpu, PlatformAdapter.tf[counter]);
 			
 			// load file and injects
 			// SOURCE: superzazu — intel 8080 c99
@@ -267,7 +267,8 @@ public class Emulator implements IOAdapter
 			addMsg("");
 
 			while(!stateTest) {
-				switch(PlatformAdapter.tf[counter][cpu.PC])
+				// implement
+				/*switch(PlatformAdapter.tf[counter][cpu.PC])
 				{
 					case 0xdb: // IN
 						debug_handleIN(cpu);
@@ -275,7 +276,7 @@ public class Emulator implements IOAdapter
 					case 0xd3: // OUT
 						debug_handleOUT();
 						break;
-				}
+				}*/
 
 				Interpreter.machineTotalCycle += interpreter.interpret(cpu);
 				// print.printInstruction(cpu, AppUtils.Machine.PRINT_LESS);

@@ -6,7 +6,7 @@ import android.view.*;
 import android.widget.*;
 import com.fireclouu.intel8080emu.Emulator.*;
 
-public class MainActivity extends Activity implements Button.OnTouchListener
+public class MainActivity extends Activity implements Button.OnTouchListener, Button.OnClickListener
 {
 	Display mDisplay;
 	Platform platform;
@@ -17,8 +17,8 @@ public class MainActivity extends Activity implements Button.OnTouchListener
 		mButtonP1Start,
 		mButtonP1Left,
 		mButtonP1Right,
-		mButtonP1Fire;
-	private final String KEY_SINGLE_INSTANCE = "singleInstance";
+		mButtonP1Fire,
+		mButtonSetPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -58,62 +58,47 @@ public class MainActivity extends Activity implements Button.OnTouchListener
 	public boolean onTouch(View view, MotionEvent motionEvent)
 	{
 		view.performClick();
-		if (view.getId() == R.id.btn_p1_coin) {
-			switch(motionEvent.getAction() & MotionEvent.ACTION_MASK)
-			{
-				case MotionEvent.ACTION_DOWN:
-					Emulator.port[1] |= Interrupts.KEY_COIN;
-					break;
-				case MotionEvent.ACTION_UP:
-					Emulator.port[1] &= ~Interrupts.KEY_COIN;
-					break;
-			}
+		byte playerPort = platform.getPlayerPort();
+		int action = motionEvent.getAction() & MotionEvent.ACTION_MASK;
+		boolean hasAction = action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_UP;
+		boolean isDown = action == MotionEvent.ACTION_DOWN;
+		int buttonId = view.getId();
+		byte key = 0;
+		
+		switch (buttonId) {
+			case R.id.btn_p1_coin:
+				key = KeyInterrupts.KEY_COIN;
+				break;
+			case R.id.btn_p1_start:
+				key = KeyInterrupts.KEY_P1_START;
+				break;
+			case R.id.btn_p1_fire:
+				key = KeyInterrupts.KEY_FIRE;
+				break;
+			case R.id.btn_p1_left:
+				key = KeyInterrupts.KEY_LEFT;
+				break;
+			case R.id.btn_p1_right:
+				key = KeyInterrupts.KEY_RIGHT;
+				break;	
 		}
-		if (view.getId() == R.id.btn_p1_start) {
-			switch(motionEvent.getAction() & MotionEvent.ACTION_MASK)
-			{
-				case MotionEvent.ACTION_DOWN:
-					Emulator.port[1] |= Interrupts.KEY_START;
-					break;
-				case MotionEvent.ACTION_UP:
-					Emulator.port[1] &= ~Interrupts.KEY_START;
-					break;
-			}
-		}
-		if (view.getId() == R.id.btn_p1_left) {
-			switch(motionEvent.getAction() & MotionEvent.ACTION_MASK)
-			{
-				case MotionEvent.ACTION_DOWN:
-					Emulator.port[1] |= Interrupts.KEY_LEFT;
-					break;
-				case MotionEvent.ACTION_UP:
-					Emulator.port[1] &= ~Interrupts.KEY_LEFT;
-					break;
-			}
-		}
-		if (view.getId() == R.id.btn_p1_fire) {
-			switch(motionEvent.getAction() & MotionEvent.ACTION_MASK)
-			{
-				case MotionEvent.ACTION_DOWN:
-					Emulator.port[1] |= Interrupts.KEY_FIRE;
-					break;
-				case MotionEvent.ACTION_UP:
-					Emulator.port[1] &= ~Interrupts.KEY_FIRE;
-					break;
-			}
-		}
-		if (view.getId() == R.id.btn_p1_right) {
-			switch(motionEvent.getAction() & MotionEvent.ACTION_MASK)
-			{
-				case MotionEvent.ACTION_DOWN:
-					Emulator.port[1] |= Interrupts.KEY_RIGHT;
-					break;
-				case MotionEvent.ACTION_UP:
-					Emulator.port[1] &= ~Interrupts.KEY_RIGHT;
-					break;
-			}
-		}
+		
+		if (hasAction) platform.sendInput(playerPort, key, isDown);
 		return false;
+	}
+	
+	@Override
+	public void onClick(View view)
+	{
+		byte playerPort = platform.getPlayerPort();
+		int buttonId = view.getId();
+		switch(buttonId) {
+			case R.id.btn_change_player:
+				playerPort = playerPort == KeyInterrupts.INPUT_PORT_1 ? KeyInterrupts.INPUT_PORT_2 : KeyInterrupts.INPUT_PORT_1;
+				platform.setPlayerPort(playerPort);
+				mButtonSetPlayer.setText("P" + playerPort);
+				break;	
+		}
 	}
 	
 	private void startEmulation() {
@@ -134,12 +119,14 @@ public class MainActivity extends Activity implements Button.OnTouchListener
 		mButtonP1Left = findViewById(R.id.btn_p1_left);
 		mButtonP1Fire = findViewById(R.id.btn_p1_fire);
 		mButtonP1Right = findViewById(R.id.btn_p1_right);
+		mButtonSetPlayer = findViewById(R.id.btn_change_player);
 		
 		mButtonCoin.setOnTouchListener(this);
 		mButtonP1Start.setOnTouchListener(this);
 		mButtonP1Left.setOnTouchListener(this);
 		mButtonP1Fire.setOnTouchListener(this);
 		mButtonP1Right.setOnTouchListener(this);
+		mButtonSetPlayer.setOnClickListener(this);
 	}
 	
 }
