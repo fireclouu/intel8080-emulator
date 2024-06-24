@@ -65,23 +65,11 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
 		int buttonId = view.getId();
 		byte key = 0;
 		
-		switch (buttonId) {
-			case R.id.btn_p1_coin:
-				key = KeyInterrupts.KEY_COIN;
-				break;
-			case R.id.btn_p1_start:
-				key = KeyInterrupts.KEY_P1_START;
-				break;
-			case R.id.btn_p1_fire:
-				key = KeyInterrupts.KEY_FIRE;
-				break;
-			case R.id.btn_p1_left:
-				key = KeyInterrupts.KEY_LEFT;
-				break;
-			case R.id.btn_p1_right:
-				key = KeyInterrupts.KEY_RIGHT;
-				break;	
-		}
+		if (buttonId == R.id.btn_p1_coin) key = KeyInterrupts.KEY_COIN;
+		if (buttonId == R.id.btn_p1_start) key = KeyInterrupts.KEY_P1_START;
+		if (buttonId == R.id.btn_p1_fire) key = KeyInterrupts.KEY_FIRE;
+		if (buttonId == R.id.btn_p1_left) key = KeyInterrupts.KEY_LEFT;
+		if (buttonId == R.id.btn_p1_right) key = KeyInterrupts.KEY_RIGHT;
 		
 		if (hasAction) platform.sendInput(playerPort, key, isDown);
 		return false;
@@ -92,12 +80,10 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
 	{
 		byte playerPort = platform.getPlayerPort();
 		int buttonId = view.getId();
-		switch(buttonId) {
-			case R.id.btn_change_player:
-				playerPort = playerPort == KeyInterrupts.INPUT_PORT_1 ? KeyInterrupts.INPUT_PORT_2 : KeyInterrupts.INPUT_PORT_1;
-				platform.setPlayerPort(playerPort);
-				mButtonSetPlayer.setText("P" + playerPort);
-				break;	
+		if (buttonId == R.id.btn_change_player) {
+			playerPort = playerPort == KeyInterrupts.INPUT_PORT_1 ? KeyInterrupts.INPUT_PORT_2 : KeyInterrupts.INPUT_PORT_1;
+			platform.setPlayerPort(playerPort);
+			mButtonSetPlayer.setText("P" + playerPort);
 		}
 	}
 	
