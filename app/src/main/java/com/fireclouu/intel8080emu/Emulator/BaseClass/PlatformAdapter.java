@@ -2,20 +2,22 @@ package com.fireclouu.intel8080emu.Emulator.BaseClass;
 
 import com.fireclouu.intel8080emu.Emulator.CpuComponents;
 import com.fireclouu.intel8080emu.Emulator.Emulator;
+import com.fireclouu.intel8080emu.Emulator.Mmu;
 import com.fireclouu.intel8080emu.R;
 
 import java.io.IOException;
 import java.io.InputStream;
-import com.fireclouu.intel8080emu.Emulator.*;
+import android.os.*;
+import java.util.concurrent.*;
 
 public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 {
-	private Thread master;
-
-	protected Emulator emulator;
-	protected CpuComponents cpu;
-	protected DisplayAdapter display;
-
+	private Emulator emulator;
+	private CpuComponents cpu;
+	private DisplayAdapter display;
+	private Handler handler;
+	private ExecutorService executor;
+	
 	public static String OUT_MSG = "System OK!";
 	public static String[] BUILD_MSG;
 	public static int MSG_COUNT = 0;
@@ -25,7 +27,7 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 	
 	@Override
 	public void run() {
-		emulator.startEmulation(cpu, display, this);
+		emulator.start(cpu, display, this);
 	}
 	
 	public PlatformAdapter(DisplayAdapter display) {
@@ -37,7 +39,7 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 	}
 	
 	// Main
-	public void startOp() {
+	public void start() {
 		// mmu inject
 		Mmu.resource = this;
 		// initial file check
@@ -56,10 +58,9 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 	}
 
 	public void init() {
-		// initialize cpu components
 		cpu = new CpuComponents();
-		// initialize emulator
 		emulator = new Emulator();
+		executor = Executors.newSingleThreadExecutor();
 		// media
 		setEffectShipHit(R.raw.ship_hit);
 		setEffectAlienKilled(R.raw.alien_killed);
@@ -75,12 +76,12 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 	}
 
 	private void startMain() {
-		// reset objects
+		handler = new Handler(Looper.getMainLooper());
 		init();
+		
 		// load and start emulation
 		if(loadSplitFiles() == 0) {
-			master = new Thread(this);
-			master.start();
+			executor.execute(this);
 		}
 	}
 	
@@ -106,8 +107,7 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		init();
 
 		// start emulation
-		master = new Thread(this);
-		master.start();
+		executor.execute(this);
 	}
 
 	// check all files
@@ -118,14 +118,11 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		
 		return true;
 	}
-	// Read and buffer file
+
 	public short[] loadFile(String filename, int addr, boolean sizeActual) {
-		// holder
 		short[] holder = null;
 		short[] tmp = new short[0x10_000];
-		// read file stream
 		InputStream file = openFile(filename);
-		// piece container
 		short read;
 		int counter = 0;
 		try
@@ -134,6 +131,8 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 				tmp[addr++] = read;
 				counter++;
 			}
+			file.close();
+			file = null;
 		} catch (IOException e) {
 			OUT_MSG = filename + " cannot be read!";
 			return null;
@@ -150,11 +149,8 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		return holder;
 	}
 	
-	// Read and buffer file
 	public void loadFile(String filename, int addr) {
-		// read file stream
 		InputStream file = openFile(filename);
-		// piece container
 		short read;
 		
 		try
@@ -162,6 +158,8 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 			while ((read = (short) file.read()) != -1) {
 				Mmu.writeMemory(cpu, addr++, read);
 			}
+			file.close();
+			file = null;
 		} catch (IOException e) {
 			OUT_MSG = filename + " cannot be read!";
 		}
@@ -174,20 +172,19 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 				loadFile(files, StringUtils.File.ROM_ADDRESS[counter++]);
 			} else {
 				System.out.println(OUT_MSG);
-				return 1; // ERROR
+				return 1;
 			}
 		}
-		return 0; // SUCCESS
+		return 0;
 	}
 
-	// File check
 	private boolean isAvailable(String filename) {
 		if (StringUtils.File.FILES.length == 0) {
 			OUT_MSG = "No files specified.";
 			return false;
 		}
 		if (StringUtils.File.ROM_ADDRESS.length == 0) {
-			OUT_MSG = "File online, but no starting memory address specified.";
+			OUT_MSG = "File is empty.";
 			return false;
 		}
 		if (StringUtils.File.ROM_ADDRESS.length != StringUtils.File.FILES.length) {
@@ -224,9 +221,8 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		return false;
 	}
 	
-	// Machine scenarios
-	public void appPause() {
-		Emulator.stateMaster = false;
+	public void pause() {
+		emulator.pause();
 	}
 	
 	public void setHighscore(int data) {
@@ -239,7 +235,12 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		}
 	}
 
-	public void appResume() {
-		Emulator.stateMaster = true;
+	public void resume() {
+		emulator.resume();
+	}
+	
+	public void stop() {
+		emulator.stop();
+		executor.shutdown();
 	}
 }

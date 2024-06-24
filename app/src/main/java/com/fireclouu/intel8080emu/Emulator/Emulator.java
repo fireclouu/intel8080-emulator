@@ -5,8 +5,8 @@ import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
 public class Emulator implements IOAdapter
 {
 	// states
-	public static boolean stateMaster = true;
-	private boolean stateTestDisplay = false;
+	private boolean isLooping = true;
+	private boolean isPaused = false;
 	private boolean stateTest = false;
 	
 	private Interpreter interpreter;
@@ -158,18 +158,14 @@ public class Emulator implements IOAdapter
 		}
 	}
 	
-	public void startEmulation(CpuComponents cpu, DisplayAdapter display, ResourceAdapter api) {
-		
+	public void start(CpuComponents cpu, DisplayAdapter display, ResourceAdapter api) {
 		if (StringUtils.Component.DEBUG) {
 			runTest(cpu);
 			return;
 		}
 		
-		while (stateTestDisplay) {
-			runTestDisplay(display);
-		}
-		
-		while(stateMaster) {
+		while(isLooping) {
+			if (isPaused) continue;
 			timerNow = getNano();
 			checkNow = timerNow;
 			
@@ -218,26 +214,18 @@ public class Emulator implements IOAdapter
 				
 			ac++;
 		}
-		
 	}
 	
-	private final short[] testMemory = new short[0x10_000];
-	private int counter = 0x23ff;
-	private short i = 0;
-	private void runTestDisplay(DisplayAdapter display) {
-		testMemory[counter] = i++;
-		
-		if (i > 0xff) 
-		{
-			counter++;
-			testMemory[counter] = 0;
-			i = 0;
-		}
-		
-		display.draw(testMemory);
-		cycleInfo = "Performing display test... | Current Memory: 0x" + String.format("%04x", counter);
-		
-		if(counter > 0x4000) stateTestDisplay = false;
+	public void stop() {
+		isLooping = false;
+	}
+	
+	public void pause() {
+		isPaused = true;
+	}
+	
+	public void resume() {
+		isPaused = false;
 	}
 	
 	private long getNano() {

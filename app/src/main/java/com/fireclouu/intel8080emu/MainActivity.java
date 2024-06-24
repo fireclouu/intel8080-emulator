@@ -18,35 +18,40 @@ public class MainActivity extends Activity implements Button.OnTouchListener
 		mButtonP1Left,
 		mButtonP1Right,
 		mButtonP1Fire;
-	
-	private boolean programStarted = false;
+	private final String KEY_SINGLE_INSTANCE = "singleInstance";
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_emulation);
-		initAndStart();
+		
+		init();
+		startEmulation();
 	}
 	
 	@Override
 	protected void onResume() {
-		// platform.appResume();
+		platform.resume();
 		super.onResume();
 	}
 
 	@Override
 	protected void onPause() {
-		// platform.appPause();
+		platform.pause();
 		super.onPause();
 	}
 
 	@Override
 	protected void onDestroy() {
+		Toast.makeText(getApplicationContext(), "Emulation terminated", 
+					   Toast.LENGTH_SHORT).show();
+		platform.stop();
 		platform.releaseResource();
+		platform = null;
 		super.onDestroy();
 	}
-
+	
 	// separate interrupt from platform-specific data
 	// move in implementation
 	@Override
@@ -111,17 +116,19 @@ public class MainActivity extends Activity implements Button.OnTouchListener
 		return false;
 	}
 	
-	private void initAndStart() {
-		mDisplay = findViewById(R.id.mainDisplay);
-		
+	private void startEmulation() {
 		if (platform == null) {
 			platform = new Platform(this, mDisplay);
 			Mmu.platform = platform;
-		} else {
-			platform.setDisplay(mDisplay);
 		}
+		platform.start();
+		Toast.makeText(getApplicationContext(), "Emulation started", 
+					   Toast.LENGTH_SHORT).show();
+	}
+	
+	private void init() {
+		mDisplay = findViewById(R.id.mainDisplay);
 		
-		// Buttons
 		mButtonCoin = findViewById(R.id.btn_p1_coin);
 		mButtonP1Start = findViewById(R.id.btn_p1_start);
 		mButtonP1Left = findViewById(R.id.btn_p1_left);
@@ -133,14 +140,6 @@ public class MainActivity extends Activity implements Button.OnTouchListener
 		mButtonP1Left.setOnTouchListener(this);
 		mButtonP1Fire.setOnTouchListener(this);
 		mButtonP1Right.setOnTouchListener(this);
-		
-		// Run
-		if (!programStarted) {
-			programStarted = true;
-			Toast.makeText(getApplicationContext(), "Emulation started", 
-				Toast.LENGTH_SHORT).show();
-			platform.startOp();
-		}
 	}
 	
 }

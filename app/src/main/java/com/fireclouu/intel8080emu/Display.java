@@ -27,38 +27,44 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 
 	public static final int GUEST_WIDTH = 256;
 	public static final int GUEST_HEIGHT = 224;
-	
+
 	private int orientationWidth, orientationHeight;
 	private Paint paintRed, paintWhite, paintGreen, paintText;
 	private SurfaceHolder holder;
 	private boolean enableOffset = false;
 
-	public Display(Context context) {
+	public Display(Context context)
+	{
 		super(context);
 		init(DRAW_ORIENTATION_PORTRAIT);
 	}
 
-	public Display(Context context, AttributeSet attrs) {
+	public Display(Context context, AttributeSet attrs)
+	{
 		super(context, attrs);
 		init(DRAW_ORIENTATION_PORTRAIT);
 	}
 
 	@Override
-	public void surfaceCreated(SurfaceHolder p1) {
+	public void surfaceCreated(SurfaceHolder p1)
+	{
 		// TODO
 	}
 
 	@Override
-	public void surfaceChanged(SurfaceHolder p1, int p2, int p3, int p4) {
+	public void surfaceChanged(SurfaceHolder p1, int p2, int p3, int p4)
+	{
 		// TODO: Implement this method
 	}
 
 	@Override
-	public void surfaceDestroyed(SurfaceHolder p1) {
+	public void surfaceDestroyed(SurfaceHolder p1)
+	{
 		// TODO: Implement this method
 	}
-	
-	private void init(int orientation) {
+
+	private void init(int orientation)
+	{
 		holder = getHolder();
 
 		paintRed = setPaint(Color.RED);
@@ -67,36 +73,43 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 
 		paintText = setPaint(Color.WHITE);
 		paintText.setTextSize(12);
-		
-		if (orientation == DRAW_ORIENTATION_PORTRAIT) {
+
+		if (orientation == DRAW_ORIENTATION_PORTRAIT)
+		{
 			orientationWidth = GUEST_HEIGHT;
 			orientationHeight = GUEST_WIDTH;
-		} else {
+		}
+		else
+		{
 			orientationWidth = GUEST_WIDTH;
 			orientationHeight = GUEST_HEIGHT;
 		}
 	}
 
-	public int getHostMaxDimension() {
+	public int getHostMaxDimension()
+	{
 		int returnValue = getWidth() > getHeight() ? DIMENSION_WIDTH : DIMENSION_HEIGHT;
 		return returnValue;
 	}
-	
-	public float getHostScalingValue(int orientation) {
+
+	public float getHostScalingValue(int orientation)
+	{
 		float returnValue = orientation == DIMENSION_WIDTH ?
 			(float) ((float) getWidth() / (float) orientationWidth) :
-			(float) ((float) getHeight() /(float) orientationHeight);
+			(float) ((float) getHeight() / (float) orientationHeight);
 		return returnValue;
 	}
-	
-	public boolean hasWidthSpace(float scale) {
+
+	public boolean hasWidthSpace(float scale)
+	{
 		boolean returnValue = false;
 		float newWidth  = scale * GUEST_WIDTH;
 		returnValue = (newWidth <= getWidth()) ;
 		return returnValue;
 	}
-	
-	private float getCenterOffset(float maxValue) {
+
+	private float getCenterOffset(float maxValue)
+	{
 		float offset = 0;
 		int hostWidth = getWidth();
 		float centerPointHost = hostWidth / 2;
@@ -104,8 +117,9 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		offset = Math.abs(centerPointHost - centerPointGuest);
 		return offset;
 	}
-	
-	public float getScaleValueLogical() {
+
+	public float getScaleValueLogical()
+	{
 		int maxDimension = getHostMaxDimension() == DIMENSION_WIDTH ? DIMENSION_HEIGHT : DIMENSION_WIDTH;
 		float scaleValue = getHostScalingValue(maxDimension);
 		enableOffset = hasWidthSpace(scaleValue);
@@ -123,48 +137,56 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		float mapY = 0;
 		float translateX = 0;
 		float translateY = 0;
-		
+
 		int vramNormalized;
 		int data;
-		if (drawOrientation == DRAW_ORIENTATION_PORTRAIT) {
+		if (drawOrientation == DRAW_ORIENTATION_PORTRAIT)
+		{
 			orientationWidth = GUEST_HEIGHT;
 			orientationHeight = GUEST_WIDTH;
-		} else {
+		}
+		else
+		{
 			orientationWidth = GUEST_WIDTH;
 			orientationHeight = GUEST_HEIGHT;
 		}
-		
+
 		// TODO: needs testing , if screen glitches
 		// change GUEST_WIDTH to orientationWidth
 		final int guestLinearDataLength = GUEST_WIDTH / 8;
-		
-		for (int vramPc = Machine.VRAM_START; vramPc <= Machine.VRAM_END; vramPc++) {
+
+		for (int vramPc = Machine.VRAM_START; vramPc <= Machine.VRAM_END; vramPc++)
+		{
 			data = memory[vramPc];
 			vramNormalized = vramPc - Machine.VRAM_START;
 
 			// draws
 			mapY = vramNormalized == 0 ? 0 : vramNormalized / guestLinearDataLength;
-			for (int bit = 0; bit < 8; bit++) {
+			for (int bit = 0; bit < 8; bit++)
+			{
 				int pixel = ((data >> bit) & 1);
 				if (pixel == 0) continue;
-				
+
 				mapX = bit + (8 * (vramNormalized % guestLinearDataLength));
-				
+
 				// translate pixel
-				if (drawOrientation == DRAW_ORIENTATION_PORTRAIT) {
+				if (drawOrientation == DRAW_ORIENTATION_PORTRAIT)
+				{
 					translateX = mapY;
 					translateY = Math.abs(mapX - orientationHeight);
-				} else {
+				}
+				else
+				{
 					translateX = mapX;
 					translateY = mapY;
 				}
-				
+
 				// translateX *= pixel;
 				// translateY *= pixel;
-				
+
 				// translateX += centerOffset;
 				// translateY += centerOffset;
-				
+
 				plotList.add((translateX * spacing) + centerOffset);
 				plotList.add((translateY * spacing));
 			}
@@ -175,7 +197,8 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		return returnValue;
 	}
 
-	private Paint setPaint(int color) {
+	private Paint setPaint(int color)
+	{
 		Paint mPaint;
 		mPaint = new Paint();
 		mPaint.setStyle(Paint.Style.FILL);
@@ -184,20 +207,23 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		return mPaint;
 	}
 
-	private double fps() {
+	private double fps()
+	{
 		return 0;
 	}
-	private String parseFps(double fps) {
+	private String parseFps(double fps)
+	{
 		return String.format("fps: %.2f", fps);
 	}
-	
+
 	@Override
-	public void draw(short[] memory) {
+	public void draw(short[] memory)
+	{
 		while (!holder.getSurface().isValid()) continue;
-        
+
 		pixelHostSize = getScaleValueLogical();
         paintWhite.setStrokeWidth(pixelHostSize + 0.5f);
-		
+
 		while (!holder.getSurface().isValid() && !holder.isCreating()) continue;
 
 		// canvas
@@ -211,23 +237,29 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		// Emulation thread speed
 		canvas.drawText("Thread speed: " + Emulator.actual_cycle, 0, getHeight() - 25, paintWhite);
 		//cycle
-		if (Emulator.isCycleCorrect()) {
+		if (Emulator.isCycleCorrect())
+		{
 			canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintGreen);
-		} else {
+		}
+		else
+		{
 			canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintRed);
 		}
-		
+
 		canvas.drawText("wxh: " + getWidth() + "x" + getHeight(), 0,  getHeight() - 55, paintWhite);
 		canvas.drawText("wxh scaled: " + (orientationWidth * pixelHostSize) + "x" + (orientationHeight * pixelHostSize), 0,  getHeight() - 70, paintWhite);
 		canvas.drawText("fireclouu", (int) (getWidth() / 1.1), getHeight() - 10, paintWhite);
 		// release
 		holder.getSurface().unlockCanvasAndPost(canvas);
 	}
-	
-class DebugThread implements Runnable {
+
+	class DebugThread implements Runnable
+	{
 		@Override
-		public void run() {
-			while(Emulator.stateMaster) {
+		public void run()
+		{
+			while (true)
+			{
 				if (!holder.getSurface().isValid()) continue;
 
 				canvas = holder.lockCanvas();
@@ -236,18 +268,22 @@ class DebugThread implements Runnable {
 				canvas.drawText(
 					Platform.OUT_MSG, 0,
 					10,
-						paintWhite);
+					paintWhite);
 				canvas.drawText(
 					StringUtils.getTime(), getWidth() - 60, 15, paintWhite);
 
 				long expected = 23803381171L; // 24 billion
-				try {
-				int startingpoint = 20;
-				for (String msg : PlatformAdapter.BUILD_MSG) {
-					canvas.drawText(msg, 0, startingpoint += 20, paintText);
-				}
+				try
+				{
+					int startingpoint = 20;
+					for (String msg : PlatformAdapter.BUILD_MSG)
+					{
+						canvas.drawText(msg, 0, startingpoint += 20, paintText);
+					}
 
-				}catch (NullPointerException e) {
+				}
+				catch (NullPointerException e)
+				{
 					String exception = e.getMessage() != null ? e.getMessage() : "DebugThread: Message is null";
 					Log.e(StringUtils.TAG, exception);
 				}
@@ -255,30 +291,30 @@ class DebugThread implements Runnable {
 				canvas.drawText(
 					"Hardware accelerated: " + isHardwareAccelerated(), 0,
 					getHeight() - 10,
-						paintWhite);
+					paintWhite);
 
 				canvas.drawText(
 					"Expected Cpu Cycle: " + expected, 0,
 					getHeight() - 25,
-						paintWhite);
+					paintWhite);
 
 				canvas.drawText(
 					"Remaining Cpu Cycle: " + (expected - Interpreter.machineTotalCycle), 0,
 					getHeight() - 40,
-						paintWhite);
+					paintWhite);
 
 				canvas.drawText(
 					"Current Cpu Cycle: " + Interpreter.machineTotalCycle, 0,
 					getHeight() - 55,
-						paintWhite);
+					paintWhite);
 
 				canvas.drawText(
 					"fireclouu", (int) (getWidth() / 1.1),
 					getHeight() - 10,
-						paintWhite);
+					paintWhite);
 
 				holder.unlockCanvasAndPost(canvas);
 			}
 		}
-}
+	}
 }
