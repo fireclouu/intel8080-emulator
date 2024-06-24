@@ -31,7 +31,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	private int orientationWidth, orientationHeight;
 	private Paint paintRed, paintWhite, paintGreen, paintText;
 	private SurfaceHolder holder;
-
+	private boolean enableOffset = false;
 
 	public Display(Context context) {
 		super(context);
@@ -89,39 +89,32 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		return returnValue;
 	}
 	
-	public boolean isScaleValueFits(float scale) {
+	public boolean hasWidthSpace(float scale) {
 		boolean returnValue = false;
-		float newWidth  = scale * orientationWidth;
-		float newHeight = scale * orientationHeight;
-		returnValue = (newWidth < getWidth() && newHeight < getHeight()) ;
+		float newWidth  = scale * GUEST_WIDTH;
+		returnValue = (newWidth <= getWidth()) ;
 		return returnValue;
 	}
 	
 	private float getCenterOffset(float maxValue) {
 		float offset = 0;
-		
-		int dimensionSize = getHostMaxDimension() == DIMENSION_HEIGHT ? getWidth() : getHeight();
-		float centerPointHost = dimensionSize / 2;
+		int hostWidth = getWidth();
+		float centerPointHost = hostWidth / 2;
 		float centerPointGuest = maxValue / 2;
-		offset = Math.abs(centerPointHost);
+		offset = Math.abs(centerPointHost - centerPointGuest);
 		return offset;
 	}
 	
 	public float getScaleValueLogical() {
-		int maxDimension = getHostMaxDimension();
+		int maxDimension = getHostMaxDimension() == DIMENSION_WIDTH ? DIMENSION_HEIGHT : DIMENSION_WIDTH;
 		float scaleValue = getHostScalingValue(maxDimension);
-		boolean isFitToHostDisplay = isScaleValueFits(scaleValue);
-		if (!isFitToHostDisplay) {
-			maxDimension = maxDimension == DIMENSION_WIDTH ? DIMENSION_HEIGHT : DIMENSION_WIDTH;
-			scaleValue = getHostScalingValue(maxDimension);
-			// do not check if fit to host, return value immediately
-		}
+		enableOffset = hasWidthSpace(scaleValue);
 		return scaleValue;
 	}
 
 	public float[] convertVramToFloatPoints(int drawOrientation, short[] memory)
 	{
-		float centerOffset = getCenterOffset(orientationWidth + pixelHostSize);
+		float centerOffset = enableOffset ? getCenterOffset(orientationWidth * pixelHostSize) : 0;
 		final float spacing = pixelHostSize;
 		List<Float> plotList = new ArrayList<>();
 		float[] returnValue;
@@ -172,7 +165,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 				// translateX += centerOffset;
 				// translateY += centerOffset;
 				
-				plotList.add((translateX * spacing));
+				plotList.add((translateX * spacing) + centerOffset);
 				plotList.add((translateY * spacing));
 			}
 		}
@@ -200,10 +193,10 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	
 	@Override
 	public void draw(short[] memory) {
-		while (!holder.getSurface().isValid()) {
-        	pixelHostSize = getScaleValueLogical();
-        	paintWhite.setStrokeWidth(pixelHostSize + 0.5f);
-		}
+		while (!holder.getSurface().isValid()) continue;
+        
+		pixelHostSize = getScaleValueLogical();
+        paintWhite.setStrokeWidth(pixelHostSize + 0.5f);
 		
 		while (!holder.getSurface().isValid() && !holder.isCreating()) continue;
 
@@ -223,6 +216,9 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		} else {
 			canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintRed);
 		}
+		
+		canvas.drawText("wxh: " + getWidth() + "x" + getHeight(), 0,  getHeight() - 55, paintWhite);
+		canvas.drawText("wxh scaled: " + (orientationWidth * pixelHostSize) + "x" + (orientationHeight * pixelHostSize), 0,  getHeight() - 70, paintWhite);
 		canvas.drawText("fireclouu", (int) (getWidth() / 1.1), getHeight() - 10, paintWhite);
 		// release
 		holder.getSurface().unlockCanvasAndPost(canvas);

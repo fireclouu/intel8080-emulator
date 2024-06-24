@@ -137,6 +137,8 @@ public class MainActivity extends Activity implements Button.OnTouchListener
 		// Run
 		if (!programStarted) {
 			programStarted = true;
+			Toast.makeText(getApplicationContext(), "Emulation started", 
+				Toast.LENGTH_SHORT).show();
 			platform.startOp();
 		}
 	}
