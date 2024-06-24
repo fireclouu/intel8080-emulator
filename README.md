@@ -13,6 +13,10 @@ Playable Space Invaders machine emulation with **Intel 8080 CPU interpreter**, w
 
 ```text
 Version latest-debug
+- Added Player 2 support by fixing and rewriting interrupt handler
+- fixes thread issues and input stream handling
+- Improved stability when suspending application
+- automatically scale and position to wider screen
 - MMU feature implemented
 - fixed persistent highscore feature
 - fixed button drawable statelists
