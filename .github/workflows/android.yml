@@ -43,5 +43,5 @@ jobs:
     - name: Upload Debug APK
       uses: actions/upload-artifact@v3
       with:
-        name: app-space-invaders-debug.zip
+        name: app-space-invaders-debug
         path: app/build/outputs/apk/debug/*.apk
