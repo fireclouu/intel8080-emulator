@@ -1,20 +1,14 @@
 package com.fireclouu.intel8080emu;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.media.AudioManager;
-import android.media.SoundPool;
-import android.os.Vibrator;
-import android.util.Log;
-
-import com.fireclouu.intel8080emu.Emulator.BaseClass.DisplayAdapter;
-import com.fireclouu.intel8080emu.Emulator.BaseClass.MachineResources;
-import com.fireclouu.intel8080emu.Emulator.BaseClass.PlatformAdapter;
-import com.fireclouu.intel8080emu.Emulator.BaseClass.ResourceAdapter;
-import com.fireclouu.intel8080emu.Emulator.BaseClass.StringUtils;
-
-import java.io.IOException;
-import java.io.InputStream;
+import android.app.*;
+import android.content.*;
+import android.media.*;
+import android.os.*;
+import android.util.*;
+import android.widget.*;
+import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
+import java.io.*;
+import android.view.*;
 
 public class Platform extends PlatformAdapter implements ResourceAdapter
 {
@@ -23,10 +17,30 @@ public class Platform extends PlatformAdapter implements ResourceAdapter
 	private SoundPool soundPool, spShipFX;
 	private SharedPreferences.Editor editor;
 	private Vibrator vibrator;
+	private DisplayAdapter display;
+	private LinearLayout llLogs;
+	private TextView tvLog;
+	private Handler handler;
+	private String outputMessage = "";
+	private Runnable runnable;
 	
-	public Platform(Context context, DisplayAdapter display) {
+	public Platform(Activity activity, Context context, DisplayAdapter display) {
 		super(display);
+		this.display = display;
 		this.context = context;
+		tvLog = activity.findViewById(R.id.tvLog);
+		llLogs = activity.findViewById(R.id.llLogs);
+		
+		handler = new Handler();
+		runnable = new Runnable() {
+			@Override
+			public void run()
+			{
+				tvLog.setText(outputMessage);
+				handler.post(this);
+			}
+		};
+		handler.post(runnable);
 		platformInit();
 	}
 	
@@ -141,5 +155,28 @@ public class Platform extends PlatformAdapter implements ResourceAdapter
 	public void vibrate(long milli) {
 		vibrator.vibrate(milli);
 	}
+
+	@Override
+	public boolean isDrawing()
+	{
+		return display.isDrawing();
+	}
+	
+	
+	@Override
+	public void writeLog(String message)
+	{
+		if (!isLogging()) return;
+		outputMessage = message;
+	}
+
+	@Override
+	public void setLogState(boolean value)
+	{
+		int visibility = value ? View.VISIBLE : View.GONE;
+		llLogs.setVisibility(visibility);
+		super.setLogState(value);
+	}
+	
 	
 }

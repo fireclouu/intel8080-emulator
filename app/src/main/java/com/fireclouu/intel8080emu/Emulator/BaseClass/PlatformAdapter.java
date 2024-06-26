@@ -14,11 +14,13 @@ import com.fireclouu.intel8080emu.Emulator.*;
 public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 {
 	private Emulator emulator;
+	private Mmu mmu;
 	private CpuComponents cpu;
 	private DisplayAdapter display;
 	private Handler handler;
 	private KeyInterrupts keyInterrupts;
 	private ExecutorService executor;
+	private boolean logState = false;
 	
 	public static String OUT_MSG = "System OK!";
 	public static String[] BUILD_MSG;
@@ -43,6 +45,7 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 	// Main
 	public void start() {
 		// mmu inject
+		mmu = new Mmu();
 		Mmu.resource = this;
 		// initial file check
 		if (!isTestFile()) {
@@ -61,7 +64,7 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 
 	public void init() {
 		cpu = new CpuComponents();
-		emulator = new Emulator();
+		emulator = new Emulator(this, mmu);
 		keyInterrupts = new KeyInterrupts(emulator);
 		executor = Executors.newSingleThreadExecutor();
 		// media
@@ -157,7 +160,7 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		try
 		{
 			while ((read = (short) file.read()) != -1) {
-				Mmu.writeMemory(cpu, addr++, read);
+				mmu.writeMemory(addr++, read);
 			}
 			file.close();
 			file = null;
@@ -255,4 +258,13 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		emulator.stop();
 		executor.shutdown();
 	}
+	
+	public abstract boolean isDrawing();
+	public boolean isLogging() {
+		return logState;
+	};
+	public void setLogState(boolean value) {
+		logState = value;
+	};
+	public abstract void writeLog(String message);
 }

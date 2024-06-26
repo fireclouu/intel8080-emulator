@@ -32,7 +32,10 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	private Paint paintRed, paintWhite, paintGreen, paintText;
 	private SurfaceHolder holder;
 	private boolean enableOffset = false;
-
+	private boolean inDrawing = false;
+	
+	long expected = 23803381171L; // 24 billion (long crc32)
+	
 	public Display(Context context)
 	{
 		super(context);
@@ -219,6 +222,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 	@Override
 	public void draw(short[] memory)
 	{
+		inDrawing = true;
 		while (!holder.getSurface().isValid()) continue;
 
 		pixelHostSize = getScaleValueLogical();
@@ -230,91 +234,19 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 		canvas = holder.getSurface().lockHardwareCanvas();
 		canvas.drawColor(Color.BLACK);
 		canvas.drawPoints(convertVramToFloatPoints(drawOrientation, memory), paintWhite);
-		canvas.drawText(Platform.OUT_MSG, 0, 10, paintWhite);
 
 		// fps
 		canvas.drawText(parseFps(fps()), 0, getHeight() - 10, paintWhite);
-		// Emulation thread speed
-		canvas.drawText("Thread speed: " + Emulator.actual_cycle, 0, getHeight() - 25, paintWhite);
-		//cycle
-		if (Emulator.isCycleCorrect())
-		{
-			canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintGreen);
-		}
-		else
-		{
-			canvas.drawText(Emulator.cycleInfo, 0, getHeight() - 40, paintRed);
-		}
-
 		canvas.drawText("wxh: " + getWidth() + "x" + getHeight(), 0,  getHeight() - 55, paintWhite);
 		canvas.drawText("wxh scaled: " + (orientationWidth * pixelHostSize) + "x" + (orientationHeight * pixelHostSize), 0,  getHeight() - 70, paintWhite);
 		canvas.drawText("fireclouu", (int) (getWidth() / 1.1), getHeight() - 10, paintWhite);
 		// release
 		holder.getSurface().unlockCanvasAndPost(canvas);
+		inDrawing = false;
 	}
-
-	class DebugThread implements Runnable
-	{
-		@Override
-		public void run()
-		{
-			while (true)
-			{
-				if (!holder.getSurface().isValid()) continue;
-
-				canvas = holder.lockCanvas();
-
-				canvas.drawColor(Color.BLACK);
-				canvas.drawText(
-					Platform.OUT_MSG, 0,
-					10,
-					paintWhite);
-				canvas.drawText(
-					StringUtils.getTime(), getWidth() - 60, 15, paintWhite);
-
-				long expected = 23803381171L; // 24 billion
-				try
-				{
-					int startingpoint = 20;
-					for (String msg : PlatformAdapter.BUILD_MSG)
-					{
-						canvas.drawText(msg, 0, startingpoint += 20, paintText);
-					}
-
-				}
-				catch (NullPointerException e)
-				{
-					String exception = e.getMessage() != null ? e.getMessage() : "DebugThread: Message is null";
-					Log.e(StringUtils.TAG, exception);
-				}
-
-				canvas.drawText(
-					"Hardware accelerated: " + isHardwareAccelerated(), 0,
-					getHeight() - 10,
-					paintWhite);
-
-				canvas.drawText(
-					"Expected Cpu Cycle: " + expected, 0,
-					getHeight() - 25,
-					paintWhite);
-
-				canvas.drawText(
-					"Remaining Cpu Cycle: " + (expected - Interpreter.machineTotalCycle), 0,
-					getHeight() - 40,
-					paintWhite);
-
-				canvas.drawText(
-					"Current Cpu Cycle: " + Interpreter.machineTotalCycle, 0,
-					getHeight() - 55,
-					paintWhite);
-
-				canvas.drawText(
-					"fireclouu", (int) (getWidth() / 1.1),
-					getHeight() - 10,
-					paintWhite);
-
-				holder.unlockCanvasAndPost(canvas);
-			}
-		}
+	
+	@Override
+	public boolean isDrawing() {
+		return inDrawing;
 	}
 }

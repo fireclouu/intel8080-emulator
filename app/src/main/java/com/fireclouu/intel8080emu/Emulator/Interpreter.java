@@ -2,9 +2,6 @@ package com.fireclouu.intel8080emu.Emulator;
 
 public class Interpreter
 {
-	public static short opcodeCycle = 0;
-	public static long machineTotalCycle = 0;
-
 	// SOURCES: superzazu
 	private final static short[] OPCODES_CYCLES = {	//  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
 		4,  10, 7,  5,  5,  5,  7,  4,  4,  10, 7,  5,  5,  5,  7,  4,  // 0
@@ -24,8 +21,10 @@ public class Interpreter
 		5,  10, 10, 18, 11, 11, 7,  11, 5,  5,  10, 4,  11, 17, 7,  11, // E
 		5,  10, 10, 4,  11, 11, 7,  11, 5,  5,  10, 4,  11, 17, 7,  11  // F
 	};
+	
+	public short opcodeCycle = 0;
 
-	public short interpret(CpuComponents cpu) {
+	public short interpret(Mmu mmu, CpuComponents cpu) {
 		// opcode
 		int opcode = cpu.PC;
 
@@ -36,45 +35,45 @@ public class Interpreter
 		cpu.PC++;
 
 		// cycles
-		int opMemory = Mmu.readMemory(cpu, opcode);
+		int opMemory = mmu.readMemory(opcode);
 		opcodeCycle = OPCODES_CYCLES[opMemory];
 
 		switch (opMemory) {	
 			case 0x01:
-				cpu.B = Mmu.readMemory(cpu, opcode + 2);
-				cpu.C = Mmu.readMemory(cpu, opcode + 1);
+				cpu.B = mmu.readMemory(opcode + 2);
+				cpu.C = mmu.readMemory(opcode + 1);
 				cpu.PC += 2;
 				break; // LXI B, D16
 			case 0x02:
-				instr_sta(cpu, cpu.B, cpu.C);
+				instr_sta(mmu, cpu, cpu.B, cpu.C);
 				break; // STAX B	
 			case 0x09:
 				instr_dad(cpu, cpu.B, cpu.C);
 				break; //DAD B
 			case 0x0a:
-				instr_lda(cpu, cpu.B, cpu.C);
+				instr_lda(mmu, cpu, cpu.B, cpu.C);
 				break; // LDAX B	
 			case 0x11:
-				cpu.D = Mmu.readMemory(cpu, opcode + 2);
-				cpu.E = Mmu.readMemory(cpu, opcode + 1);
+				cpu.D = mmu.readMemory(opcode + 2);
+				cpu.E = mmu.readMemory(opcode + 1);
 				cpu.PC += 2;
 				break; // LXI D, D16
 			case 0x12:
-				instr_sta(cpu, cpu.D, cpu.E);
+				instr_sta(mmu, cpu, cpu.D, cpu.E);
 				break; // STAX D	
 			case 0x19:
 				instr_dad(cpu, cpu.D, cpu.E);
 				break; //DAD D
 			case 0x1a:
-				instr_lda(cpu, cpu.D, cpu.E);
+				instr_lda(mmu, cpu, cpu.D, cpu.E);
 				break; // LDAX D	
 			case 0x21:
-				cpu.H = Mmu.readMemory(cpu, opcode + 2);
-				cpu.L = Mmu.readMemory(cpu, opcode + 1);
+				cpu.H = mmu.readMemory(opcode + 2);
+				cpu.L = mmu.readMemory(opcode + 1);
 				cpu.PC += 2;
 				break; // LXI H, D16
 			case 0x22:
-				instr_shld(cpu, opcode);
+				instr_shld(mmu, cpu, opcode);
 				cpu.PC += 2;
 				break; // SHLD adr
 			case 0x27:
@@ -99,25 +98,25 @@ public class Interpreter
 				instr_dad(cpu, cpu.H, cpu.L);
 				break; //DAD H
 			case 0x2a:
-				instr_lhld(cpu, opcode);
+				instr_lhld(mmu, cpu, opcode);
 				cpu.PC += 2;
 				break; // LHLD adr
 			case 0x2f:
 				cpu.A = (short) ((~cpu.A & 0xff));
 				break; // CMA
 			case 0x31:
-				cpu.SP = ((Mmu.readMemory(cpu, opcode + 2) << 8) | Mmu.readMemory(cpu, opcode + 1));
+				cpu.SP = ((mmu.readMemory(opcode + 2) << 8) | mmu.readMemory(opcode + 1));
 				cpu.PC += 2;
 				break; // LXI SP, D16
 			case 0x32:
-				instr_sta(cpu, Mmu.readMemory(cpu, opcode + 2), Mmu.readMemory(cpu, opcode + 1));
+				instr_sta(mmu, cpu, mmu.readMemory(opcode + 2), mmu.readMemory(opcode + 1));
 				cpu.PC += 2;
 				break; // STA adr	
 			case 0x39:
 				instr_dad(cpu, cpu.SP);
 				break; //DAD SP
 			case 0x3a:
-				instr_lda(cpu, Mmu.readMemory(cpu, opcode + 2), Mmu.readMemory(cpu, opcode + 1));
+				instr_lda(mmu, cpu, mmu.readMemory(opcode + 2), mmu.readMemory(opcode + 1));
 				cpu.PC += 2;
 				break; // LDA adr
 			case 0xeb:
@@ -127,17 +126,17 @@ public class Interpreter
 			///  MOV  ///
 
 			// IMMEDIATE
-			case 0x06: cpu.B = Mmu.readMemory(cpu, opcode + 1); cpu.PC++; break; // MVI B, D8
-			case 0x0e: cpu.C = Mmu.readMemory(cpu, opcode + 1); cpu.PC++; break; // MVI C, D8
-			case 0x16: cpu.D = Mmu.readMemory(cpu, opcode + 1); cpu.PC++; break; // MVI D, D8
-			case 0x1e: cpu.E = Mmu.readMemory(cpu, opcode + 1); cpu.PC++; break; // MVI E, D8
-			case 0x26: cpu.H = Mmu.readMemory(cpu, opcode + 1); cpu.PC++; break; // MVI H, D8
-			case 0x2e: cpu.L = Mmu.readMemory(cpu, opcode + 1); cpu.PC++; break; // MVI L, D8
+			case 0x06: cpu.B = mmu.readMemory(opcode + 1); cpu.PC++; break; // MVI B, D8
+			case 0x0e: cpu.C = mmu.readMemory(opcode + 1); cpu.PC++; break; // MVI C, D8
+			case 0x16: cpu.D = mmu.readMemory(opcode + 1); cpu.PC++; break; // MVI D, D8
+			case 0x1e: cpu.E = mmu.readMemory(opcode + 1); cpu.PC++; break; // MVI E, D8
+			case 0x26: cpu.H = mmu.readMemory(opcode + 1); cpu.PC++; break; // MVI H, D8
+			case 0x2e: cpu.L = mmu.readMemory(opcode + 1); cpu.PC++; break; // MVI L, D8
 			case 0x36: 
-				Mmu.writeMemory(cpu, addr, Mmu.readMemory(cpu, opcode + 1));
+				mmu.writeMemory(addr, mmu.readMemory(opcode + 1));
 				cpu.PC++; 
 				break; // MVI M, D8
-			case 0x3e: cpu.A = Mmu.readMemory(cpu, opcode + 1); cpu.PC++; break; // MVI A, D8
+			case 0x3e: cpu.A = mmu.readMemory(opcode + 1); cpu.PC++; break; // MVI A, D8
 
 			// B
 			case 0x40: break; // MOV B, B
@@ -146,7 +145,7 @@ public class Interpreter
 			case 0x43: cpu.B = cpu.E; break; // MOV B, E
 			case 0x44: cpu.B = cpu.H; break; // MOV B, H
 			case 0x45: cpu.B = cpu.L; break; // MOV B, L
-			case 0x46: cpu.B = Mmu.readMemory(cpu, addr); break; // MOV B, M
+			case 0x46: cpu.B = mmu.readMemory(addr); break; // MOV B, M
 			case 0x47: cpu.B = cpu.A; break; // MOV B, A
 
 			// C
@@ -156,7 +155,7 @@ public class Interpreter
 			case 0x4b: cpu.C = cpu.E; break; // MOV C, E
 			case 0x4c: cpu.C = cpu.H; break; // MOV C, H
 			case 0x4d: cpu.C = cpu.L; break; // MOV C, L
-			case 0x4e: cpu.C = Mmu.readMemory(cpu, addr); break; // MOV C, M
+			case 0x4e: cpu.C = mmu.readMemory(addr); break; // MOV C, M
 			case 0x4f: cpu.C = cpu.A; break; // MOV C, A
 
 			// D
@@ -166,7 +165,7 @@ public class Interpreter
 			case 0x53: cpu.D = cpu.E; break; // MOV D, E
 			case 0x54: cpu.D = cpu.H; break; // MOV D, H
 			case 0x55: cpu.D = cpu.L; break; // MOV D, L
-			case 0x56: cpu.D = Mmu.readMemory(cpu, addr); break; // MOV D, M
+			case 0x56: cpu.D = mmu.readMemory(addr); break; // MOV D, M
 			case 0x57: cpu.D = cpu.A; break; // MOV D, A
 
 			// E
@@ -176,7 +175,7 @@ public class Interpreter
 			case 0x5b: break; // MOV E, E
 			case 0x5c: cpu.E = cpu.H; break; // MOV E, H
 			case 0x5d: cpu.E = cpu.L; break; // MOV E, L
-			case 0x5e: cpu.E = Mmu.readMemory(cpu, addr);; break; // MOV E, M
+			case 0x5e: cpu.E = mmu.readMemory(addr);; break; // MOV E, M
 			case 0x5f: cpu.E = cpu.A; break; // MOV E, A
 
 			// H
@@ -186,7 +185,7 @@ public class Interpreter
 			case 0x63: cpu.H = cpu.E; break; // MOV H, E
 			case 0x64: break; // MOV H, H
 			case 0x65: cpu.H = cpu.L; break; // MOV H, L
-			case 0x66: cpu.H = Mmu.readMemory(cpu, addr);; break; // MOV H, M
+			case 0x66: cpu.H = mmu.readMemory(addr);; break; // MOV H, M
 			case 0x67: cpu.H = cpu.A; break; // MOV H, A
 
 			// L
@@ -196,17 +195,17 @@ public class Interpreter
 			case 0x6b: cpu.L = cpu.E; break; // MOV L, E
 			case 0x6c: cpu.L = cpu.H; break; // MOV L, H
 			case 0x6d: break; // MOV L, L
-			case 0x6e: cpu.L = Mmu.readMemory(cpu, addr); break; // MOV L, M
+			case 0x6e: cpu.L = mmu.readMemory(addr); break; // MOV L, M
 			case 0x6f: cpu.L = cpu.A; break; // MOV L, A
 
 			// MEMORY
-			case 0x70: Mmu.writeMemory(cpu, addr, cpu.B); break; // MOV M, B
-			case 0x71: Mmu.writeMemory(cpu, addr, cpu.C); break; // MOV M, C
-			case 0x72: Mmu.writeMemory(cpu, addr, cpu.D); break; // MOV M, D
-			case 0x73: Mmu.writeMemory(cpu, addr, cpu.E); break; // MOV M, E
-			case 0x74: Mmu.writeMemory(cpu, addr, cpu.H); break; // MOV M, H
-			case 0x75: Mmu.writeMemory(cpu, addr, cpu.L); break; // MOV M, L
-			case 0x77: Mmu.writeMemory(cpu, addr, cpu.A); break; // MOV M, A
+			case 0x70: mmu.writeMemory(addr, cpu.B); break; // MOV M, B
+			case 0x71: mmu.writeMemory(addr, cpu.C); break; // MOV M, C
+			case 0x72: mmu.writeMemory(addr, cpu.D); break; // MOV M, D
+			case 0x73: mmu.writeMemory(addr, cpu.E); break; // MOV M, E
+			case 0x74: mmu.writeMemory(addr, cpu.H); break; // MOV M, H
+			case 0x75: mmu.writeMemory(addr, cpu.L); break; // MOV M, L
+			case 0x77: mmu.writeMemory(addr, cpu.A); break; // MOV M, A
 
 			// A
 			case 0x78: cpu.A = cpu.B; break; // MOV A, B
@@ -215,7 +214,7 @@ public class Interpreter
 			case 0x7b: cpu.A = cpu.E; break; // MOV A, E
 			case 0x7c: cpu.A = cpu.H; break; // MOV A, H
 			case 0x7d: cpu.A = cpu.L; break; // MOV A, L
-			case 0x7e: cpu.A = Mmu.readMemory(cpu, addr); break; // MOV A, M
+			case 0x7e: cpu.A = mmu.readMemory(addr); break; // MOV A, M
 			case 0x7f: break; // MOV A, A
 
 			///  ALU  ///
@@ -227,7 +226,7 @@ public class Interpreter
 			case 0x83: instr_add(cpu, cpu.E, 0); break; // ADD E
 			case 0x84: instr_add(cpu, cpu.H, 0); break; // ADD H
 			case 0x85: instr_add(cpu, cpu.L, 0); break; // ADD L
-			case 0x86: instr_add(cpu, Mmu.readMemory(cpu, addr), 0); break; // ADD M
+			case 0x86: instr_add(cpu, mmu.readMemory(addr), 0); break; // ADD M
 			case 0x87: instr_add(cpu, cpu.A, 0); break; // ADD A
 
 			// ADC
@@ -237,7 +236,7 @@ public class Interpreter
 			case 0x8b: instr_add(cpu, cpu.E, cpu.cc.CY); break; // ADC E
 			case 0x8c: instr_add(cpu, cpu.H, cpu.cc.CY); break; // ADC H
 			case 0x8d: instr_add(cpu, cpu.L, cpu.cc.CY); break; // ADC L
-			case 0x8e: instr_add(cpu, Mmu.readMemory(cpu, addr), cpu.cc.CY); break; // ADC M
+			case 0x8e: instr_add(cpu, mmu.readMemory(addr), cpu.cc.CY); break; // ADC M
 			case 0x8f: instr_add(cpu, cpu.A, cpu.cc.CY); break; // ADC A
 
 			// SUB
@@ -247,7 +246,7 @@ public class Interpreter
 			case 0x93: instr_sub(cpu, cpu.E, 0); break; // SUB E
 			case 0x94: instr_sub(cpu, cpu.H, 0); break; // SUB H
 			case 0x95: instr_sub(cpu, cpu.L, 0); break; // SUB L
-			case 0x96: instr_sub(cpu, Mmu.readMemory(cpu, addr), 0); break; // SUB M
+			case 0x96: instr_sub(cpu, mmu.readMemory(addr), 0); break; // SUB M
 			case 0x97: instr_sub(cpu, cpu.A, 0); break; // SUB A
 
 			// SBB
@@ -257,7 +256,7 @@ public class Interpreter
 			case 0x9b: instr_sub(cpu, cpu.E, cpu.cc.CY); break; // SBB E
 			case 0x9c: instr_sub(cpu, cpu.H, cpu.cc.CY); break; // SBB H
 			case 0x9d: instr_sub(cpu, cpu.L, cpu.cc.CY); break; // SBB L
-			case 0x9e: instr_sub(cpu, Mmu.readMemory(cpu, addr), cpu.cc.CY); break; // SBB M
+			case 0x9e: instr_sub(cpu, mmu.readMemory(addr), cpu.cc.CY); break; // SBB M
 			case 0x9f: instr_sub(cpu, cpu.A, cpu.cc.CY); break; // SBB A
 
 			// ANA
@@ -267,7 +266,7 @@ public class Interpreter
 			case 0xa3: instr_ana(cpu, cpu.E); break; // ANA E
 			case 0xa4: instr_ana(cpu, cpu.H); break; // ANA H
 			case 0xa5: instr_ana(cpu, cpu.L); break; // ANA L
-			case 0xa6: instr_ana(cpu, Mmu.readMemory(cpu, addr)); break; // ANA M
+			case 0xa6: instr_ana(cpu, mmu.readMemory(addr)); break; // ANA M
 			case 0xa7: instr_ana(cpu, cpu.A); break; // ANA A
 
 			// XRA
@@ -277,7 +276,7 @@ public class Interpreter
 			case 0xab: instr_xra(cpu, cpu.E); break; // XRA E
 			case 0xac: instr_xra(cpu, cpu.H); break; // XRA H
 			case 0xad: instr_xra(cpu, cpu.L); break; // XRA L
-			case 0xae: instr_xra(cpu, Mmu.readMemory(cpu, addr)); break; // XRA M
+			case 0xae: instr_xra(cpu, mmu.readMemory(addr)); break; // XRA M
 			case 0xaf: instr_xra(cpu, cpu.A); break; // XRA A
 
 			// ORA
@@ -287,7 +286,7 @@ public class Interpreter
 			case 0xb3: instr_ora(cpu, cpu.E); break; // ORA E
 			case 0xb4: instr_ora(cpu, cpu.H); break; // ORA H
 			case 0xb5: instr_ora(cpu, cpu.L); break; // ORA L
-			case 0xb6: instr_ora(cpu, Mmu.readMemory(cpu, addr)); break; // ORA M
+			case 0xb6: instr_ora(cpu, mmu.readMemory(addr)); break; // ORA M
 			case 0xb7: instr_ora(cpu, cpu.A); break; // ORA A
 
 			// CMP
@@ -297,7 +296,7 @@ public class Interpreter
 			case 0xbb: instr_cmp(cpu, cpu.E); break; // CMP E
 			case 0xbc: instr_cmp(cpu, cpu.H); break; // CMP H
 			case 0xbd: instr_cmp(cpu, cpu.L); break; // CMP L
-			case 0xbe: instr_cmp(cpu, Mmu.readMemory(cpu, addr)); break; // CMP M
+			case 0xbe: instr_cmp(cpu, mmu.readMemory(addr)); break; // CMP M
 			case 0xbf: instr_cmp(cpu, cpu.A); break; // CMP A
 
 			// INR
@@ -308,7 +307,7 @@ public class Interpreter
 			case 0x24: cpu.H = instr_inr(cpu, cpu.H); break; // INR H
 			case 0x2c: cpu.L = instr_inr(cpu, cpu.L); break; // INR L
 			case 0x34: 
-				Mmu.writeMemory(cpu, addr, instr_inr(cpu, Mmu.readMemory(cpu, addr))); 
+				mmu.writeMemory(addr, instr_inr(cpu, mmu.readMemory(addr))); 
 				break; // INR M
 			case 0x3c: cpu.A = instr_inr(cpu, cpu.A); break; // INR A
 
@@ -320,7 +319,7 @@ public class Interpreter
 			case 0x25: cpu.H = instr_dcr(cpu, cpu.H); break; // DCR H
 			case 0x2d: cpu.L = instr_dcr(cpu, cpu.L); break; // DCR L
 			case 0x35: 
-				Mmu.writeMemory(cpu, addr, instr_dcr(cpu, Mmu.readMemory(cpu, addr))); 
+				mmu.writeMemory(addr, instr_dcr(cpu, mmu.readMemory(addr))); 
 				break; // DCR M
 			case 0x3d: cpu.A = instr_dcr(cpu, cpu.A); break; // DCR A
 
@@ -347,82 +346,82 @@ public class Interpreter
 			case 0x3f: cpu.cc.CY = (cpu.cc.CY == 1) ? (byte) 0 : 1; break; // CMC	
 
 			// ALU (IMMEDIATE)
-			case 0xc6: instr_add(cpu, Mmu.readMemory(cpu, opcode + 1), 0); cpu.PC++; break; // ADI D8		
-			case 0xce: instr_add(cpu, Mmu.readMemory(cpu, opcode + 1), cpu.cc.CY); cpu.PC++; break; // ACI D8	
-			case 0xd6: instr_sub(cpu, Mmu.readMemory(cpu, opcode + 1), 0); cpu.PC++; break; // SUI D8	
-			case 0xde: instr_sub(cpu, Mmu.readMemory(cpu, opcode + 1), cpu.cc.CY); cpu.PC++; break; // SBI D8
-			case 0xe6: instr_ana(cpu, Mmu.readMemory(cpu, opcode + 1)); cpu.PC++; break; // ANI D8
-			case 0xee: instr_xra(cpu, Mmu.readMemory(cpu, opcode + 1)); cpu.PC++; break; // XRI D8
-			case 0xf6: instr_ora(cpu, Mmu.readMemory(cpu, opcode + 1)); cpu.PC++; break; // ORI D8
-			case 0xfe: instr_cmp(cpu, Mmu.readMemory(cpu, opcode + 1)); cpu.PC++; break; // CPI D8
+			case 0xc6: instr_add(cpu, mmu.readMemory(opcode + 1), 0); cpu.PC++; break; // ADI D8		
+			case 0xce: instr_add(cpu, mmu.readMemory(opcode + 1), cpu.cc.CY); cpu.PC++; break; // ACI D8	
+			case 0xd6: instr_sub(cpu, mmu.readMemory(opcode + 1), 0); cpu.PC++; break; // SUI D8	
+			case 0xde: instr_sub(cpu, mmu.readMemory(opcode + 1), cpu.cc.CY); cpu.PC++; break; // SBI D8
+			case 0xe6: instr_ana(cpu, mmu.readMemory(opcode + 1)); cpu.PC++; break; // ANI D8
+			case 0xee: instr_xra(cpu, mmu.readMemory(opcode + 1)); cpu.PC++; break; // XRI D8
+			case 0xf6: instr_ora(cpu, mmu.readMemory(opcode + 1)); cpu.PC++; break; // ORI D8
+			case 0xfe: instr_cmp(cpu, mmu.readMemory(opcode + 1)); cpu.PC++; break; // CPI D8
 
 			///  BRANCH  ////
 
 			// JUMPS
-			case 0xc3: instr_jmp(cpu, opcode); break; // JMP adr
-			case 0xc9: instr_ret(cpu); break; // RET
-			case 0xcd: instr_call(cpu, opcode); break; // CALL adr
+			case 0xc3: instr_jmp(mmu, cpu, opcode); break; // JMP adr
+			case 0xc9: instr_ret(mmu, cpu); break; // RET
+			case 0xcd: instr_call(mmu, cpu, opcode); break; // CALL adr
 			case 0xe9: cpu.PC = addr; break; // PCHL
 
 			// RET (conditional)
-			case 0xc0: conditional_ret(cpu, cpu.cc.Z == 0); break; // RNZ
-			case 0xc8: conditional_ret(cpu, cpu.cc.Z == 1); break; // RZ
-			case 0xd0: conditional_ret(cpu, cpu.cc.CY == 0); break; // RNC
-			case 0xd8: conditional_ret(cpu, cpu.cc.CY == 1); break; // RC
-			case 0xe0: conditional_ret(cpu, cpu.cc.P == 0); break; // RPO
-			case 0xe8: conditional_ret(cpu, cpu.cc.P == 1); break; // RPE	
-			case 0xf0: conditional_ret(cpu, cpu.cc.S == 0); break; // RP
-			case 0xf8: conditional_ret(cpu, cpu.cc.S == 1); break; // RM
+			case 0xc0: conditional_ret(mmu, cpu, cpu.cc.Z == 0); break; // RNZ
+			case 0xc8: conditional_ret(mmu, cpu, cpu.cc.Z == 1); break; // RZ
+			case 0xd0: conditional_ret(mmu, cpu, cpu.cc.CY == 0); break; // RNC
+			case 0xd8: conditional_ret(mmu, cpu, cpu.cc.CY == 1); break; // RC
+			case 0xe0: conditional_ret(mmu, cpu, cpu.cc.P == 0); break; // RPO
+			case 0xe8: conditional_ret(mmu, cpu, cpu.cc.P == 1); break; // RPE	
+			case 0xf0: conditional_ret(mmu, cpu, cpu.cc.S == 0); break; // RP
+			case 0xf8: conditional_ret(mmu, cpu, cpu.cc.S == 1); break; // RM
 
 			// JMP (conditional)
-			case 0xc2: conditional_jmp(cpu, opcode, cpu.cc.Z == 0); break; // JNZ adr
-			case 0xca: conditional_jmp(cpu, opcode, cpu.cc.Z == 1); break; // JZ adr
-			case 0xd2: conditional_jmp(cpu, opcode, cpu.cc.CY == 0); break; // JNC adr
-			case 0xda: conditional_jmp(cpu, opcode, cpu.cc.CY == 1); break; // JC adr
-			case 0xe2: conditional_jmp(cpu, opcode, cpu.cc.P == 0); break; // JPO adr
-			case 0xea: conditional_jmp(cpu, opcode, cpu.cc.P == 1); break; // JPE adr
-			case 0xf2: conditional_jmp(cpu, opcode, cpu.cc.S == 0); break; // JP adr
-			case 0xfa: conditional_jmp(cpu, opcode, cpu.cc.S == 1); break; // JM adr
+			case 0xc2: conditional_jmp(mmu, cpu, opcode, cpu.cc.Z == 0); break; // JNZ adr
+			case 0xca: conditional_jmp(mmu, cpu, opcode, cpu.cc.Z == 1); break; // JZ adr
+			case 0xd2: conditional_jmp(mmu, cpu, opcode, cpu.cc.CY == 0); break; // JNC adr
+			case 0xda: conditional_jmp(mmu, cpu, opcode, cpu.cc.CY == 1); break; // JC adr
+			case 0xe2: conditional_jmp(mmu, cpu, opcode, cpu.cc.P == 0); break; // JPO adr
+			case 0xea: conditional_jmp(mmu, cpu, opcode, cpu.cc.P == 1); break; // JPE adr
+			case 0xf2: conditional_jmp(mmu, cpu, opcode, cpu.cc.S == 0); break; // JP adr
+			case 0xfa: conditional_jmp(mmu, cpu, opcode, cpu.cc.S == 1); break; // JM adr
 
 			// CALL (conditional)
-			case 0xc4: conditional_call(cpu, opcode, cpu.cc.Z == 0); break; // CNZ adr
-			case 0xcc: conditional_call(cpu, opcode, cpu.cc.Z == 1); break; // CZ adr
-			case 0xd4: conditional_call(cpu, opcode, cpu.cc.CY == 0); break; // CNC adr
-			case 0xdc: conditional_call(cpu, opcode, cpu.cc.CY == 1); break; // CC adr
-			case 0xe4: conditional_call(cpu, opcode, cpu.cc.P == 0); break; // CPO adr
-			case 0xec: conditional_call(cpu, opcode, cpu.cc.P == 1); break; // CPE adr
-			case 0xf4: conditional_call(cpu, opcode, cpu.cc.S == 0); break; // CP adr
-			case 0xfc: conditional_call(cpu, opcode, cpu.cc.S == 1); break; // CM adr
+			case 0xc4: conditional_call(mmu, cpu, opcode, cpu.cc.Z == 0); break; // CNZ adr
+			case 0xcc: conditional_call(mmu, cpu, opcode, cpu.cc.Z == 1); break; // CZ adr
+			case 0xd4: conditional_call(mmu, cpu, opcode, cpu.cc.CY == 0); break; // CNC adr
+			case 0xdc: conditional_call(mmu, cpu, opcode, cpu.cc.CY == 1); break; // CC adr
+			case 0xe4: conditional_call(mmu, cpu, opcode, cpu.cc.P == 0); break; // CPO adr
+			case 0xec: conditional_call(mmu, cpu, opcode, cpu.cc.P == 1); break; // CPE adr
+			case 0xf4: conditional_call(mmu, cpu, opcode, cpu.cc.S == 0); break; // CP adr
+			case 0xfc: conditional_call(mmu, cpu, opcode, cpu.cc.S == 1); break; // CM adr
 
 			///  STACK  ///
 
 			// POP
-			case 0xc1: set_pair_bc(cpu, instr_pop(cpu)); break; // POP B
-			case 0xd1: set_pair_de(cpu, instr_pop(cpu)); break; // POP D
-			case 0xe1: set_pair_hl(cpu, instr_pop(cpu)); break; // POP H
-			case 0xf1: pop_psw(cpu); break; // POP PSW
+			case 0xc1: set_pair_bc(cpu, instr_pop(mmu, cpu)); break; // POP B
+			case 0xd1: set_pair_de(cpu, instr_pop(mmu, cpu)); break; // POP D
+			case 0xe1: set_pair_hl(cpu, instr_pop(mmu, cpu)); break; // POP H
+			case 0xf1: pop_psw(mmu, cpu); break; // POP PSW
 
 			// PUSH
-			case 0xc5: instr_push(cpu, get_pair_bc(cpu)); break; // PUSH B
-			case 0xd5: instr_push(cpu, get_pair_de(cpu)); break; // PUSH D
-			case 0xe5: instr_push(cpu, get_pair_hl(cpu)); break; // PUSH H
-			case 0xf5: push_psw(cpu); break; // PUSH PSW
+			case 0xc5: instr_push(mmu, cpu, get_pair_bc(cpu)); break; // PUSH B
+			case 0xd5: instr_push(mmu, cpu, get_pair_de(cpu)); break; // PUSH D
+			case 0xe5: instr_push(mmu, cpu, get_pair_hl(cpu)); break; // PUSH H
+			case 0xf5: push_psw(mmu, cpu); break; // PUSH PSW
 
 			// XTHL, SPHL
-			case 0xe3: instr_xthl(cpu); break; // XTHL
+			case 0xe3: instr_xthl(mmu, cpu); break; // XTHL
 			case 0xf9: instr_sphl(cpu, addr); break; // SPHL
 
 			///  SIGNAL  ///
 
 			// RST
-			case 0xc7: instr_call(cpu, 0x00); break; // RST 0
-			case 0xcf: instr_call(cpu, 0x08); break; // RST 1
-			case 0xd7: instr_call(cpu, 0x10); break; // RST 2
-			case 0xdf: instr_call(cpu, 0x18); break; // RST 3
-			case 0xe7: instr_call(cpu, 0x20); break; // RST 4
-			case 0xef: instr_call(cpu, 0x28); break; // RST 5
-			case 0xf7: instr_call(cpu, 0x30); break; // RST 6
-			case 0xff: instr_call(cpu, 0x38); break; // RST 7
+			case 0xc7: instr_call(mmu, cpu, 0x00); break; // RST 0
+			case 0xcf: instr_call(mmu, cpu, 0x08); break; // RST 1
+			case 0xd7: instr_call(mmu, cpu, 0x10); break; // RST 2
+			case 0xdf: instr_call(mmu, cpu, 0x18); break; // RST 3
+			case 0xe7: instr_call(mmu, cpu, 0x20); break; // RST 4
+			case 0xef: instr_call(mmu, cpu, 0x28); break; // RST 5
+			case 0xf7: instr_call(mmu, cpu, 0x30); break; // RST 6
+			case 0xff: instr_call(mmu, cpu, 0x38); break; // RST 7
 
 			// INTERRUPTS
 			case 0xf3: cpu.int_enable = 0; break; // DI
@@ -444,10 +443,10 @@ public class Interpreter
 	}
 
 	/// INTERRUPT
-	public void sendInterrupt(CpuComponents cpu, int interrupt_num) {
+	public void sendInterrupt(Mmu mmu, CpuComponents cpu, int interrupt_num) {
 		// PUSH PC
-		Mmu.writeMemory(cpu, cpu.SP - 1, (short) ((cpu.PC & 0xff00) >> 8));
-		Mmu.writeMemory(cpu, cpu.SP - 2, (short) (cpu.PC & 0xff));
+		mmu.writeMemory(cpu.SP - 1, (short) ((cpu.PC & 0xff00) >> 8));
+		mmu.writeMemory(cpu.SP - 2, (short) (cpu.PC & 0xff));
 		cpu.SP = (cpu.SP - 2) & 0xffff;
 		cpu.PC = 8 * interrupt_num;
 		cpu.int_enable = 0;
@@ -456,25 +455,25 @@ public class Interpreter
 	/// SUBROUTINES
 
 	// CONDITIONAL
-	private void conditional_call(CpuComponents cpu, int opcode, boolean cond) {
+	private void conditional_call(Mmu mmu, CpuComponents cpu, int opcode, boolean cond) {
 		if (cond) {
-			instr_call(cpu, opcode);
+			instr_call(mmu, cpu, opcode);
 			opcodeCycle += 6;
 		} else {
 			cpu.PC += 2;
 		}
 	}
 	
-	private void conditional_jmp(CpuComponents cpu, int opcode, boolean cond) {
+	private void conditional_jmp(Mmu mmu, CpuComponents cpu, int opcode, boolean cond) {
 		if (cond) {
-			instr_jmp(cpu, opcode);
+			instr_jmp(mmu, cpu, opcode);
 		} else {
 			cpu.PC += 2;
 		}
 	}
 	
-	private void conditional_ret(CpuComponents cpu, boolean cond) {
-		if (cond) { instr_ret(cpu); opcodeCycle += 6; }
+	private void conditional_ret(Mmu mmu, CpuComponents cpu, boolean cond) {
+		if (cond) { instr_ret(mmu, cpu); opcodeCycle += 6; }
 	}
 
 	// REGISTER PAIRS
@@ -572,12 +571,12 @@ public class Interpreter
 	}
 
 	// JUMPS
-	private void instr_call(CpuComponents cpu, int opcode) {
+	private void instr_call(Mmu mmu, CpuComponents cpu, int opcode) {
 		int nextAddr = opcode + 3;
-		Mmu.writeMemory(cpu, cpu.SP - 1, (short) ((nextAddr >> 8) & 0xff));
-		Mmu.writeMemory(cpu, cpu.SP - 2, (short) (nextAddr & 0xff));
+		mmu.writeMemory(cpu.SP - 1, (short) ((nextAddr >> 8) & 0xff));
+		mmu.writeMemory(cpu.SP - 2, (short) (nextAddr & 0xff));
 		cpu.SP = (cpu.SP - 2) & 0xffff;
-		instr_jmp(cpu, opcode);
+		instr_jmp(mmu, cpu, opcode);
 	}
 	
 	private void instr_dad(CpuComponents cpu, int... var) {
@@ -594,47 +593,47 @@ public class Interpreter
 		cpu.L = (short) (res & 0xff); // store lower  8-bit to L
 	}
 	
-	private void instr_jmp(CpuComponents cpu, int opcode) {
-		cpu.PC = (Mmu.readMemory(cpu, opcode + 2) << 8) | Mmu.readMemory(cpu, opcode + 1);
+	private void instr_jmp(Mmu mmu, CpuComponents cpu, int opcode) {
+		cpu.PC = (mmu.readMemory(opcode + 2) << 8) | mmu.readMemory(opcode + 1);
 	}
 	
-	private void instr_lda(CpuComponents cpu, int hi_nib, int lo_nib) {
+	private void instr_lda(Mmu mmu, CpuComponents cpu, int hi_nib, int lo_nib) {
 		int addr = (hi_nib << 8) | lo_nib;
-		cpu.A = Mmu.readMemory(cpu, addr);
+		cpu.A = mmu.readMemory(addr);
 	}
 	
-	private void instr_lhld(CpuComponents cpu, int opcode) {
-		int addr = (Mmu.readMemory(cpu, opcode + 2) << 8) | Mmu.readMemory(cpu, opcode + 1);
-		cpu.H = Mmu.readMemory(cpu, addr + 1);
-		cpu.L = Mmu.readMemory(cpu, addr);
+	private void instr_lhld(Mmu mmu, CpuComponents cpu, int opcode) {
+		int addr = (mmu.readMemory(opcode + 2) << 8) | mmu.readMemory(opcode + 1);
+		cpu.H = mmu.readMemory(addr + 1);
+		cpu.L = mmu.readMemory(addr);
 	}
 	
-	private void pop_psw(CpuComponents cpu) {
-		int PSW = Mmu.readMemory(cpu, cpu.SP);
+	private void pop_psw(Mmu mmu, CpuComponents cpu) {
+		int PSW = mmu.readMemory(cpu.SP);
 		cpu.cc.CY = ((PSW & cpu.PSW_FLAG_POS_CY) != 0) ? (byte) 1 : 0;
 		cpu.cc.P  = ((PSW & cpu.PSW_FLAG_POS_PA) != 0) ? (byte) 1 : 0;
 		cpu.cc.AC = ((PSW & cpu.PSW_FLAG_POS_AC) != 0) ? (byte) 1 : 0;
 		cpu.cc.Z  = ((PSW & cpu.PSW_FLAG_POS_ZE) != 0) ? (byte) 1 : 0;
 		cpu.cc.S  = ((PSW & cpu.PSW_FLAG_POS_SN) != 0) ? (byte) 1 : 0;
-		cpu.A = Mmu.readMemory(cpu, cpu.SP + 1);
+		cpu.A = mmu.readMemory(cpu.SP + 1);
 		cpu.SP = (cpu.SP + 2) & 0xffff;
 	}
 	
-	private int instr_pop(CpuComponents cpu) {
-		int res = (Mmu.readMemory(cpu, cpu.SP + 1) << 8) | Mmu.readMemory(cpu, cpu.SP);
+	private int instr_pop(Mmu mmu, CpuComponents cpu) {
+		int res = (mmu.readMemory(cpu.SP + 1) << 8) | mmu.readMemory(cpu.SP);
 		cpu.SP = (cpu.SP + 2) & 0xffff;
 		return res;
 	}
 	
-	private void instr_push(CpuComponents cpu, int pair) {
-		Mmu.writeMemory(cpu, cpu.SP - 1, (short) (pair >> 8));
-		Mmu.writeMemory(cpu, cpu.SP - 2, (short) (pair & 0xff));
+	private void instr_push(Mmu mmu, CpuComponents cpu, int pair) {
+		mmu.writeMemory(cpu.SP - 1, (short) (pair >> 8));
+		mmu.writeMemory(cpu.SP - 2, (short) (pair & 0xff));
 		cpu.SP = (cpu.SP - 2) & 0xffff;
 	}
 	
-	private void push_psw(CpuComponents cpu) {
+	private void push_psw(Mmu mmu, CpuComponents cpu) {
 		// A and PSW (formed binary value via flags , plus its filler value)
-		Mmu.writeMemory(cpu, cpu.SP - 1, cpu.A);
+		mmu.writeMemory(cpu.SP - 1, cpu.A);
 		// prepare variable higher than 0xff, but with 0's in bit 0-7
 		// this way, it serves as flags' default state waiting to be flipped, like a template
 		// also helps to retain flags proper positioning
@@ -646,7 +645,7 @@ public class Interpreter
 			(cpu.cc.P     <<  2)  |   // place parity flag status on pos 2
 			(1            <<  1)  |
 			(cpu.cc.CY)  ;   // place carry flag status on pos 0
-		Mmu.writeMemory(cpu, cpu.SP - 2, (short) (psw & 0xff));
+		mmu.writeMemory(cpu.SP - 2, (short) (psw & 0xff));
 		cpu.SP = (cpu.SP - 2) & 0xffff;
 	}
 	
@@ -662,8 +661,8 @@ public class Interpreter
 		cpu.A = (short) (((cpu.A >> 1) | (cy << 7)) & 0xff);
 	}
 	
-	private void instr_ret(CpuComponents cpu) {
-		int addr = Mmu.readMemory(cpu, cpu.SP + 1) << 8 | Mmu.readMemory(cpu, cpu.SP);
+	private void instr_ret(Mmu mmu, CpuComponents cpu) {
+		int addr = mmu.readMemory(cpu.SP + 1) << 8 | mmu.readMemory(cpu.SP);
 		cpu.SP = (cpu.SP + 2) & 0xffff;
 		cpu.PC = addr;
 	}
@@ -678,19 +677,19 @@ public class Interpreter
 		cpu.A = (short) ((cpu.A >> 1) | (cpu.cc.CY << 7) & 0xff); // rotate to right, wrapping its contents by placing bit 0 to bit 7
 	}
 	
-	private void instr_shld(CpuComponents cpu, int opcode) {
-		int addr = Mmu.readMemory(cpu, opcode + 2) << 8 | Mmu.readMemory(cpu, opcode + 1);
-		Mmu.writeMemory(cpu, addr + 1, cpu.H);
-		Mmu.writeMemory(cpu, addr, cpu.L);
+	private void instr_shld(Mmu mmu, CpuComponents cpu, int opcode) {
+		int addr = mmu.readMemory(opcode + 2) << 8 | mmu.readMemory(opcode + 1);
+		mmu.writeMemory(addr + 1, cpu.H);
+		mmu.writeMemory(addr, cpu.L);
 	}
 	
 	private void instr_sphl(CpuComponents cpu, int address) {
 		cpu.SP = address;
 	}
 	
-	private void instr_sta(CpuComponents cpu, int hi_nib, int lo_nib) {
+	private void instr_sta(Mmu mmu, CpuComponents cpu, int hi_nib, int lo_nib) {
 		int addr = (hi_nib << 8) | lo_nib;
-		Mmu.writeMemory(cpu, addr, cpu.A);
+		mmu.writeMemory(addr, cpu.A);
 	}
 	
 	private void instr_xchg(CpuComponents cpu) {
@@ -705,15 +704,15 @@ public class Interpreter
 	}
 	
 	// FIXME
-	private void instr_xthl(CpuComponents cpu) {
+	private void instr_xthl(Mmu mmu, CpuComponents cpu) {
 		// SWAP H and Top + 1  SP (under of top stack)
-		cpu.H = (short) (cpu.H + Mmu.readMemory(cpu, cpu.SP + 1));
-		Mmu.writeMemory(cpu, cpu.SP + 1, (short) (cpu.H - Mmu.readMemory(cpu, cpu.SP + 1)));
-		cpu.H = (short) (cpu.H - Mmu.readMemory(cpu, cpu.SP + 1));
+		cpu.H = (short) (cpu.H + mmu.readMemory(cpu.SP + 1));
+		mmu.writeMemory(cpu.SP + 1, (short) (cpu.H - mmu.readMemory(cpu.SP + 1)));
+		cpu.H = (short) (cpu.H - mmu.readMemory(cpu.SP + 1));
 		// SWAP L and Top SP (top stack)
-		cpu.L = (short) (cpu.L + Mmu.readMemory(cpu, cpu.SP));
-		Mmu.writeMemory(cpu, cpu.SP, (short) (cpu.L - Mmu.readMemory(cpu, cpu.SP)));
-		cpu.L = (short) (cpu.L - Mmu.readMemory(cpu, cpu.SP));
+		cpu.L = (short) (cpu.L + mmu.readMemory(cpu.SP));
+		mmu.writeMemory(cpu.SP, (short) (cpu.L - mmu.readMemory(cpu.SP)));
+		cpu.L = (short) (cpu.L - mmu.readMemory(cpu.SP));
 	}
 
 	/// FLAGS

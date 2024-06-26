@@ -12,8 +12,21 @@ public class Mmu
 	private static boolean readHiscoreMsb = false;
 	private static boolean readHiscoreLsb = false;
 	
-	public static void writeMemory(CpuComponents cpu, int address, short value) {
+	/// MEMORY ///
+	private short[] memory;
+	
+	public Mmu() {
+		init();
+	}
+	
+	public void init() {
+		// load file on memory
+		memory = new short[StringUtils.Component.PROGRAM_LENGTH];
+	}
+	
+	public void writeMemory(int address, short value) {
 		// this example exhibits how important MMU is to emulation
+		// set highscore whenever emulator writes to its address
 		if ((address == SP_MEM_ADDR_HI_SCORE_MSB || address == SP_MEM_ADDR_HI_SCORE_LSB)) {
 			readHiscoreMsb = address == SP_MEM_ADDR_HI_SCORE_MSB ? true : readHiscoreMsb;
 			readHiscoreLsb = address == SP_MEM_ADDR_HI_SCORE_LSB ? true : readHiscoreLsb;
@@ -30,26 +43,30 @@ public class Mmu
 				isInitialHiscoreInjected = readHiscoreMsb && readHiscoreLsb;
 			}
 			if (readHiscoreLsb && readHiscoreMsb) {
-				short hiScoreDataMsb = address == SP_MEM_ADDR_HI_SCORE_MSB ? value : Mmu.readMemory(cpu, SP_MEM_ADDR_HI_SCORE_MSB);
-				short hiScoreDataLsb = address == SP_MEM_ADDR_HI_SCORE_LSB ? value : Mmu.readMemory(cpu, SP_MEM_ADDR_HI_SCORE_LSB);
+				short hiScoreDataMsb = address == SP_MEM_ADDR_HI_SCORE_MSB ? value : readMemory(SP_MEM_ADDR_HI_SCORE_MSB);
+				short hiScoreDataLsb = address == SP_MEM_ADDR_HI_SCORE_LSB ? value : readMemory(SP_MEM_ADDR_HI_SCORE_LSB);
 				setHighscore(hiScoreDataMsb << 8 | hiScoreDataLsb);
 				readHiscoreMsb = false;
 				readHiscoreLsb = false;
 			}
 		}
-		cpu.memory[address & 0xffff] = value;
+		
+		// prevent writing to VRAM if host is still drawing
+		if ((address >= Machine.VRAM_START && address <= Machine.VRAM_END) && platform.isDrawing()) return;
+		
+		memory[address & 0xffff] = value;
 	}
 	
-	public static short readMemory(CpuComponents cpu, int address) {
-		return cpu.memory[address & 0xffff];
+	public short readMemory(int address) {
+		return memory[address & 0xffff];
 	}
 	
-	public static short[] getMemory(CpuComponents cpu) {
-		return cpu.memory;
+	public short[] getMemory() {
+		return memory;
 	}
 	
-	public static void setMemory(CpuComponents cpu, short[] memory) {
-		cpu.memory = memory;
+	public void setMemory(short[] memory) {
+		this.memory = memory;
 	}
 	private static void setHighscore(int data) {
 		platform.setHighscore(data);

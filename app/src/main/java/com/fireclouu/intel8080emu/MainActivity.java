@@ -18,7 +18,8 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
 		mButtonP1Left,
 		mButtonP1Right,
 		mButtonP1Fire,
-		mButtonSetPlayer;
+		mButtonSetPlayer,
+		mButtonMenu;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -26,6 +27,7 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
         super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_emulation);
 		
+		requestFullscreen();
 		init();
 		startEmulation();
 	}
@@ -85,11 +87,14 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
 			platform.setPlayerPort(playerPort);
 			mButtonSetPlayer.setText("P" + playerPort);
 		}
+		if (buttonId == R.id.btn_menu) {
+			platform.setLogState(!platform.isLogging());
+		}
 	}
 	
 	private void startEmulation() {
 		if (platform == null) {
-			platform = new Platform(this, mDisplay);
+			platform = new Platform(this, this, mDisplay);
 			Mmu.platform = platform;
 		}
 		platform.start();
@@ -106,6 +111,7 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
 		mButtonP1Fire = findViewById(R.id.btn_p1_fire);
 		mButtonP1Right = findViewById(R.id.btn_p1_right);
 		mButtonSetPlayer = findViewById(R.id.btn_change_player);
+		mButtonMenu = findViewById(R.id.btn_menu);
 		
 		mButtonCoin.setOnTouchListener(this);
 		mButtonP1Start.setOnTouchListener(this);
@@ -113,6 +119,12 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
 		mButtonP1Fire.setOnTouchListener(this);
 		mButtonP1Right.setOnTouchListener(this);
 		mButtonSetPlayer.setOnClickListener(this);
+		mButtonMenu.setOnClickListener(this);
 	}
 	
+	private void requestFullscreen() {
+		getWindow().getDecorView().setSystemUiVisibility(
+			View.SYSTEM_UI_FLAG_FULLSCREEN |
+			View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
+	}
 }

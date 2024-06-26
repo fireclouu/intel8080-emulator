@@ -2,8 +2,6 @@ package com.fireclouu.intel8080emu.Emulator;
 
 public class Disassembler
 {
-	///  PRINT INST.  ///
-
 	// SOURCE: superzazu
 	public final static String[] DISASSEMBLE_TABLE = {
 		"nop", "lxi b,#", "stax b", "inx b", "inr b", "dcr b", "mvi b,#", "rlc",
@@ -42,12 +40,11 @@ public class Disassembler
 		"rst 6", "rm", "sphl", "jm $", "ei", "cm $", "ill", "cpi #", "rst 7"
 	};
 
-	public void print(CpuComponents cpu, boolean verbose) {
-
-		int pc = cpu.PC;
-		short data = Mmu.readMemory(cpu, pc);
+	public static String disassemble(int pc, int data) {
+		String returnValue = "";
 		String inst = DISASSEMBLE_TABLE[data];
-
+		
+		/*
 		switch(data) {
 				// byte
 			case 0x06: case 0x0e:
@@ -73,56 +70,32 @@ public class Disassembler
 				inst += toHex04((Mmu.readMemory(cpu, pc + 2) << 8) 
 					| Mmu.readMemory(cpu, pc + 1));
 				break;	
-		}
+		}*/
 
-		if (verbose) {
-			System.out.println(toHex04(pc) + "  " + inst);
-		} else {
-
-			// PSW (Flags)
-			int PSW = 0x102;
-
-			// skip pos 5 and 3, it does not need to be flipped since it is by default, a 0 value
-			PSW =
-				(cpu.cc.S     <<  7)  |   // place sign flag status on pos 7
-				(cpu.cc.Z     <<  6)  |   // place zero flag status on pos 6
-				(cpu.cc.AC    <<  4)  |   // place aux. carry flag status on pos 4
-				(cpu.cc.P     <<  2)  |   // place parity flag status on pos 2
-				(1            <<  1)  |
-				(cpu.cc.CY    << 0 )  ;   // place carry flag status on pos 0
-
-
-			// Print registers
-			System.out.println(
-				"AF: " + toHex04((cpu.A << 8) | PSW) + " | BC: " + toHex04((cpu.B << 8) | cpu.C) + " | DE: " + toHex04((cpu.D << 8) | cpu.E) + " | HL: " + toHex04((cpu.H << 8) | cpu.L) +
-				" | SP: " + toHex04(cpu.SP));
-
-			// Print Flags
-			System.out.println("CY: " + cpu.cc.CY + " | ZR: " + cpu.cc.Z + " | PA: " + cpu.cc.P + " | SN: " + cpu.cc.S  + " | AC: " + cpu.cc.AC);
-
-			// Print Stack Pointer
-
-			System.out.println("PC: " + toHex04(pc) + " (" + toHex02(Mmu.readMemory(cpu, pc)) + ")" + " " + inst + " | CYCLE: " + Interpreter.machineTotalCycle);
-
-			// Print Separator
-			System.out.println();
-		}
+		returnValue = "PC: " + toHex04(pc) + "  " + "DATA: " + data + "  " + "OP: " + inst + "  ";
+		return returnValue;
 	}
 
-	public void check_overflow(CpuComponents cpu) {
+	public void check_overflow(CpuComponents cpu, long cycle) {
 		if (cpu.A > 0xff | cpu.B > 0xff | cpu.C > 0xff | cpu.D > 0xff |
 			cpu.E > 0xff | cpu.H > 0xff | cpu.L > 0xff | cpu.PC > 0xffff | cpu.SP > 0xffff |
 			cpu.cc.AC > 0x1 | cpu.cc.CY > 0x1 | cpu.cc.P > 0x1 |
 			cpu.cc.S > 0x1 | cpu.cc.Z > 0x1) {
-			print(cpu, false);
+			//disassemble(cpu, false, cycle);
 		}
 	}
 
-	public String toHex04(int value) {
-		return String.format("%04x", value);
+	private static String toHex04(int value) {
+		char[] hexArray = "0123456789abcdef".toCharArray();
+		char[] hexChars = new char[4];
+		for (int j = 0; j < 4; j++) {
+			int v = (value >> (12 - j * 4)) & 0x0F;
+			hexChars[j] = hexArray[v];
+		}
+		return new String(hexChars);
 	}
 
-	public String toHex02(int value) {
+	private static String toHex02(int value) {
 		return String.format("%02x", value);
 	}
 }

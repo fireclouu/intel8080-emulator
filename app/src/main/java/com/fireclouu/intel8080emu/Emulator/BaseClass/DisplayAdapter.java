@@ -11,4 +11,5 @@ public interface DisplayAdapter
 	
 	float[] convertVramToFloatPoints(int drawOrientation, short[] memory);
 	void draw(short[] memory);
+	boolean isDrawing();
 }

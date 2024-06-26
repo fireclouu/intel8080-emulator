@@ -18,9 +18,6 @@ public class CpuComponents
 	///  16-BIT REGISTER ADDRESSES  ///
 	public int PC, SP;
 
-	///  MEMORY  ///
-	public short[] memory;
-
 	///  CONDITIONALS  ///
 	ConditionCodes cc;
 
@@ -48,9 +45,6 @@ public class CpuComponents
 		SP = 0;
 
 		int_enable = 0;
-
-		// load file on memory
-		memory = new short[StringUtils.Component.PROGRAM_LENGTH];
 
 		// init flags (bit)
 		cc.init();
