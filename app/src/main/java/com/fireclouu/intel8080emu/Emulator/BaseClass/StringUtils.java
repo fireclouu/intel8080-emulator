@@ -8,6 +8,7 @@ public final class StringUtils
 {
 	public static final String TAG = "FRCL_SPACE_INVADERS";
 	public static final String ITEM_HISCORE = "HISCORE";
+	public static final String PREFS_NAME = "data";
 
 	private StringUtils() { } // prevent instatiation
 	

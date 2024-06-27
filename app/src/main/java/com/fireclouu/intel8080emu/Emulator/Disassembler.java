@@ -40,11 +40,10 @@ public class Disassembler
 		"rst 6", "rm", "sphl", "jm $", "ei", "cm $", "ill", "cpi #", "rst 7"
 	};
 
-	public static String disassemble(int pc, int data) {
+	public static String disassemble(Mmu mmu, int pc, int data) {
 		String returnValue = "";
 		String inst = DISASSEMBLE_TABLE[data];
 		
-		/*
 		switch(data) {
 				// byte
 			case 0x06: case 0x0e:
@@ -55,7 +54,7 @@ public class Disassembler
 			case 0xd3: case 0xd6: case 0xdb: case 0xde:
 			case 0xe6: case 0xee:
 			case 0xf6: case 0xfe:
-				inst += toHex02(Mmu.readMemory(cpu, pc + 1));
+				inst += toHex02(mmu.readMemory(pc + 1));
 				break;
 
 				// word
@@ -67,12 +66,12 @@ public class Disassembler
 			case 0xd2: case 0xd4: case 0xda: case 0xdc:
 			case 0xe2: case 0xe4: case 0xea: case 0xec:
 			case 0xf2: case 0xf4: case 0xfa: case 0xfc:
-				inst += toHex04((Mmu.readMemory(cpu, pc + 2) << 8) 
-					| Mmu.readMemory(cpu, pc + 1));
+				inst += toHex04((mmu.readMemory(pc + 2) << 8) 
+					| mmu.readMemory(pc + 1));
 				break;	
-		}*/
+		}
 
-		returnValue = "PC: " + toHex04(pc) + "  " + "DATA: " + data + "  " + "OP: " + inst + "  ";
+		returnValue = "PC: " + toHex04(pc) + "  " + "OP: " + toHex02(data) + "  " + inst + "  ";
 		return returnValue;
 	}
 
@@ -96,6 +95,12 @@ public class Disassembler
 	}
 
 	private static String toHex02(int value) {
-		return String.format("%02x", value);
+		char[] hexArray = "0123456789abcdef".toCharArray();
+		char[] hexChars = new char[2];
+		for (int j = 0; j < 2; j++) {
+			int v = (value >> (4 - j * 4)) & 0x0F;
+			hexChars[j] = hexArray[v];
+		}
+		return new String(hexChars);
 	}
 }

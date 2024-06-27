@@ -20,12 +20,17 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
 		mButtonP1Fire,
 		mButtonSetPlayer,
 		mButtonMenu;
+		
+	private LinearLayout llLogs;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_emulation);
+		
+		// android views init
+		llLogs = findViewById(R.id.llLogs);
 		
 		requestFullscreen();
 		init();
@@ -34,13 +39,13 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
 	
 	@Override
 	protected void onResume() {
-		platform.resume();
+		platform.setPause(false);
 		super.onResume();
 	}
 
 	@Override
 	protected void onPause() {
-		platform.pause();
+		platform.setPause(true);
 		super.onPause();
 	}
 
@@ -78,8 +83,7 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
 	}
 	
 	@Override
-	public void onClick(View view)
-	{
+	public void onClick(View view) {
 		byte playerPort = platform.getPlayerPort();
 		int buttonId = view.getId();
 		if (buttonId == R.id.btn_change_player) {
@@ -87,8 +91,13 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
 			platform.setPlayerPort(playerPort);
 			mButtonSetPlayer.setText("P" + playerPort);
 		}
+		
 		if (buttonId == R.id.btn_menu) {
-			platform.setLogState(!platform.isLogging());
+			boolean isVisible = llLogs.getVisibility() == View.VISIBLE;
+			int toggledVisibility = isVisible ? View.GONE : View.VISIBLE;
+			llLogs.setVisibility(toggledVisibility);
+			isVisible = llLogs.getVisibility() == View.VISIBLE;
+			platform.toggleLog(isVisible);
 		}
 	}
 	
@@ -97,6 +106,7 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
 			platform = new Platform(this, this, mDisplay);
 			Mmu.platform = platform;
 		}
+		
 		platform.start();
 		Toast.makeText(getApplicationContext(), "Emulation started", 
 					   Toast.LENGTH_SHORT).show();

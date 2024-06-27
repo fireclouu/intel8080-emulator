@@ -10,23 +10,22 @@ public class Emulator implements IOAdapter
 	private boolean stateTest = false;
 
 	private Interpreter interpreter;
-	private Disassembler disassembler;
 	private PlatformAdapter platform;
 	private Mmu mmu;
 
 	// Timer and interrupts
 	private final long GUEST_MAX_CYCLE_PER_SECOND = 2_000_000;
-	private final double NANO_SEC = 1_000_000.0; // template
+	private final double NANO_SEC = 1_000_000.0;
 
 	private final double VBLANK_START = (1.0 / 60.0) * (NANO_SEC);
 	private final double MIDFRAME = VBLANK_START / 2.0;
 	private final double WHEN_TO_RUN_CYCLE = 1.0 / 2_000_000.0;
+	private final double fixedMhz = (WHEN_TO_RUN_CYCLE * (NANO_SEC * 10.0));
 	private final byte INTERRUPT_MID  = 1;
 	private final byte INTERRUPT_FULL = 2;
 
-	private double timeNow = 0;
-	private double timePrev = 0;
-	private final double fixedMhz = (WHEN_TO_RUN_CYCLE * (NANO_SEC * 10.0)) ;
+	private double timeNow;
+	private double timePrev;
 	private double updateHz;
 	private double timeNextInterrupt;
 	private byte interruptType = INTERRUPT_MID;
@@ -36,37 +35,32 @@ public class Emulator implements IOAdapter
 	private short shift_msb;
 	private byte  shift_offset = 0;
 	private short readPort;
-	public static volatile short[] port = new short[8];
-	public static volatile short[] last_port_value = new short[8];
+	public short[] port = new short[8];
+	public short[] last_port_value = new short[8];
 
 	public long cycleHostTotal = 0;
 	public long cyclePerSecond = 0;
 
-	public Emulator(PlatformAdapter platform, Mmu mmu)
-	{
+	public Emulator(PlatformAdapter platform, Mmu mmu) {
 		init(platform, mmu);
 	}
 
-	private void init(PlatformAdapter platform, Mmu mmu)
-	{
+	private void init(PlatformAdapter platform, Mmu mmu) {
 		this.interpreter = new Interpreter();
-		this.disassembler = new Disassembler();
 		this.platform = platform;
 		this.mmu = mmu;
 	}
 
 	@Override
-	public short handleIN(CpuComponents cpu, short port)
-	{
+	public short handleIN(CpuComponents cpu, short port) {
 		short a = 0;
-		switch (port)
-		{
+		switch (port) {
 			case 0: // ?
 				return 0;
 			case 1: // input
-				return Emulator.port[KeyInterrupts.INPUT_PORT_1];
+				return this.port[KeyInterrupts.INPUT_PORT_1];
 			case 2: // input
-				return Emulator.port[KeyInterrupts.INPUT_PORT_2];
+				return this.port[KeyInterrupts.INPUT_PORT_2];
 			case 3: // rotate shift register
 				int v = (shift_msb << 8) | shift_lsb;    
 				a = (short) ((v >> (8 - shift_offset)) & 0xff);  
@@ -76,38 +70,30 @@ public class Emulator implements IOAdapter
 	}
 
 	@Override
-	public void handleOUT(CpuComponents cpu, ResourceAdapter api, short port, short value)
-	{
-		switch (port)
-		{
+	public void handleOUT(CpuComponents cpu, ResourceAdapter api, short port, short value) {
+		switch (port) {
 			case 2: // shift amount
 				shift_offset = (byte) (value & 0x7);    
 				break;  
 			case 3: // sound 1
-				if (value != last_port_value[3])
-				{
-
-					if ((value & 0x1) > 0 && (last_port_value[3] & 0x1) == 0)    
-					{
+				if (value != last_port_value[3]) {
+					if ((value & 0x1) > 0 && (last_port_value[3] & 0x1) == 0) {
 						api.playShipFX();
-					}
-					else if ((value & 0x1) == 0 && (last_port_value[3] & 0x1) > 0)
-					{
+					} else if ((value & 0x1) == 0 && (last_port_value[3] & 0x1) > 0) {
 						api.releaseShipFX();
 					}
 
-					if ((value & 0x2) > 0 && (last_port_value[3] & 0x2) == 0)
-					{
+					if ((value & 0x2) > 0 && (last_port_value[3] & 0x2) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_FIRE, 0);
 					}
-					if ((value & 0x4) > 0 && (last_port_value[3] & 0x4) == 0)
-					{
+					
+					if ((value & 0x4) > 0 && (last_port_value[3] & 0x4) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_PLAYER_EXPLODED, 0);
 						api.vibrate(300);
 
 					}
-					if ((value & 0x8) > 0 && (last_port_value[3] & 0x8) == 0)
-					{
+					
+					if ((value & 0x8) > 0 && (last_port_value[3] & 0x8) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_KILLED, 0);
 					}
 
@@ -124,45 +110,41 @@ public class Emulator implements IOAdapter
 			case 5:
 				// alien moving sound
 				// bit 0 (0)
-				if (value != last_port_value[5])
-				{
-					if ((value & 0x1) > 0 && (last_port_value[5] & 0x1) == 0)
-					{
+				if (value != last_port_value[5]) {
+					if ((value & 0x1) > 0 && (last_port_value[5] & 0x1) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_1, 0);
-
-						api.vibrate(20);
+						// api.vibrate(20);
 					}
-					if ((value & 0x2) > 0 && (last_port_value[5] & 0x2) == 0)
-					{
+					
+					if ((value & 0x2) > 0 && (last_port_value[5] & 0x2) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_2, 0);
-						api.vibrate(20);
+						// api.vibrate(20);
 					}
-					if ((value & 0x4) > 0 && (last_port_value[5] & 0x4) == 0)
-					{
+					
+					if ((value & 0x4) > 0 && (last_port_value[5] & 0x4) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_3, 0);
-						api.vibrate(20);
+						// api.vibrate(20);
 					}
-					if ((value & 0x8) > 0 && (last_port_value[5] & 0x8) == 0)
-					{
+					
+					if ((value & 0x8) > 0 && (last_port_value[5] & 0x8) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_4, 0);
-						api.vibrate(20);
+						// api.vibrate(20);
 					}
-					if ((value & 0x10) > 0 && (last_port_value[5] & 0x10) == 0)
-					{
+					
+					if ((value & 0x10) > 0 && (last_port_value[5] & 0x10) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_SHIP_HIT, 0);
 					}
+					
 					last_port_value[5] = value;
 				}
 		}
 	}
 
-	public void ioHandler(CpuComponents cpu, ResourceAdapter media, int opcode)
-	{
+	public void ioHandler(CpuComponents cpu, ResourceAdapter media, int opcode) {
 		readPort = 0;
 		short dataPort = mmu.readMemory(opcode + 1);
 		int data = mmu.readMemory(opcode);
-		switch (data)
-		{
+		switch (data) {
 			case 0xdb: // in
 				readPort = dataPort;
 				cpu.A = handleIN(cpu, readPort);
@@ -174,8 +156,7 @@ public class Emulator implements IOAdapter
 		}
 	}
 
-	public void start(CpuComponents cpu, DisplayAdapter display, ResourceAdapter api)
-	{
+	public void start(CpuComponents cpu, DisplayAdapter display, ResourceAdapter api) {
 		boolean isCatchingUp = false;
 		boolean isTimePrevNeedsUpdate = false;
 		String log = "";
@@ -209,7 +190,7 @@ public class Emulator implements IOAdapter
 				// IO
 				ioHandler(cpu, api, cpu.PC);
 				if (platform.isLogging()) {
-					log = disassembler.disassemble(cpu.PC, (int) mmu.readMemory(cpu.PC));
+					log = Disassembler.disassemble(mmu, cpu.PC, (int) mmu.readMemory(cpu.PC));
 					callHost(log);
 				}
 				cyclePerSecond += interpreter.interpret(mmu, cpu);
@@ -222,7 +203,7 @@ public class Emulator implements IOAdapter
 				// IO
 				ioHandler(cpu, api, cpu.PC);
 				if (platform.isLogging()) {
-					log = disassembler.disassemble(cpu.PC, (int) mmu.readMemory(cpu.PC));
+					log = Disassembler.disassemble(mmu, cpu.PC, (int) mmu.readMemory(cpu.PC));
 					callHost(log);
 				}
 				cyclePerSecond += interpreter.interpret(mmu, cpu);
@@ -243,8 +224,7 @@ public class Emulator implements IOAdapter
 	// DEBUGGING
 	private void runTest(CpuComponents cpu) {
 		int counter = 0;
-		for (String name : StringUtils.File.FILES)
-		{
+		for (String name : StringUtils.File.FILES) {
 			stateTest = false;
 
 			cpu.init();
@@ -270,8 +250,7 @@ public class Emulator implements IOAdapter
 			addMsg("______________________________");
 			addMsg("");
 
-			while (!stateTest)
-			{
+			while (!stateTest) {
 				// implement
 				/*switch(PlatformAdapter.tf[counter][cpu.PC])
 				 {
@@ -285,7 +264,7 @@ public class Emulator implements IOAdapter
 
 				cyclePerSecond += interpreter.interpret(mmu, cpu);
 				// print.printInstruction(cpu, AppUtils.Machine.PRINT_LESS);
-				disassembler.check_overflow(cpu, cyclePerSecond);
+				// Disassembler.check_overflow(cpu, cyclePerSecond);
 			}
 
 			System.out.println();
@@ -311,25 +290,20 @@ public class Emulator implements IOAdapter
 
 		int operation = cpu.C;
 		if (operation == 2) {
-
 			System.out.printf("%c", cpu.E);
 			addMsg((char) cpu.E);
-			if ((char) cpu.E == 10)
-			{
+			if ((char) cpu.E == 10) {
 				PlatformAdapter.MSG_COUNT++;
 				PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT] = "";
 			}
-		}
-		else if (operation == 9)
-		{
+		} else if (operation == 9) {
 			int addr = (cpu.D << 8) | cpu.E;
 			int data;
 			do {
 				data = mmu.readMemory(addr);
 				System.out.printf("%c", data);
 				addMsg((char) data);
-				if ((char) data == 10)
-				{
+				if ((char) data == 10) {
 
 					PlatformAdapter.MSG_COUNT++;
 					PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT] = "";
@@ -339,41 +313,35 @@ public class Emulator implements IOAdapter
 		}
 		cpu.A = 0xff;
 	}
-	private void debug_handleOUT()
-	{
+	private void debug_handleOUT() {
 		stateTest = true;
 	}
-	// String Builder
-	private void addMsg(char c)
-	{
+	
+	private void addMsg(char c) {
 		PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT] += c;
 	}
-	private void addMsg()
-	{
+	
+	private void addMsg() {
 		PlatformAdapter.MSG_COUNT++;
 	}
-	private void addMsg(String str)
-	{
+	
+	private void addMsg(String str) {
 		PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT++] = str + "\n";
 	}
 	
-	public void stop()
-	{
+	public void stop() {
 		isLooping = false;
 	}
 
-	public void pause()
-	{
-		isPaused = true;
+	public void setPause(boolean isPaused) {
+		this.isPaused = isPaused;
 	}
 
-	public void resume()
-	{
-		isPaused = false;
+	public boolean isPaused() {
+		return this.isPaused;
 	}
 
-	private long getNano()
-	{
+	private long getNano() {
 		return System.nanoTime() / 1_000;
 	}
 	

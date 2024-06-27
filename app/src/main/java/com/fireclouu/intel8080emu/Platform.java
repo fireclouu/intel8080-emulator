@@ -4,25 +4,30 @@ import android.app.*;
 import android.content.*;
 import android.media.*;
 import android.os.*;
+import android.text.*;
 import android.util.*;
+import android.view.*;
 import android.widget.*;
 import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
 import java.io.*;
-import android.view.*;
+import java.util.*;
+import java.util.concurrent.*;
 
-public class Platform extends PlatformAdapter implements ResourceAdapter
-{
-	private final Context context;
+public class Platform extends PlatformAdapter implements ResourceAdapter {
+	private Context context;
 	private SharedPreferences sp;
 	private SoundPool soundPool, spShipFX;
 	private SharedPreferences.Editor editor;
 	private Vibrator vibrator;
 	private DisplayAdapter display;
 	private LinearLayout llLogs;
+	private ScrollView svLogs;
 	private TextView tvLog;
+	private Button buttonPause;
+	
 	private Handler handler;
-	private String outputMessage = "";
 	private Runnable runnable;
+	private Stack<String> arrLog;
 	
 	public Platform(Activity activity, Context context, DisplayAdapter display) {
 		super(display);
@@ -30,17 +35,17 @@ public class Platform extends PlatformAdapter implements ResourceAdapter
 		this.context = context;
 		tvLog = activity.findViewById(R.id.tvLog);
 		llLogs = activity.findViewById(R.id.llLogs);
+		buttonPause = activity.findViewById(R.id.buttonPause);
+		arrLog = new Stack<String>();
+		svLogs = activity.findViewById(R.id.svLogs);
+		buttonPause.setOnClickListener(new View.OnClickListener() {
+				@Override
+				public void onClick(View p1) {
+					togglePause();
+				}
+		});
 		
-		handler = new Handler();
-		runnable = new Runnable() {
-			@Override
-			public void run()
-			{
-				tvLog.setText(outputMessage);
-				handler.post(this);
-			}
-		};
-		handler.post(runnable);
+		tvLog.setText("");
 		platformInit();
 	}
 	
@@ -48,14 +53,45 @@ public class Platform extends PlatformAdapter implements ResourceAdapter
 		soundPool = new SoundPool(10, AudioManager.STREAM_MUSIC, 0);
 		spShipFX = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
 		vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-		sp = context.getSharedPreferences("si_prefs", 0);
+		sp = context.getSharedPreferences(StringUtils.PREFS_NAME, 0);
 		editor = sp.edit();
+	}
+	
+	private void initLogs() {
+		if (!isPaused()) {
+			handler = new Handler(Looper.getMainLooper());
+			runnable = new Runnable() {
+				@Override
+				public void run() {
+					handler.post(new Runnable() {
+							@Override
+							public void run() {
+								if (arrLog.size() > 0) {
+									tvLog.append(arrLog.pop() + "\n");
+									svLogs.post(new Runnable() {
+											@Override
+											public void run() {
+												svLogs.fullScroll(View.FOCUS_DOWN);
+											}
+										});
+								}
+
+								if (!isPaused()) handler.post(this);
+							}
+					});
+				}
+			};
+			
+			ExecutorService executor = Executors.newCachedThreadPool();
+			executor.execute(runnable);
+		} else {
+			arrLog.clear();
+		}
 	}
 	
 	@Override
 	public InputStream openFile(String romName) {
-		try
-		{
+		try {
 			return context.getAssets().open(romName);
 		} catch (IOException e) {
 			String exception = e.getMessage() == null ? "openFile: Message is null" : e.getMessage();
@@ -66,14 +102,12 @@ public class Platform extends PlatformAdapter implements ResourceAdapter
 	
 	/////   API   /////
 	@Override
-	public void playSound(int id, int loop)
-	{
+	public void playSound(int id, int loop) {
 		soundPool.play(id, 1, 1, 0, loop, 1);
 	}
 
 	@Override
-	public void reloadResource()
-	{
+	public void reloadResource() {
 		setEffectShipIncoming(R.raw.ship_incoming);
 	}
 
@@ -110,8 +144,6 @@ public class Platform extends PlatformAdapter implements ResourceAdapter
 		MachineResources.MEDIA_EFFECT_SHIP_HIT = soundPool.load(context, id, 1);
 	}
 
-	// Hacks for SoundPool bug
-
 	@Override
 	public void playShipFX() {
 		spShipFX.play(MachineResources.MEDIA_EFFECT_SHIP_INCOMING, 1, 1, 0, -1, 1);
@@ -122,7 +154,6 @@ public class Platform extends PlatformAdapter implements ResourceAdapter
 		spShipFX.stop(MachineResources.MEDIA_EFFECT_SHIP_INCOMING);
 		spShipFX.unload(MachineResources.MEDIA_EFFECT_SHIP_INCOMING);
 		spShipFX.release();
-
 		initShipFX();
 	}
 
@@ -157,26 +188,26 @@ public class Platform extends PlatformAdapter implements ResourceAdapter
 	}
 
 	@Override
-	public boolean isDrawing()
-	{
+	public boolean isDrawing() {
 		return display.isDrawing();
 	}
 	
-	
 	@Override
-	public void writeLog(String message)
-	{
+	public void writeLog(String message) {
 		if (!isLogging()) return;
-		outputMessage = message;
+		arrLog.push(message);
 	}
 
 	@Override
-	public void setLogState(boolean value)
-	{
-		int visibility = value ? View.VISIBLE : View.GONE;
-		llLogs.setVisibility(visibility);
-		super.setLogState(value);
+	public void toggleLog(boolean isLogging) {
+		super.toggleLog(isLogging);
+		tvLog.setText("");
+		initLogs();
 	}
 	
-	
+	@Override
+	public void togglePause() {
+		super.togglePause();
+		initLogs();
+	}
 }

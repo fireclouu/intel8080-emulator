@@ -20,7 +20,7 @@
 			android:fontFamily="monospace"
 			android:textColor="#d3d3d3"
 			android:textSize="12sp"
-			android:text="Log:" />
+			android:text="Log: (this window greatly affects emulation speed)" />
 		
 		<View
 			android:layout_width="match_parent"
@@ -28,14 +28,29 @@
 			android:layout_marginVertical="5dp"
 			android:background="#d3d3d3" />
 		
+		<ScrollView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:id="@+id/svLogs"
+			android:orientation="vertical"
+			android:layout_weight="1">
+			
 		<TextView
 			android:layout_width="match_parent"
-			android:layout_height="match_parent"
+			android:layout_height="wrap_content"
 			android:fontFamily="monospace"
 			android:textColor="#d3d3d3"
 			android:textSize="12sp"
 			android:id="@+id/tvLog"
 			android:text="Ready to connect..." />
+		
+		</ScrollView>
+		
+		<Button
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/buttonPause" 
+			android:text="Pause"/>
 		
 	</LinearLayout>
 	

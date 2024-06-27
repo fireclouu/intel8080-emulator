@@ -11,8 +11,7 @@ import android.os.*;
 import java.util.concurrent.*;
 import com.fireclouu.intel8080emu.Emulator.*;
 
-public abstract class PlatformAdapter implements Runnable, ResourceAdapter
-{
+public abstract class PlatformAdapter implements Runnable, ResourceAdapter {
 	private Emulator emulator;
 	private Mmu mmu;
 	private CpuComponents cpu;
@@ -20,14 +19,15 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 	private Handler handler;
 	private KeyInterrupts keyInterrupts;
 	private ExecutorService executor;
-	private boolean logState = false;
+	private boolean isLogging;
 	
 	public static String OUT_MSG = "System OK!";
 	public static String[] BUILD_MSG;
 	public static int MSG_COUNT = 0;
 	
-	// Stream file
 	public abstract InputStream openFile(String romName);
+	public abstract void writeLog(String message);
+	public abstract boolean isDrawing();
 	
 	@Override
 	public void run() {
@@ -236,8 +236,8 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		keyInterrupts.setPlayerPort(playerPort);
 	}
 	
-	public void pause() {
-		emulator.pause();
+	public void setPause(boolean value) {
+		emulator.setPause(value);
 	}
 	
 	public void setHighscore(int data) {
@@ -250,8 +250,8 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		}
 	}
 
-	public void resume() {
-		emulator.resume();
+	public boolean isPaused() {
+		return emulator.isPaused();
 	}
 	
 	public void stop() {
@@ -259,12 +259,16 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter
 		executor.shutdown();
 	}
 	
-	public abstract boolean isDrawing();
 	public boolean isLogging() {
-		return logState;
+		return isLogging;
 	};
-	public void setLogState(boolean value) {
-		logState = value;
+	
+	public void toggleLog(boolean value) {
+		this.isLogging = value;
 	};
-	public abstract void writeLog(String message);
+	
+	public void togglePause() {
+		boolean pause = !emulator.isPaused();
+		emulator.setPause(pause);
+	}
 }
