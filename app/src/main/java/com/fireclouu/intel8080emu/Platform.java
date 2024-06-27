@@ -25,6 +25,7 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 	private TextView tvLog;
 	private Button buttonPause;
 	
+	private ExecutorService executor;
 	private Handler handler;
 	private Runnable runnable;
 	private Stack<String> arrLog;
@@ -36,7 +37,6 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 		tvLog = activity.findViewById(R.id.tvLog);
 		llLogs = activity.findViewById(R.id.llLogs);
 		buttonPause = activity.findViewById(R.id.buttonPause);
-		arrLog = new Stack<String>();
 		svLogs = activity.findViewById(R.id.svLogs);
 		buttonPause.setOnClickListener(new View.OnClickListener() {
 				@Override
@@ -59,6 +59,7 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 	
 	private void initLogs() {
 		if (!isPaused()) {
+			arrLog = new Stack<String>();
 			handler = new Handler(Looper.getMainLooper());
 			runnable = new Runnable() {
 				@Override
@@ -82,9 +83,10 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 				}
 			};
 			
-			ExecutorService executor = Executors.newCachedThreadPool();
+			executor = Executors.newCachedThreadPool();
 			executor.execute(runnable);
 		} else {
+			executor.shutdown();
 			arrLog.clear();
 		}
 	}
