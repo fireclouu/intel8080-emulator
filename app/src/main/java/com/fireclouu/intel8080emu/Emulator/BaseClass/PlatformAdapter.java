@@ -11,14 +11,14 @@ import android.os.*;
 import java.util.concurrent.*;
 import com.fireclouu.intel8080emu.Emulator.*;
 
-public abstract class PlatformAdapter implements Runnable, ResourceAdapter {
+public abstract class PlatformAdapter implements ResourceAdapter {
 	private Emulator emulator;
 	private Mmu mmu;
 	private CpuComponents cpu;
 	private DisplayAdapter display;
-	private Handler handler;
+	protected Handler handlerEmulator;
 	private KeyInterrupts keyInterrupts;
-	private ExecutorService executor;
+	protected ExecutorService executorEmulator;
 	private boolean isLogging;
 	
 	public static String OUT_MSG = "System OK!";
@@ -29,13 +29,9 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter {
 	public abstract void writeLog(String message);
 	public abstract boolean isDrawing();
 	
-	@Override
-	public void run() {
-		emulator.start(cpu, display, this);
-	}
-	
 	public PlatformAdapter(DisplayAdapter display) {
 		this.display = display;
+		this.mmu = new Mmu(this, this);
 	}
 	
 	public void setDisplay (DisplayAdapter display) {
@@ -44,29 +40,17 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter {
 	
 	// Main
 	public void start() {
-		// mmu inject
-		mmu = new Mmu();
-		Mmu.resource = this;
-		// initial file check
-		if (!isTestFile()) {
-				if(!isAllFileOK()) {
-				OUT_MSG = "Some files could be corrupted, or no files specified";
-				System.out.println(OUT_MSG);
-				return;
-			}	
-			// Start emulation
-			startMain();
-			return;
-		}
-		// test file
-		startTest();
-	}
+		init();
+		loadSplitFiles();
+	};
 
 	public void init() {
 		cpu = new CpuComponents();
 		emulator = new Emulator(this, mmu);
 		keyInterrupts = new KeyInterrupts(emulator);
-		executor = Executors.newSingleThreadExecutor();
+		executorEmulator = Executors.newSingleThreadExecutor();
+		handlerEmulator = new Handler(Looper.getMainLooper());
+		
 		// media
 		setEffectShipHit(R.raw.ship_hit);
 		setEffectAlienKilled(R.raw.alien_killed);
@@ -81,56 +65,13 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter {
 		setEffectShipIncoming(R.raw.ship_incoming);
 	}
 
-	private void startMain() {
-		handler = new Handler(Looper.getMainLooper());
-		init();
-		
-		if(loadSplitFiles() == 0) {
-			executor.execute(this);
-		}
-	}
-	
-	private void startTest() {
-		// init
-		init();
-		// trigger debug
-		StringUtils.Component.DEBUG = true;
-		// testfiles container
-		int counter = 0;
-		for (String files : StringUtils.File.FILES)
-		{
-			// tf[counter] = loadFile(files, 0x100, false);
-			counter++;
-		}
-		
-		// BUILD MSG
-		BUILD_MSG = new String[65355];
-		BUILD_MSG[0] = "";
-
-		// reset objects
-		init();
-
-		// start emulation
-		executor.execute(this);
-	}
-
-	// check all files
-	private boolean isAllFileOK() {
-		for (String files : StringUtils.File.FILES) {
-			if (!isAvailable(files)) return false;
-		}
-		
-		return true;
-	}
-
 	public short[] loadFile(String filename, int addr, boolean sizeActual) {
 		short[] holder = null;
 		short[] tmp = new short[0x10_000];
 		InputStream file = openFile(filename);
 		short read;
 		int counter = 0;
-		try
-		{
+		try {
 			while ((read = (short) file.read()) != -1) {
 				tmp[addr++] = read;
 				counter++;
@@ -145,8 +86,7 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter {
 		holder = new short[(sizeActual ? counter : StringUtils.Component.PROGRAM_LENGTH)];
 		
 		counter = 0;
-		for (short tmp2 : tmp)
-		{
+		for (short tmp2 : tmp) {
 			holder[counter++] = tmp2;
 		}
 		
@@ -208,22 +148,6 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter {
 		OUT_MSG = "File online , loaded successfully!";
 		return true;
 	}
-
-	private boolean isTestFile() {
-		for(String name : StringUtils.File.FILES) {
-			switch (name) {
-				case "cpudiag.bin":
-				case "8080EX1.COM":
-				case "8080EXER.COM":
-				case "CPUTEST.COM":
-				case "8080EXM.COM":
-				case "8080PRE.COM":
-				case "TST8080.COM":
-					return true;
-			}
-		}
-		return false;
-	}
 	
 	public void sendInput(int port, byte key, boolean isDown) {
 		keyInterrupts.sendInput(port, key, isDown);
@@ -241,11 +165,9 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter {
 	}
 	
 	public void setHighscore(int data) {
-		
 		int storedHiscore = getPrefs(StringUtils.ITEM_HISCORE);
 		
-		if (data > storedHiscore)
-		{
+		if (data > storedHiscore) {
 			putPrefs(StringUtils.ITEM_HISCORE, data);
 		}
 	}
@@ -256,7 +178,7 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter {
 	
 	public void stop() {
 		emulator.stop();
-		executor.shutdown();
+		executorEmulator.shutdown();
 	}
 	
 	public boolean isLogging() {
@@ -270,5 +192,9 @@ public abstract class PlatformAdapter implements Runnable, ResourceAdapter {
 	public void togglePause() {
 		boolean pause = !emulator.isPaused();
 		emulator.setPause(pause);
+	}
+	
+	public void stepEmulator() {
+		emulator.step(cpu, display, this);
 	}
 }

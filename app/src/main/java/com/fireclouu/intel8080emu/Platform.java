@@ -196,7 +196,6 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 	
 	@Override
 	public void writeLog(String message) {
-		if (!isLogging()) return;
 		arrLog.push(message);
 	}
 
@@ -212,4 +211,21 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 		super.togglePause();
 		initLogs();
 	}
+
+	@Override
+	public void start() {
+		super.start();
+		executorEmulator.execute(new Runnable() {
+				@Override
+				public void run() {
+					// FIXME: terminate when pause to
+					// optimize battery usage
+					if (!isPaused()) stepEmulator();
+					handlerEmulator.post(this);
+				}
+				
+		});
+	}
+	
+	
 }

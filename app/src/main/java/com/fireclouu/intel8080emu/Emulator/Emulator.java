@@ -16,7 +16,7 @@ public class Emulator implements IOAdapter
 	// Timer and interrupts
 	private final long GUEST_MAX_CYCLE_PER_SECOND = 2_000_000;
 	private final double NANO_SEC = 1_000_000.0;
-
+	
 	private final double VBLANK_START = (1.0 / 60.0) * (NANO_SEC);
 	private final double MIDFRAME = VBLANK_START / 2.0;
 	private final double WHEN_TO_RUN_CYCLE = 1.0 / 2_000_000.0;
@@ -35,6 +35,10 @@ public class Emulator implements IOAdapter
 	private short shift_msb;
 	private byte  shift_offset = 0;
 	private short readPort;
+	private boolean isCatchingUp;
+	private boolean isTimePrevNeedsUpdate;
+	private String log;
+	
 	public short[] port = new short[8];
 	public short[] last_port_value = new short[8];
 
@@ -49,6 +53,11 @@ public class Emulator implements IOAdapter
 		this.interpreter = new Interpreter();
 		this.platform = platform;
 		this.mmu = mmu;
+		
+		isCatchingUp = false;
+		isTimePrevNeedsUpdate = false;
+		cyclePerSecond = 0;
+		cycleHostTotal = 0;
 	}
 
 	@Override
@@ -156,16 +165,7 @@ public class Emulator implements IOAdapter
 		}
 	}
 
-	public void start(CpuComponents cpu, DisplayAdapter display, ResourceAdapter api) {
-		boolean isCatchingUp = false;
-		boolean isTimePrevNeedsUpdate = false;
-		String log = "";
-		cyclePerSecond = 0;
-		cycleHostTotal = 0;
-		
-		while(isLooping) {
-			if (isPaused) continue;
-			
+	public void step(CpuComponents cpu, DisplayAdapter display, ResourceAdapter api) {
 			isCatchingUp = false;
 			isTimePrevNeedsUpdate = false;
 			timeNow = getNano();
@@ -187,7 +187,6 @@ public class Emulator implements IOAdapter
 
 			// 2mhz cycle catch-up
 			while((timeNow > timePrev + (NANO_SEC)) && cyclePerSecond < GUEST_MAX_CYCLE_PER_SECOND) {
-				// IO
 				ioHandler(cpu, api, cpu.PC);
 				if (platform.isLogging()) {
 					log = Disassembler.disassemble(mmu, cpu.PC, (int) mmu.readMemory(cpu.PC));
@@ -200,7 +199,6 @@ public class Emulator implements IOAdapter
 	
 			// normal cycle
 			if((timeNow > timePrev + fixedMhz) && !isCatchingUp) {
-				// IO
 				ioHandler(cpu, api, cpu.PC);
 				if (platform.isLogging()) {
 					log = Disassembler.disassemble(mmu, cpu.PC, (int) mmu.readMemory(cpu.PC));
@@ -218,7 +216,6 @@ public class Emulator implements IOAdapter
 			
 			if (isTimePrevNeedsUpdate) timePrev = timeNow;
 			cycleHostTotal++;
-		}
 	}
 	
 	// DEBUGGING

@@ -104,7 +104,6 @@ public class MainActivity extends Activity implements Button.OnTouchListener, Bu
 	private void startEmulation() {
 		if (platform == null) {
 			platform = new Platform(this, this, mDisplay);
-			Mmu.platform = platform;
 		}
 		
 		platform.start();

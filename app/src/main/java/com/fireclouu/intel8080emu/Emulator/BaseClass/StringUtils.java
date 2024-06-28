@@ -10,7 +10,7 @@ public final class StringUtils
 	public static final String ITEM_HISCORE = "HISCORE";
 	public static final String PREFS_NAME = "data";
 
-	private StringUtils() { } // prevent instatiation
+	private StringUtils() { }
 	
 	public static String getTime() {
 		Date date = new Date();
@@ -44,9 +44,6 @@ public final class StringUtils
 
 	public static final class Component {
 		private Component() { }
-
-		// DO NOT MODIFY
-		public static boolean DEBUG = false;
 
 		public static final boolean PRINT_LESS = true;
 		public static final int PROGRAM_LENGTH = 0x10_000;

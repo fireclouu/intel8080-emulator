@@ -5,8 +5,8 @@ public class Mmu
 {
 	private static final int SP_MEM_ADDR_HI_SCORE_MSB = 0x20f5;
 	private static final int SP_MEM_ADDR_HI_SCORE_LSB = 0x20f4;
-	public static PlatformAdapter platform;
-	public static ResourceAdapter resource;
+	private PlatformAdapter platform;
+	private ResourceAdapter resource;
 	
 	private static boolean isInitialHiscoreInjected = false;
 	private static boolean readHiscoreMsb = false;
@@ -15,12 +15,13 @@ public class Mmu
 	/// MEMORY ///
 	private short[] memory;
 	
-	public Mmu() {
+	public Mmu(PlatformAdapter platform, ResourceAdapter resource) {
+		this.platform = platform;
+		this.resource = resource;
 		init();
 	}
 	
 	public void init() {
-		// load file on memory
 		memory = new short[StringUtils.Component.PROGRAM_LENGTH];
 	}
 	
@@ -68,7 +69,7 @@ public class Mmu
 	public void setMemory(short[] memory) {
 		this.memory = memory;
 	}
-	private static void setHighscore(int data) {
+	private void setHighscore(int data) {
 		platform.setHighscore(data);
 	}
 }
