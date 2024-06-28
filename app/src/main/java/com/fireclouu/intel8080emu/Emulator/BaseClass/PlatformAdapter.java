@@ -45,7 +45,7 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 	};
 
 	public void init() {
-		cpu = new Cpu();
+		cpu = new Cpu(mmu);
 		emulator = new Emulator(this, cpu, mmu);
 		keyInterrupts = new KeyInterrupts(emulator);
 		executorEmulator = Executors.newSingleThreadExecutor();

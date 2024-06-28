@@ -12,7 +12,6 @@ public class Mmu
 	private static boolean readHiscoreMsb = false;
 	private static boolean readHiscoreLsb = false;
 	
-	/// MEMORY ///
 	private short[] memory;
 	
 	public Mmu(PlatformAdapter platform, ResourceAdapter resource) {

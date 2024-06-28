@@ -75,15 +75,6 @@ public class Disassembler
 		return returnValue;
 	}
 
-	public void check_overflow(Cpu cpu, long cycle) {
-		if (cpu.a > 0xff | cpu.b > 0xff | cpu.c > 0xff | cpu.d > 0xff |
-			cpu.e > 0xff | cpu.h > 0xff | cpu.l > 0xff | cpu.pc > 0xffff | cpu.sp > 0xffff |
-			cpu.cc.ac > 0x1 | cpu.cc.cy > 0x1 | cpu.cc.p > 0x1 |
-			cpu.cc.s > 0x1 | cpu.cc.z > 0x1) {
-			//disassemble(cpu, false, cycle);
-		}
-	}
-
 	private static String toHex04(int value) {
 		char[] hexArray = "0123456789abcdef".toCharArray();
 		char[] hexChars = new char[4];
