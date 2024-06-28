@@ -75,11 +75,11 @@ public class Disassembler
 		return returnValue;
 	}
 
-	public void check_overflow(CpuComponents cpu, long cycle) {
-		if (cpu.A > 0xff | cpu.B > 0xff | cpu.C > 0xff | cpu.D > 0xff |
-			cpu.E > 0xff | cpu.H > 0xff | cpu.L > 0xff | cpu.PC > 0xffff | cpu.SP > 0xffff |
-			cpu.cc.AC > 0x1 | cpu.cc.CY > 0x1 | cpu.cc.P > 0x1 |
-			cpu.cc.S > 0x1 | cpu.cc.Z > 0x1) {
+	public void check_overflow(Cpu cpu, long cycle) {
+		if (cpu.a > 0xff | cpu.b > 0xff | cpu.c > 0xff | cpu.d > 0xff |
+			cpu.e > 0xff | cpu.h > 0xff | cpu.l > 0xff | cpu.pc > 0xffff | cpu.sp > 0xffff |
+			cpu.cc.ac > 0x1 | cpu.cc.cy > 0x1 | cpu.cc.p > 0x1 |
+			cpu.cc.s > 0x1 | cpu.cc.z > 0x1) {
 			//disassemble(cpu, false, cycle);
 		}
 	}

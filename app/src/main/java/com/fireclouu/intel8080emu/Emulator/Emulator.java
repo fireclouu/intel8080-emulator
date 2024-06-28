@@ -11,6 +11,7 @@ public class Emulator implements IOAdapter
 
 	private Interpreter interpreter;
 	private PlatformAdapter platform;
+	private Cpu cpu;
 	private Mmu mmu;
 
 	// Timer and interrupts
@@ -45,13 +46,14 @@ public class Emulator implements IOAdapter
 	public long cycleHostTotal = 0;
 	public long cyclePerSecond = 0;
 
-	public Emulator(PlatformAdapter platform, Mmu mmu) {
-		init(platform, mmu);
+	public Emulator(PlatformAdapter platform, Cpu cpu, Mmu mmu) {
+		init(platform, cpu, mmu);
 	}
 
-	private void init(PlatformAdapter platform, Mmu mmu) {
-		this.interpreter = new Interpreter();
+	private void init(PlatformAdapter platform, Cpu cpu, Mmu mmu) {
+		this.interpreter = new Interpreter(cpu, mmu);
 		this.platform = platform;
+		this.cpu = cpu;
 		this.mmu = mmu;
 		
 		isCatchingUp = false;
@@ -61,7 +63,7 @@ public class Emulator implements IOAdapter
 	}
 
 	@Override
-	public short handleIN(CpuComponents cpu, short port) {
+	public short handleIN(Cpu cpu, short port) {
 		short a = 0;
 		switch (port) {
 			case 0: // ?
@@ -79,7 +81,7 @@ public class Emulator implements IOAdapter
 	}
 
 	@Override
-	public void handleOUT(CpuComponents cpu, ResourceAdapter api, short port, short value) {
+	public void handleOUT(Cpu cpu, ResourceAdapter api, short port, short value) {
 		switch (port) {
 			case 2: // shift amount
 				shift_offset = (byte) (value & 0x7);    
@@ -149,23 +151,23 @@ public class Emulator implements IOAdapter
 		}
 	}
 
-	public void ioHandler(CpuComponents cpu, ResourceAdapter media, int opcode) {
+	public void ioHandler(Cpu cpu, ResourceAdapter media, int opcode) {
 		readPort = 0;
 		short dataPort = mmu.readMemory(opcode + 1);
 		int data = mmu.readMemory(opcode);
 		switch (data) {
 			case 0xdb: // in
 				readPort = dataPort;
-				cpu.A = handleIN(cpu, readPort);
+				cpu.a = handleIN(cpu, readPort);
 				break;
 			case 0xd3: // out
 				readPort = dataPort;
-				handleOUT(cpu, media, readPort, cpu.A);
+				handleOUT(cpu, media, readPort, cpu.a);
 				break;
 		}
 	}
 
-	public void step(CpuComponents cpu, DisplayAdapter display, ResourceAdapter api) {
+	public void step(DisplayAdapter display, ResourceAdapter api) {
 			isCatchingUp = false;
 			isTimePrevNeedsUpdate = false;
 			timeNow = getNano();
@@ -179,32 +181,32 @@ public class Emulator implements IOAdapter
 			// interrupt for space invaders
 			// Check midframe interrupt and rst 1 if true
 			// check final frame interrupt and rst 2 if true
-			if ((cpu.int_enable == 1) && (timeNow >= timeNextInterrupt)) {
-				interpreter.sendInterrupt(mmu, cpu, interruptType);
+			if ((cpu.enableInterrupt == 1) && (timeNow >= timeNextInterrupt)) {
+				interpreter.sendInterrupt(interruptType);
 				interruptType = (interruptType == INTERRUPT_MID) ? INTERRUPT_FULL : INTERRUPT_MID;
 				timeNextInterrupt = timeNow + (MIDFRAME);
 			}
 
 			// 2mhz cycle catch-up
 			while((timeNow > timePrev + (NANO_SEC)) && cyclePerSecond < GUEST_MAX_CYCLE_PER_SECOND) {
-				ioHandler(cpu, api, cpu.PC);
+				ioHandler(cpu, api, cpu.pc);
 				if (platform.isLogging()) {
-					log = Disassembler.disassemble(mmu, cpu.PC, (int) mmu.readMemory(cpu.PC));
+					log = Disassembler.disassemble(mmu, cpu.pc, (int) mmu.readMemory(cpu.pc));
 					callHost(log);
 				}
-				cyclePerSecond += interpreter.interpret(mmu, cpu);
+				cyclePerSecond += interpreter.interpret();
 				isTimePrevNeedsUpdate = true;
 				isCatchingUp = true;
 			}
 	
 			// normal cycle
 			if((timeNow > timePrev + fixedMhz) && !isCatchingUp) {
-				ioHandler(cpu, api, cpu.PC);
+				ioHandler(cpu, api, cpu.pc);
 				if (platform.isLogging()) {
-					log = Disassembler.disassemble(mmu, cpu.PC, (int) mmu.readMemory(cpu.PC));
+					log = Disassembler.disassemble(mmu, cpu.pc, (int) mmu.readMemory(cpu.pc));
 					callHost(log);
 				}
-				cyclePerSecond += interpreter.interpret(mmu, cpu);
+				cyclePerSecond += interpreter.interpret();
 				isTimePrevNeedsUpdate = true;
 			}	
 			
@@ -219,7 +221,7 @@ public class Emulator implements IOAdapter
 	}
 	
 	// DEBUGGING
-	private void runTest(CpuComponents cpu) {
+	private void runTest(Cpu cpu) {
 		int counter = 0;
 		for (String name : StringUtils.File.FILES) {
 			stateTest = false;
@@ -237,7 +239,7 @@ public class Emulator implements IOAdapter
 			mmu.writeMemory(0x0007, (short) 0xC9);
 			// inject "in a,0" at 0x0005 (signal to output some characters)
 			// jump pc to 0x100
-			cpu.PC = 0x0100;
+			cpu.pc = 0x0100;
 
 			System.out.println("Test: " + name + "\nSTART: " + StringUtils.getTime());
 			System.out.println("______________________________");
@@ -259,7 +261,7 @@ public class Emulator implements IOAdapter
 				 break;
 				 }*/
 
-				cyclePerSecond += interpreter.interpret(mmu, cpu);
+				cyclePerSecond += interpreter.interpret();
 				// print.printInstruction(cpu, AppUtils.Machine.PRINT_LESS);
 				// Disassembler.check_overflow(cpu, cyclePerSecond);
 			}
@@ -280,21 +282,21 @@ public class Emulator implements IOAdapter
 		}
 	}
 
-	private void debug_handleIN(CpuComponents cpu)  {
+	private void debug_handleIN(Cpu cpu)  {
 		if (PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT] == null) {
 			PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT] = "";
 		}
 
-		int operation = cpu.C;
+		int operation = cpu.c;
 		if (operation == 2) {
-			System.out.printf("%c", cpu.E);
-			addMsg((char) cpu.E);
-			if ((char) cpu.E == 10) {
+			System.out.printf("%c", cpu.e);
+			addMsg((char) cpu.e);
+			if ((char) cpu.e == 10) {
 				PlatformAdapter.MSG_COUNT++;
 				PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT] = "";
 			}
 		} else if (operation == 9) {
-			int addr = (cpu.D << 8) | cpu.E;
+			int addr = (cpu.d << 8) | cpu.e;
 			int data;
 			do {
 				data = mmu.readMemory(addr);
@@ -308,7 +310,7 @@ public class Emulator implements IOAdapter
 				addr++;
 			} while (data != '$');
 		}
-		cpu.A = 0xff;
+		cpu.a = 0xff;
 	}
 	private void debug_handleOUT() {
 		stateTest = true;

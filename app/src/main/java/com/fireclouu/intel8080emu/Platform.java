@@ -222,8 +222,8 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 					// optimize battery usage
 					if (!isPaused()) stepEmulator();
 					handlerEmulator.post(this);
+					// executorEmulator.execute(this);
 				}
-				
 		});
 	}
 	

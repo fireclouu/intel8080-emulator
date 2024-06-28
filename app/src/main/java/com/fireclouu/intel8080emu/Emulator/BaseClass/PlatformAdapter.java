@@ -1,6 +1,6 @@
 package com.fireclouu.intel8080emu.Emulator.BaseClass;
 
-import com.fireclouu.intel8080emu.Emulator.CpuComponents;
+import com.fireclouu.intel8080emu.Emulator.Cpu;
 import com.fireclouu.intel8080emu.Emulator.Emulator;
 import com.fireclouu.intel8080emu.Emulator.Mmu;
 import com.fireclouu.intel8080emu.R;
@@ -14,7 +14,7 @@ import com.fireclouu.intel8080emu.Emulator.*;
 public abstract class PlatformAdapter implements ResourceAdapter {
 	private Emulator emulator;
 	private Mmu mmu;
-	private CpuComponents cpu;
+	private Cpu cpu;
 	private DisplayAdapter display;
 	protected Handler handlerEmulator;
 	private KeyInterrupts keyInterrupts;
@@ -45,8 +45,8 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 	};
 
 	public void init() {
-		cpu = new CpuComponents();
-		emulator = new Emulator(this, mmu);
+		cpu = new Cpu();
+		emulator = new Emulator(this, cpu, mmu);
 		keyInterrupts = new KeyInterrupts(emulator);
 		executorEmulator = Executors.newSingleThreadExecutor();
 		handlerEmulator = new Handler(Looper.getMainLooper());
@@ -195,6 +195,6 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 	}
 	
 	public void stepEmulator() {
-		emulator.step(cpu, display, this);
+		emulator.step(display, this);
 	}
 }

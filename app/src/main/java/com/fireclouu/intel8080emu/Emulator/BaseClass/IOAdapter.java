@@ -11,6 +11,6 @@ public interface IOAdapter
 	int PORT_KEY_FIRE  = 4;
 	int PORT_COIN      = 5;
 	
-	short handleIN(CpuComponents cpu, short port);
-	void handleOUT(CpuComponents cpu, ResourceAdapter media, short port, short value);
+	short handleIN(Cpu cpu, short port);
+	void handleOUT(Cpu cpu, ResourceAdapter media, short port, short value);
 }
