@@ -1,15 +1,16 @@
 package com.fireclouu.intel8080emu.Emulator;
 
 import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
+import com.fireclouu.intel8080emu.*;
 
 public class Emulator implements IOAdapter {
 	// states
 	private boolean isLooping = true;
 	private boolean isPaused = false;
 	private boolean stateTest = false;
-
-	private PlatformAdapter platform;
+	
 	private Cpu cpu;
+	private HostHook hostHook;
 	private Mmu mmu;
 
 	// Timer and interrupts
@@ -36,22 +37,22 @@ public class Emulator implements IOAdapter {
 	private short readPort;
 	private boolean isCatchingUp;
 	private boolean isTimePrevNeedsUpdate;
-	private String log;
 	
 	public short[] port = new short[8];
 	public short[] last_port_value = new short[8];
 
-	public long cycleHostTotal = 0;
-	public long cyclePerSecond = 0;
+	private long cycleHostTotal = 0;
+	private long cyclePerSecond = 0;
+	private long cycleGuestTotal = 0;
 
-	public Emulator(PlatformAdapter platform, Cpu cpu, Mmu mmu) {
-		init(platform, cpu, mmu);
+	public Emulator(Guest guest) {
+		init(guest);
 	}
 
-	private void init(PlatformAdapter platform, Cpu cpu, Mmu mmu) {
-		this.platform = platform;
-		this.cpu = cpu;
-		this.mmu = mmu;
+	private void init(Guest guest) {
+		this.cpu = guest.getCpu();
+		this.mmu = guest.getMmu();
+		this.hostHook = HostHook.getInstance();
 		
 		isCatchingUp = false;
 		isTimePrevNeedsUpdate = false;
@@ -121,22 +122,18 @@ public class Emulator implements IOAdapter {
 				if (value != last_port_value[5]) {
 					if ((value & 0x1) > 0 && (last_port_value[5] & 0x1) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_1, 0);
-						// api.vibrate(20);
 					}
 					
 					if ((value & 0x2) > 0 && (last_port_value[5] & 0x2) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_2, 0);
-						// api.vibrate(20);
 					}
 					
 					if ((value & 0x4) > 0 && (last_port_value[5] & 0x4) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_3, 0);
-						// api.vibrate(20);
 					}
 					
 					if ((value & 0x8) > 0 && (last_port_value[5] & 0x8) == 0) {
 						api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_4, 0);
-						// api.vibrate(20);
 					}
 					
 					if ((value & 0x10) > 0 && (last_port_value[5] & 0x10) == 0) {
@@ -164,7 +161,7 @@ public class Emulator implements IOAdapter {
 		}
 	}
 
-	public void step(DisplayAdapter display, ResourceAdapter api) {
+	public void tick(DisplayAdapter display, ResourceAdapter api) {
 			isCatchingUp = false;
 			isTimePrevNeedsUpdate = false;
 			timeNow = getNano();
@@ -187,11 +184,13 @@ public class Emulator implements IOAdapter {
 			// 2mhz cycle catch-up
 			while((timeNow > timePrev + (NANO_SEC)) && cyclePerSecond < GUEST_MAX_CYCLE_PER_SECOND) {
 				ioHandler(cpu, api, cpu.getPC());
-				if (platform.isLogging()) {
-					log = Disassembler.disassemble(mmu, cpu.getPC(), (int) mmu.readMemory(cpu.getPC()));
-					callHost(log);
-				}
-				cyclePerSecond += cpu.step();
+				
+				writeLogToHost();
+				
+				int cycle = cpu.step();
+				cyclePerSecond += cycle;
+				cycleGuestTotal += cycle;
+				
 				isTimePrevNeedsUpdate = true;
 				isCatchingUp = true;
 			}
@@ -199,11 +198,11 @@ public class Emulator implements IOAdapter {
 			// normal cycle
 			if((timeNow > timePrev + fixedMhz) && !isCatchingUp) {
 				ioHandler(cpu, api, cpu.getPC());
-				if (platform.isLogging()) {
-					log = Disassembler.disassemble(mmu, cpu.getPC(), (int) mmu.readMemory(cpu.getPC()));
-					callHost(log);
-				}
-				cyclePerSecond += cpu.step();
+				writeLogToHost();
+				
+				int cycle = cpu.step();
+				cyclePerSecond += cycle;
+				cycleGuestTotal += cycle;
 				isTimePrevNeedsUpdate = true;
 			}	
 			
@@ -217,116 +216,60 @@ public class Emulator implements IOAdapter {
 			cycleHostTotal++;
 	}
 	
-	// DEBUGGING
-	private void runTest(Cpu cpu) {
-		int counter = 0;
-		for (String name : StringUtils.File.FILES) {
-			stateTest = false;
-
-			cpu.init();
-			// Mmu.setMemory(cpu, PlatformAdapter.tf[counter]);
-
-			// load file and injects
-			// SOURCE: superzazu — intel 8080 c99
-			// inject "out 1,a" at 0x0000 (signal to stop the test)
-			mmu.writeMemory(0x0000, (short) 0xD3);
-			mmu.writeMemory(0x0001, (short) 0x00);
-			mmu.writeMemory(0x0005, (short) 0xDB);
-			mmu.writeMemory(0x0006, (short) 0x00);
-			mmu.writeMemory(0x0007, (short) 0xC9);
-			// inject "in a,0" at 0x0005 (signal to output some characters)
-			// jump pc to 0x100
-			cpu.setPC(0x0100);
-
-			System.out.println("Test: " + name + "\nSTART: " + StringUtils.getTime());
-			System.out.println("______________________________");
-
-			addMsg("Test: " + name);
-			addMsg("START: " + StringUtils.getTime());
-			addMsg("______________________________");
-			addMsg("");
-
-			while (!stateTest) {
-				// implement
-				/*switch(PlatformAdapter.tf[counter][cpu.PC])
-				 {
-				 case 0xdb: // IN
-				 debug_handleIN(cpu);
-				 break;
-				 case 0xd3: // OUT
-				 debug_handleOUT();
-				 break;
-				 }*/
-
-				cyclePerSecond += cpu.step();
-				// print.printInstruction(cpu, AppUtils.Machine.PRINT_LESS);
-				// Disassembler.check_overflow(cpu, cyclePerSecond);
-			}
-
-			System.out.println();
-			System.out.println("______________________________");
-			System.out.println("END:   " + StringUtils.getTime());
-			System.out.println("\n***\n");
-
-			addMsg();
-			addMsg("______________________________");
-			addMsg("END:   " + StringUtils.getTime());
-			addMsg() ;
-			addMsg("***");
-			addMsg();
-
-			counter++;
+	public void tickCpuOnly() {
+		int op = mmu.readMemory(cpu.getPC());
+		switch (op) {
+			case 0xdb:
+				testSuiteIn();
+				break;
+			case 0xd3:
+				testSuiteOut();
+				break;
 		}
+		
+		cycleGuestTotal += cpu.step();
 	}
-
-	private void debug_handleIN(Cpu cpu)  {
-		if (PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT] == null) {
-			PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT] = "";
-		}
-
+	
+	private void testSuiteIn()  {
 		int operation = cpu.getRegC();
+		
 		if (operation == 2) {
-			System.out.printf("%c", cpu.getRegE());
-			addMsg((char) cpu.getRegE());
-			if ((char) cpu.getRegE() == 10) {
-				PlatformAdapter.MSG_COUNT++;
-				PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT] = "";
+			char data = (char) cpu.getRegE();
+			String dataString = Character.valueOf(data).toString();
+			writeLog(dataString);
+			
+			if (cpu.getRegE() == 10) {
+				writeLog("\n");
 			}
 		} else if (operation == 9) {
 			int addr = (cpu.getRegD() << 8) | cpu.getRegE();
-			int data;
+			char data;
+			
 			do {
-				data = mmu.readMemory(addr);
-				System.out.printf("%c", data);
-				addMsg((char) data);
-				if ((char) data == 10) {
-
-					PlatformAdapter.MSG_COUNT++;
-					PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT] = "";
+				data = (char) mmu.readMemory(addr);
+				if (data == '$') break;
+				String dataString = Character.valueOf(data).toString();
+				writeLog(dataString);
+			
+				if (cpu.getRegE() == 10) {
+					writeLog("\n");
 				}
 				addr++;
 			} while (data != '$');
 		}
+		
 		cpu.setRegA((short) 0xff);
 	}
-	private void debug_handleOUT() {
-		stateTest = true;
-	}
-	
-	private void addMsg(char c) {
-		PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT] += c;
-	}
-	
-	private void addMsg() {
-		PlatformAdapter.MSG_COUNT++;
-	}
-	
-	private void addMsg(String str) {
-		PlatformAdapter.BUILD_MSG[PlatformAdapter.MSG_COUNT++] = str + "\n";
+	private void testSuiteOut() {
+		stop();
 	}
 	
 	public void stop() {
 		isLooping = false;
+	}
+	
+	public boolean isLooping() {
+		return this.isLooping;
 	}
 
 	public void setPause(boolean isPaused) {
@@ -341,7 +284,15 @@ public class Emulator implements IOAdapter {
 		return System.nanoTime() / 1_000;
 	}
 	
-	private void callHost(String message) {
+	private void writeLog(String message) {
+		PlatformAdapter platform = hostHook.getPlatform();
 		platform.writeLog(message);
+	}
+	
+	private void writeLogToHost() {
+		PlatformAdapter platform = hostHook.getPlatform();
+		if (!platform.isLogging()) return;
+		String log = Disassembler.disassemble(mmu, cpu.getPC(), (int) mmu.readMemory(cpu.getPC()));
+		platform.writeLog(log + "\n");
 	}
 }

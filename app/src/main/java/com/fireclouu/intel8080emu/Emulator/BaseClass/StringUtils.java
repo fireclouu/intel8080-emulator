@@ -9,7 +9,9 @@ public final class StringUtils
 	public static final String TAG = "FRCL_SPACE_INVADERS";
 	public static final String ITEM_HISCORE = "HISCORE";
 	public static final String PREFS_NAME = "data";
-
+	public static final String INTENT_FILE_IS_TEST_ROM = "intentFileIsTestRom";
+	public static final String INTENT_TEST_ROM_FILE_NAME = "intentTestRomFileName";
+	
 	private StringUtils() { }
 	
 	public static String getTime() {
@@ -25,14 +27,6 @@ public final class StringUtils
 		public static final String[] FILES = {
 			"invaders.h", "invaders.g",
 			"invaders.f", "invaders.e",
-
-			///  TESTS  ///
-			//"TST8080.COM",
-			//"8080PRE.COM",
-			//"CPUTEST.COM",
-			//"8080EXM.COM",
-			//"8080EX1.COM",
-			//"8080EXER.COM",
 		};
 
 		public static final int[] ROM_ADDRESS = {

@@ -1,37 +1,26 @@
 package com.fireclouu.intel8080emu.Emulator;
 import com.fireclouu.intel8080emu.Emulator.BaseClass.*;
+import com.fireclouu.intel8080emu.*;
 
 public class Mmu
 {
 	private static final int SP_MEM_ADDR_HI_SCORE_MSB = 0x20f5;
 	private static final int SP_MEM_ADDR_HI_SCORE_LSB = 0x20f4;
-	private PlatformAdapter platform;
-	private ResourceAdapter resource;
 	
 	private static boolean isInitialHiscoreInjected = false;
 	private static boolean readHiscoreMsb = false;
 	private static boolean readHiscoreLsb = false;
 	
+	private HostHook hostHook;
 	private short[] memory;
 	
-	public Mmu(PlatformAdapter platform, ResourceAdapter resource) {
-		this.platform = platform;
-		this.resource = resource;
-		init();
-	}
-	
-	public void init() {
-		memory = new short[StringUtils.Component.PROGRAM_LENGTH];
-	}
-	
-	public void writeMemory(int address, short value) {
-		// this example exhibits how important MMU is to emulation
-		// set highscore whenever emulator writes to its address
+	private short interceptValue(int address, short value) {
 		if ((address == SP_MEM_ADDR_HI_SCORE_MSB || address == SP_MEM_ADDR_HI_SCORE_LSB)) {
 			readHiscoreMsb = address == SP_MEM_ADDR_HI_SCORE_MSB ? true : readHiscoreMsb;
 			readHiscoreLsb = address == SP_MEM_ADDR_HI_SCORE_LSB ? true : readHiscoreLsb;
 			if (!isInitialHiscoreInjected) {
-				int storedHiscore = resource.getPrefs(StringUtils.ITEM_HISCORE);
+				Object data = hostHook.getData(HostHook.ACTION_TYPE.GET_HISCORE);
+				int storedHiscore = data != null ? (int) data : 0;
 				short hiscoreNibble = 0;
 				if (address == SP_MEM_ADDR_HI_SCORE_MSB) {
 					hiscoreNibble = (short) (storedHiscore >> 8);
@@ -45,15 +34,42 @@ public class Mmu
 			if (readHiscoreLsb && readHiscoreMsb) {
 				short hiScoreDataMsb = address == SP_MEM_ADDR_HI_SCORE_MSB ? value : readMemory(SP_MEM_ADDR_HI_SCORE_MSB);
 				short hiScoreDataLsb = address == SP_MEM_ADDR_HI_SCORE_LSB ? value : readMemory(SP_MEM_ADDR_HI_SCORE_LSB);
-				setHighscore(hiScoreDataMsb << 8 | hiScoreDataLsb);
+				int hiScore = hiScoreDataMsb << 8 | hiScoreDataLsb;
+				hostHook.setData(HostHook.ACTION_TYPE.SET_HISCORE, hiScore);
 				readHiscoreMsb = false;
 				readHiscoreLsb = false;
 			}
 		}
-		
-		// prevent writing to VRAM if host is still drawing
-		if ((address >= Machine.VRAM_START && address <= Machine.VRAM_END) && platform.isDrawing()) return;
-		
+
+		// TODO: prevent writing to VRAM if host is still drawing if threaded
+
+		return value;
+	}
+	
+	// tests suite patches
+	public void writeTestSuitePatch() {
+		// run only if rom has loaded on memory
+		if (memory == null || memory.length <= 0) return;
+		writeMemory(0x0000, (short) 0xD3);
+		writeMemory(0x0001, (short) 0x00);
+		writeMemory(0x0005, (short) 0xDB);
+		writeMemory(0x0006, (short) 0x00);
+		writeMemory(0x0007, (short) 0xC9);
+	}
+	
+	public Mmu() {
+		init();
+	}
+	
+	public void init() {
+		this.hostHook = HostHook.getInstance();
+		memory = new short[StringUtils.Component.PROGRAM_LENGTH];
+	}
+	
+	public void writeMemory(int address, short value) {
+		// this example exhibits how important MMU is to emulation
+		// set highscore whenever emulator writes to its address
+		value = interceptValue(address, value);
 		memory[address & 0xffff] = value;
 	}
 	
@@ -67,8 +83,5 @@ public class Mmu
 	
 	public void setMemory(short[] memory) {
 		this.memory = memory;
-	}
-	private void setHighscore(int data) {
-		platform.setHighscore(data);
 	}
 }

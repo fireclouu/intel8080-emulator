@@ -10,16 +10,18 @@ import java.io.InputStream;
 import android.os.*;
 import java.util.concurrent.*;
 import com.fireclouu.intel8080emu.Emulator.*;
+import com.fireclouu.intel8080emu.*;
 
 public abstract class PlatformAdapter implements ResourceAdapter {
 	private Emulator emulator;
-	private Mmu mmu;
-	private Cpu cpu;
 	private DisplayAdapter display;
-	protected Handler handlerEmulator;
+	private Guest guest;
+	protected Handler handler;
 	private KeyInterrupts keyInterrupts;
-	protected ExecutorService executorEmulator;
+	protected ExecutorService executor;
 	private boolean isLogging;
+	private String testRomFileName;
+	public boolean isTestSuite;
 	
 	public static String OUT_MSG = "System OK!";
 	public static String[] BUILD_MSG;
@@ -29,9 +31,9 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 	public abstract void writeLog(String message);
 	public abstract boolean isDrawing();
 	
-	public PlatformAdapter(DisplayAdapter display) {
+	public PlatformAdapter(DisplayAdapter display, boolean isTestSuite) {
 		this.display = display;
-		this.mmu = new Mmu(this, this);
+		this.isTestSuite = isTestSuite;
 	}
 	
 	public void setDisplay (DisplayAdapter display) {
@@ -41,15 +43,26 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 	// Main
 	public void start() {
 		init();
-		loadSplitFiles();
+		if (isTestSuite) {
+			loadFile("tests/" + testRomFileName, 0x100);
+			guest.getMmu().writeTestSuitePatch();
+			guest.getCpu().setPC(0x100);
+			writeLog("File name: " + testRomFileName + "\n");
+			for (int i = 0; i <= 25; i++) {
+				writeLog("-");
+			}
+			writeLog("\n");
+		} else {
+			loadSplitFiles();
+		}
 	};
 
 	public void init() {
-		cpu = new Cpu(mmu);
-		emulator = new Emulator(this, cpu, mmu);
+		guest = new Guest();
+		emulator = new Emulator(guest);
 		keyInterrupts = new KeyInterrupts(emulator);
-		executorEmulator = Executors.newSingleThreadExecutor();
-		handlerEmulator = new Handler(Looper.getMainLooper());
+		executor = Executors.newSingleThreadExecutor();
+		handler = new Handler(Looper.getMainLooper());
 		
 		// media
 		setEffectShipHit(R.raw.ship_hit);
@@ -100,7 +113,7 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 		try
 		{
 			while ((read = (short) file.read()) != -1) {
-				mmu.writeMemory(addr++, read);
+				guest.getMmu().writeMemory(addr++, read);
 			}
 			file.close();
 			file = null;
@@ -171,6 +184,10 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 			putPrefs(StringUtils.ITEM_HISCORE, data);
 		}
 	}
+	
+	public int getHighscore() {
+		return getPrefs(StringUtils.ITEM_HISCORE);
+	}
 
 	public boolean isPaused() {
 		return emulator.isPaused();
@@ -178,7 +195,7 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 	
 	public void stop() {
 		emulator.stop();
-		executorEmulator.shutdown();
+		executor.shutdown();
 	}
 	
 	public boolean isLogging() {
@@ -194,7 +211,23 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 		emulator.setPause(pause);
 	}
 	
-	public void stepEmulator() {
-		emulator.step(display, this);
+	public void tickEmulator() {
+		emulator.tick(display, this);
+	}
+	
+	public void tickCpuOnly() {
+		emulator.tickCpuOnly();
+	}
+	
+	public boolean isLooping() {
+		return emulator.isLooping();
+	}
+	
+	public String getTestRomFileName() {
+		return this.testRomFileName;
+	}
+	
+	public void setTestRomFileName(String testRomFileName) {
+		this.testRomFileName = testRomFileName;
 	}
 }

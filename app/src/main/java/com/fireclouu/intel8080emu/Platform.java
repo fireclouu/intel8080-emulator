@@ -25,15 +25,13 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 	private TextView tvLog;
 	private Button buttonPause;
 	
-	private ExecutorService executor;
-	private Handler handler;
-	private Runnable runnable;
 	private Stack<String> arrLog;
 	
-	public Platform(Activity activity, Context context, DisplayAdapter display) {
-		super(display);
+	public Platform(Activity activity, Context context, DisplayAdapter display, boolean isTestSuite) {
+		super(display, isTestSuite);
 		this.display = display;
 		this.context = context;
+		
 		tvLog = activity.findViewById(R.id.tvLog);
 		llLogs = activity.findViewById(R.id.llLogs);
 		buttonPause = activity.findViewById(R.id.buttonPause);
@@ -47,6 +45,7 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 		
 		tvLog.setText("");
 		platformInit();
+		HostHook.getInstance().setPlatform(this);
 	}
 	
 	private void platformInit() {
@@ -58,7 +57,7 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 	}
 	
 	private void initLogs() {
-		if (!isPaused()) {
+		/*if (!isPaused()) {
 			arrLog = new Stack<String>();
 			handler = new Handler(Looper.getMainLooper());
 			runnable = new Runnable() {
@@ -68,7 +67,7 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 							@Override
 							public void run() {
 								if (arrLog.size() > 0) {
-									tvLog.append(arrLog.pop() + "\n");
+									tvLog.append(arrLog.pop());
 									svLogs.post(new Runnable() {
 											@Override
 											public void run() {
@@ -86,9 +85,10 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 			executor = Executors.newCachedThreadPool();
 			executor.execute(runnable);
 		} else {
+			if (executor == null) return;
 			executor.shutdown();
 			arrLog.clear();
-		}
+		}*/
 	}
 	
 	@Override
@@ -195,8 +195,19 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 	}
 	
 	@Override
-	public void writeLog(String message) {
-		arrLog.push(message);
+	public void writeLog(final String message) {
+		handler.post(new Runnable() {
+				@Override
+				public void run() {
+					tvLog.append(message);
+					svLogs.post(new Runnable() {
+							@Override
+							public void run() {
+								svLogs.fullScroll(View.FOCUS_DOWN);
+							}
+					});
+				}
+		});
 	}
 
 	@Override
@@ -215,14 +226,35 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 	@Override
 	public void start() {
 		super.start();
-		executorEmulator.execute(new Runnable() {
+		executor.execute(new Runnable() {
 				@Override
 				public void run() {
 					// FIXME: terminate when pause to
 					// optimize battery usage
-					if (!isPaused()) stepEmulator();
-					handlerEmulator.post(this);
-					// executorEmulator.execute(this);
+					
+					while (isLooping()) {
+						if (!isPaused() && !isTestSuite) {
+							tickEmulator();
+						} else {
+							tickCpuOnly();
+						}
+					}
+					
+					writeLog("\n");
+					for (int i = 0; i <= 25; i++) {
+						writeLog("-");
+					}
+					
+					handler.post(new Runnable() {
+
+							@Override
+							public void run() {
+								Toast.makeText(context, "Emulation terminated", Toast.LENGTH_SHORT).show();
+							}	
+						
+					});
+					// if (isLooping()) handlerEmulator.post(this);
+					// if (isLooping()) executorEmulator.execute(this);
 				}
 		});
 	}
