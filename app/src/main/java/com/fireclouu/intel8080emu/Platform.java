@@ -25,7 +25,7 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 	private TextView tvLog;
 	private Button buttonPause;
 	
-	private Stack<String> arrLog;
+	private ExecutorService exec2;
 	
 	public Platform(Activity activity, Context context, DisplayAdapter display, boolean isTestSuite) {
 		super(display, isTestSuite);
@@ -45,6 +45,7 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 		
 		tvLog.setText("");
 		platformInit();
+		exec2 = Executors.newSingleThreadExecutor();
 		HostHook.getInstance().setPlatform(this);
 	}
 	
@@ -54,41 +55,6 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 		vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
 		sp = context.getSharedPreferences(StringUtils.PREFS_NAME, 0);
 		editor = sp.edit();
-	}
-	
-	private void initLogs() {
-		/*if (!isPaused()) {
-			arrLog = new Stack<String>();
-			handler = new Handler(Looper.getMainLooper());
-			runnable = new Runnable() {
-				@Override
-				public void run() {
-					handler.post(new Runnable() {
-							@Override
-							public void run() {
-								if (arrLog.size() > 0) {
-									tvLog.append(arrLog.pop());
-									svLogs.post(new Runnable() {
-											@Override
-											public void run() {
-												svLogs.fullScroll(View.FOCUS_DOWN);
-											}
-										});
-								}
-
-								if (!isPaused()) handler.post(this);
-							}
-					});
-				}
-			};
-			
-			executor = Executors.newCachedThreadPool();
-			executor.execute(runnable);
-		} else {
-			if (executor == null) return;
-			executor.shutdown();
-			arrLog.clear();
-		}*/
 	}
 	
 	@Override
@@ -205,8 +171,8 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 							public void run() {
 								svLogs.fullScroll(View.FOCUS_DOWN);
 							}
-					});
-				}
+						});
+				}			
 		});
 	}
 
@@ -214,13 +180,11 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 	public void toggleLog(boolean isLogging) {
 		super.toggleLog(isLogging);
 		tvLog.setText("");
-		initLogs();
 	}
 	
 	@Override
 	public void togglePause() {
 		super.togglePause();
-		initLogs();
 	}
 
 	@Override
@@ -233,27 +197,28 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 					// optimize battery usage
 					
 					while (isLooping()) {
-						if (!isPaused() && !isTestSuite) {
-							tickEmulator();
-						} else {
-							tickCpuOnly();
+						if (!isPaused()) {
+							if (!isTestSuite) {
+								tickEmulator();
+							} else {
+								tickCpuOnly();
+							}
 						}
 					}
 					
 					writeLog("\n");
-					for (int i = 0; i <= 25; i++) {
+					for (int i = 0; i < 25; i++) {
 						writeLog("-");
 					}
 					
 					handler.post(new Runnable() {
-
 							@Override
 							public void run() {
 								Toast.makeText(context, "Emulation terminated", Toast.LENGTH_SHORT).show();
-							}	
-						
+							}
 					});
-					// if (isLooping()) handlerEmulator.post(this);
+					
+					 // if (isLooping()) handler.post(this);
 					// if (isLooping()) executorEmulator.execute(this);
 				}
 		});

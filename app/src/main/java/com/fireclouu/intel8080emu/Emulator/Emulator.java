@@ -7,7 +7,6 @@ public class Emulator implements IOAdapter {
 	// states
 	private boolean isLooping = true;
 	private boolean isPaused = false;
-	private boolean stateTest = false;
 	
 	private Cpu cpu;
 	private HostHook hostHook;
