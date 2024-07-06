@@ -198,7 +198,7 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 					
 					while (isLooping()) {
 						if (!isPaused()) {
-							if (!isTestSuite) {
+							if (!isTestSuite()) {
 								tickEmulator();
 							} else {
 								tickCpuOnly();

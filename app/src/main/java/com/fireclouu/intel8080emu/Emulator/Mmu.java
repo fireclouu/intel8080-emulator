@@ -7,12 +7,14 @@ public class Mmu
 	private static final int SP_MEM_ADDR_HI_SCORE_MSB = 0x20f5;
 	private static final int SP_MEM_ADDR_HI_SCORE_LSB = 0x20f4;
 	
-	private static boolean isInitialHiscoreInjected = false;
-	private static boolean readHiscoreMsb = false;
-	private static boolean readHiscoreLsb = false;
+	private boolean isInitialHiscoreInjected;
+	private boolean readHiscoreMsb;
+	private boolean readHiscoreLsb;
 	
 	private HostHook hostHook;
+	
 	private short[] memory;
+	private boolean isTestSuite;
 	
 	private short interceptValue(int address, short value) {
 		if ((address == SP_MEM_ADDR_HI_SCORE_MSB || address == SP_MEM_ADDR_HI_SCORE_LSB)) {
@@ -62,14 +64,17 @@ public class Mmu
 	}
 	
 	public void init() {
+		isInitialHiscoreInjected = false;
+		readHiscoreMsb = false;
+		readHiscoreLsb = false;
+		
 		this.hostHook = HostHook.getInstance();
 		memory = new short[StringUtils.Component.PROGRAM_LENGTH];
+		isTestSuite = hostHook.getPlatform().isTestSuite();
 	}
 	
 	public void writeMemory(int address, short value) {
-		// this example exhibits how important MMU is to emulation
-		// set highscore whenever emulator writes to its address
-		value = interceptValue(address, value);
+		if (!isTestSuite) value = interceptValue(address, value);
 		memory[address & 0xffff] = value;
 	}
 	

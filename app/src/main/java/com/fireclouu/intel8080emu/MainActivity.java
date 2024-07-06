@@ -14,23 +14,42 @@ import android.widget.CompoundButton.*;
 public class MainActivity extends Activity implements View.OnClickListener, CheckBox.OnCheckedChangeListener, AdapterView.OnItemSelectedListener
 {
 	private Button buttonLoadEmulator;
+	private Button buttonChooseFile;
+	private TextView tvChooseFile;
+	
 	private CheckBox cbTestRom;
 	private Spinner spinnerTestRom;
 	
 	private String[] files;
 	private String testRomFilename;
 	
+	private static final int REQUEST_PICK_DOC_MULTI = 1;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.layout_file_picker);
 		
+		buttonChooseFile = findViewById(R.id.buttonChooseFile);
 		buttonLoadEmulator = findViewById(R.id.buttonLoadEmulator);
+		tvChooseFile = findViewById(R.id.tvChooseFile);
 		cbTestRom = findViewById(R.id.cbTestRom);
 		spinnerTestRom = findViewById(R.id.spinnerTestRoms);
 		
 		buttonLoadEmulator.setOnClickListener(this);
-		
+		buttonChooseFile.setOnClickListener(new View.OnClickListener() {
+
+				@Override
+				public void onClick(View p1) {
+					Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+					intent.setType("*/*");
+					intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+					intent.addCategory(Intent.CATEGORY_OPENABLE);
+					startActivityForResult(intent, REQUEST_PICK_DOC_MULTI);
+				}
+				
+			
+		});
 		
 		AssetManager assetManager = getAssets();
 		files = null;
@@ -79,4 +98,23 @@ public class MainActivity extends Activity implements View.OnClickListener, Chec
 		int visibility = p2 ? View.VISIBLE : View.GONE;
 		spinnerTestRom.setVisibility(visibility);
 	}
+
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+		// TODO: Implement this method
+		super.onActivityResult(requestCode, resultCode, data);
+		
+		if (requestCode == REQUEST_PICK_DOC_MULTI && resultCode == RESULT_OK) {
+			if (data == null) return;
+			if (data.getClipData() == null) return;
+			
+			int itemCount = data.getClipData().getItemCount();
+			
+			String test = data.getClipData().getItemAt(0).getUri().toString();
+			tvChooseFile.setText(test);
+			
+		}
+	}
+	
+	
 }

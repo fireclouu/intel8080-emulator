@@ -19,6 +19,7 @@
 		android:text="fireclouu"
 		android:textSize="12sp"
 		android:textStyle="bold" />
+	
 	<LinearLayout
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
@@ -28,11 +29,13 @@
 	<Button
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
+		android:id="@+id/buttonChooseFile"
 		android:text="Choose file" />
 	
 	<TextView
 		android:layout_width="wrap_content"
 		android:layout_height="wrap_content"
+		android:id="@+id/tvChooseFile"
 		android:text="File: " />
 	
 	</LinearLayout>

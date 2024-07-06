@@ -21,11 +21,7 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 	protected ExecutorService executor;
 	private boolean isLogging;
 	private String testRomFileName;
-	public boolean isTestSuite;
-	
-	public static String OUT_MSG = "System OK!";
-	public static String[] BUILD_MSG;
-	public static int MSG_COUNT = 0;
+	private boolean isTestSuite;
 	
 	public abstract InputStream openFile(String romName);
 	public abstract void writeLog(String message);
@@ -92,7 +88,7 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 			file.close();
 			file = null;
 		} catch (IOException e) {
-			OUT_MSG = filename + " cannot be read!";
+			// OUT_MSG = filename + " cannot be read!";
 			return null;
 		}
 		
@@ -118,7 +114,7 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 			file.close();
 			file = null;
 		} catch (IOException e) {
-			OUT_MSG = filename + " cannot be read!";
+			// OUT_MSG = filename + " cannot be read!";
 		}
 	}
 	
@@ -128,7 +124,7 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 			if (isAvailable(files)) {
 				loadFile(files, StringUtils.File.ROM_ADDRESS[counter++]);
 			} else {
-				System.out.println(OUT_MSG);
+				// System.out.println(OUT_MSG);
 				return 1;
 			}
 		}
@@ -137,28 +133,28 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 
 	private boolean isAvailable(String filename) {
 		if (StringUtils.File.FILES.length == 0) {
-			OUT_MSG = "No files specified.";
+			// OUT_MSG = "No files specified.";
 			return false;
 		}
 		if (StringUtils.File.ROM_ADDRESS.length == 0) {
-			OUT_MSG = "File is empty.";
+			// OUT_MSG = "File is empty.";
 			return false;
 		}
 		if (StringUtils.File.ROM_ADDRESS.length != StringUtils.File.FILES.length) {
-			OUT_MSG = "File online, but roms and memory address unaligned.";
+			// OUT_MSG = "File online, but roms and memory address unaligned.";
 			return false;
 		}
 		try
 		{
 			if (openFile(filename) == null) {
-				OUT_MSG = "File \"" + filename + "\" could not be found.";
+				// OUT_MSG = "File \"" + filename + "\" could not be found.";
 				return false;
 			}
 		} catch (ArrayIndexOutOfBoundsException e) {
 			e.printStackTrace();
 			return false;
 		}
-		OUT_MSG = "File online , loaded successfully!";
+		// OUT_MSG = "File online , loaded successfully!";
 		return true;
 	}
 	
@@ -221,6 +217,18 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 	
 	public boolean isLooping() {
 		return emulator.isLooping();
+	}
+	
+	public boolean isTestSuite() {
+		return this.isTestSuite;
+	}
+	
+	public void enableTestSuite() {
+		this.isTestSuite = true;
+	}
+	
+	public void disableTestSuite() {
+		this.isTestSuite = false;
 	}
 	
 	public String getTestRomFileName() {
