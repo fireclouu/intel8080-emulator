@@ -1,4 +1,4 @@
-package com.fireclouu.intel8080emu.Emulator.BaseClass;
+package com.fireclouu.intel8080emu.emulator.baseclass;
 
 public class MachineResources {
     /////   MEDIA   /////

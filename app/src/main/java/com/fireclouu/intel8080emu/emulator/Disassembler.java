@@ -1,4 +1,4 @@
-package com.fireclouu.intel8080emu.Emulator;
+package com.fireclouu.intel8080emu.emulator;
 
 public class Disassembler
 {
@@ -43,14 +43,14 @@ public class Disassembler
 	public static String disassemble(Mmu mmu, int pc, int data) {
 		String returnValue = "";
 		String inst = DISASSEMBLE_TABLE[data];
-		
+
 		switch(data) {
 				// byte
 			case 0x06: case 0x0e:
 			case 0x16: case 0x1e:
 			case 0x26: case 0x2e:
 			case 0x36: case 0x3e:
-			case 0xc6: case 0xce: 
+			case 0xc6: case 0xce:
 			case 0xd3: case 0xd6: case 0xdb: case 0xde:
 			case 0xe6: case 0xee:
 			case 0xf6: case 0xfe:
@@ -66,9 +66,9 @@ public class Disassembler
 			case 0xd2: case 0xd4: case 0xda: case 0xdc:
 			case 0xe2: case 0xe4: case 0xea: case 0xec:
 			case 0xf2: case 0xf4: case 0xfa: case 0xfc:
-				inst += toHex04((mmu.readMemory(pc + 2) << 8) 
+				inst += toHex04((mmu.readMemory(pc + 2) << 8)
 					| mmu.readMemory(pc + 1));
-				break;	
+				break;
 		}
 
 		returnValue = "PC: " + toHex04(pc) + "  " + "OP: " + toHex02(data) + "  " + inst + "  ";
