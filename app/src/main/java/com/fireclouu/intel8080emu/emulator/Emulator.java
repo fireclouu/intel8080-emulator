@@ -8,8 +8,9 @@ import com.fireclouu.intel8080emu.emulator.baseclass.ResourceAdapter;
 import com.fireclouu.intel8080emu.HostHook;
 
 public class Emulator implements IOAdapter {
+	PlatformAdapter platform;
     // Timer and interrupts
-    private final long GUEST_MAX_CYCLE_PER_SECOND = 2_000_000;
+    private final long MAX_CYCLE_PER_SECOND = 2_000_000;
     private final double NANO_SEC = 1_000_000.0;
     private final double VBLANK_START = (1.0 / 60.0) * (NANO_SEC);
     private final double MIDFRAME = VBLANK_START / 2.0;
@@ -46,10 +47,12 @@ public class Emulator implements IOAdapter {
     }
 
     private void init(Guest guest) {
+		
         this.cpu = guest.getCpu();
         this.mmu = guest.getMmu();
         this.hostHook = HostHook.getInstance();
-
+		platform = hostHook.getPlatform();
+		
         isCatchingUp = false;
         isTimePrevNeedsUpdate = false;
         cyclePerSecond = 0;
@@ -178,28 +181,29 @@ public class Emulator implements IOAdapter {
         }
 
         // 2mhz cycle catch-up
-        while ((timeNow > timePrev + (NANO_SEC)) && cyclePerSecond < GUEST_MAX_CYCLE_PER_SECOND) {
+        while ((timeNow > timePrev + (NANO_SEC)) && cyclePerSecond < MAX_CYCLE_PER_SECOND) {
             ioHandler(cpu, api, cpu.getPC());
-
-            writeLogToHost();
+			if (platform.isLogging()) {
+				writeLog(getLogCurrentPc());
+			}
 
             int cycle = cpu.step();
             cyclePerSecond += cycle;
             cycleGuestTotal += cycle;
 
-            isTimePrevNeedsUpdate = true;
             isCatchingUp = true;
         }
 
         // normal cycle
-        if ((timeNow > timePrev + fixedMhz) && !isCatchingUp) {
+        if (!isCatchingUp) {
             ioHandler(cpu, api, cpu.getPC());
-            writeLogToHost();
+            if (platform.isLogging()) {
+				writeLog(getLogCurrentPc());
+			}
 
             int cycle = cpu.step();
             cyclePerSecond += cycle;
             cycleGuestTotal += cycle;
-            isTimePrevNeedsUpdate = true;
         }
 
         // cycle reset
@@ -282,14 +286,10 @@ public class Emulator implements IOAdapter {
     }
 
     private void writeLog(String message) {
-        PlatformAdapter platform = hostHook.getPlatform();
-        platform.writeLog(message);
+        // platform.writeLog(message);
     }
 
-    private void writeLogToHost() {
-        PlatformAdapter platform = hostHook.getPlatform();
-        if (!platform.isLogging()) return;
-        String log = Disassembler.disassemble(mmu, cpu.getPC(), mmu.readMemory(cpu.getPC()));
-        platform.writeLog(log + "\n");
+    private String getLogCurrentPc() {
+        return Disassembler.disassemble(mmu, cpu.getPC(), mmu.readMemory(cpu.getPC()));
     }
 }
