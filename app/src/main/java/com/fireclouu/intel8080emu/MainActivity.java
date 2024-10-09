@@ -14,12 +14,10 @@ import android.widget.CompoundButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 
-import com.fireclouu.intel8080emu.emulator.baseclass.StringUtils;
-
 import java.io.IOException;
 
 public class MainActivity extends Activity implements View.OnClickListener, CheckBox.OnCheckedChangeListener, AdapterView.OnItemSelectedListener {
-    private static final int REQUEST_PICK_DOC_MULTI = 1;
+	private static final int REQUEST_PICK_DOC_MULTI = 1;
     private Button buttonLoadEmulator;
     private Button buttonChooseFile;
     private TextView tvChooseFile;
@@ -60,7 +58,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Chec
         try {
             files = assetManager.list("tests");
         } catch (IOException e) {
-            Log.e(StringUtils.TAG, e.getMessage());
+            Log.e(HostHook.TAG, e.getMessage());
         }
 
         ArrayAdapter arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, files);
@@ -80,8 +78,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Chec
 
         if (id == R.id.buttonLoadEmulator) {
             Intent intent = new Intent(MainActivity.this, EmulatorActivity.class);
-            intent.putExtra(StringUtils.INTENT_FILE_IS_TEST_ROM, cbTestRom.isChecked());
-            intent.putExtra(StringUtils.INTENT_TEST_ROM_FILE_NAME, testRomFilename);
+            intent.putExtra(HostHook.INTENT_FILE_IS_TEST_ROM, cbTestRom.isChecked());
+            intent.putExtra(HostHook.INTENT_ROM_FILE_NAME, testRomFilename);
             startActivity(intent);
         }
     }
