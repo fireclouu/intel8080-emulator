@@ -1,13 +1,21 @@
 package com.fireclouu.intel8080emu;
 
-import com.fireclouu.intel8080emu.emulator.baseclass.PlatformAdapter;
+import com.fireclouu.intel8080emu.emulator.base.PlatformAdapter;
+import android.os.Environment;
 
 public class HostHook {
-    private static HostHook hostHook;
-    private PlatformAdapter platform;
-
-    private HostHook() {
-    }
+	private static HostHook hostHook;
+	private Platform platform;
+	
+	public static final String ITEM_HISCORE = "HISCORE";
+    public static final String PREFS_NAME = "data";
+    public static final String INTENT_FILE_IS_TEST_ROM = "intentFileIsTestRom";
+    public static final String INTENT_ROM_FILE_NAME = "intentTestRomFileName";
+	public static final String TAG = "FIRECLOUU_SI";
+	public static final String STORAGE_LOCATION = 
+		Environment.getExternalStorageDirectory().getPath() + "Download/";
+    
+	private HostHook() {}
 
     public static HostHook getInstance() {
         if (hostHook == null) {
@@ -32,7 +40,7 @@ public class HostHook {
         return this.platform;
     }
 
-    public void setPlatform(PlatformAdapter platform) {
+    public void setPlatform(Platform platform) {
         this.platform = platform;
     }
 
