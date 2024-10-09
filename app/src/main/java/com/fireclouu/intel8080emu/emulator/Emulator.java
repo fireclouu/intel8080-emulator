@@ -1,10 +1,9 @@
 package com.fireclouu.intel8080emu.emulator;
 
-import com.fireclouu.intel8080emu.emulator.baseclass.DisplayAdapter;
-import com.fireclouu.intel8080emu.emulator.baseclass.IOAdapter;
-import com.fireclouu.intel8080emu.emulator.baseclass.MachineResources;
-import com.fireclouu.intel8080emu.emulator.baseclass.PlatformAdapter;
-import com.fireclouu.intel8080emu.emulator.baseclass.ResourceAdapter;
+import com.fireclouu.intel8080emu.emulator.base.DisplayAdapter;
+import com.fireclouu.intel8080emu.emulator.base.IOAdapter;
+import com.fireclouu.intel8080emu.emulator.base.PlatformAdapter;
+import com.fireclouu.intel8080emu.emulator.base.ResourceAdapter;
 import com.fireclouu.intel8080emu.HostHook;
 
 public class Emulator implements IOAdapter {
@@ -24,11 +23,10 @@ public class Emulator implements IOAdapter {
     private boolean isLooping = true;
     private boolean isPaused = false;
     private Cpu cpu;
+	private Guest guest;
     private HostHook hostHook;
     private Mmu mmu;
-    private double timeNow;
     private double timePrev;
-    private double updateHz;
     private double timeNextInterrupt;
     private byte interruptType = INTERRUPT_MID;
     // I/O
@@ -36,25 +34,17 @@ public class Emulator implements IOAdapter {
     private short shift_msb;
     private byte shift_offset = 0;
     private short readPort;
-    private boolean isCatchingUp;
-    private boolean isTimePrevNeedsUpdate;
     private long cycleHostTotal = 0;
     private long cyclePerSecond = 0;
     private long cycleGuestTotal = 0;
 
     public Emulator(Guest guest) {
-        init(guest);
-    }
-
-    private void init(Guest guest) {
-		
+		this.guest = guest;
         this.cpu = guest.getCpu();
         this.mmu = guest.getMmu();
         this.hostHook = HostHook.getInstance();
 		platform = hostHook.getPlatform();
-		
-        isCatchingUp = false;
-        isTimePrevNeedsUpdate = false;
+
         cyclePerSecond = 0;
         cycleHostTotal = 0;
     }
@@ -92,17 +82,17 @@ public class Emulator implements IOAdapter {
                     }
 
                     if ((value & 0x2) > 0 && (last_port_value[3] & 0x2) == 0) {
-                        api.playSound(MachineResources.MEDIA_EFFECT_FIRE, 0);
+                        api.playSound(Guest.MEDIA_AUDIO.FIRE.getId(), 0);
                     }
 
                     if ((value & 0x4) > 0 && (last_port_value[3] & 0x4) == 0) {
-                        api.playSound(MachineResources.MEDIA_EFFECT_PLAYER_EXPLODED, 0);
+                        api.playSound(Guest.MEDIA_AUDIO.PLAYER_EXPLODED.getId(), 0);
                         api.vibrate(300);
 
                     }
 
                     if ((value & 0x8) > 0 && (last_port_value[3] & 0x8) == 0) {
-                        api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_KILLED, 0);
+                        api.playSound(Guest.MEDIA_AUDIO.ALIEN_KILLED.getId(), 0);
                     }
 
                     last_port_value[3] = value;
@@ -120,23 +110,23 @@ public class Emulator implements IOAdapter {
                 // bit 0 (0)
                 if (value != last_port_value[5]) {
                     if ((value & 0x1) > 0 && (last_port_value[5] & 0x1) == 0) {
-                        api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_1, 0);
+                        api.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_1.getId(), 0);
                     }
 
                     if ((value & 0x2) > 0 && (last_port_value[5] & 0x2) == 0) {
-                        api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_2, 0);
+                        api.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_2.getId(), 0);
                     }
 
                     if ((value & 0x4) > 0 && (last_port_value[5] & 0x4) == 0) {
-                        api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_3, 0);
+                        api.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_3.getId(), 0);
                     }
 
                     if ((value & 0x8) > 0 && (last_port_value[5] & 0x8) == 0) {
-                        api.playSound(MachineResources.MEDIA_EFFECT_ALIEN_MOVE_4, 0);
+                        api.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_4.getId(), 0);
                     }
 
                     if ((value & 0x10) > 0 && (last_port_value[5] & 0x10) == 0) {
-                        api.playSound(MachineResources.MEDIA_EFFECT_SHIP_HIT, 0);
+                        api.playSound(Guest.MEDIA_AUDIO.SHIP_HIT.getId(), 0);
                     }
 
                     last_port_value[5] = value;
@@ -161,58 +151,47 @@ public class Emulator implements IOAdapter {
     }
 
     public void tick(DisplayAdapter display, ResourceAdapter api) {
-        isCatchingUp = false;
-        isTimePrevNeedsUpdate = false;
-        timeNow = getNano();
-
-        // 60hz
-        if ((updateHz + VBLANK_START <= timeNow)) {
-            display.draw(mmu.getMemory());
-            updateHz = timeNow;
-        }
-
         // interrupt for space invaders
         // Check midframe interrupt and rst 1 if true
         // check final frame interrupt and rst 2 if true
-        if ((cpu.getInterrupt() == 1) && (timeNow >= timeNextInterrupt)) {
+        if ((cpu.getInterrupt() == 1) && (getSystemNanoTime() >= timeNextInterrupt)) {
             cpu.sendInterrupt(interruptType);
+			if (interruptType == INTERRUPT_FULL) display.draw(guest.getMemory());
             interruptType = (interruptType == INTERRUPT_MID) ? INTERRUPT_FULL : INTERRUPT_MID;
-            timeNextInterrupt = timeNow + (MIDFRAME);
+            timeNextInterrupt = getSystemNanoTime() + MIDFRAME;
         }
 
         // 2mhz cycle catch-up
-        while ((timeNow > timePrev + (NANO_SEC)) && cyclePerSecond < MAX_CYCLE_PER_SECOND) {
-            ioHandler(cpu, api, cpu.getPC());
+        while (getSystemNanoTime() > timePrev + NANO_SEC && cyclePerSecond < MAX_CYCLE_PER_SECOND) {
+            
 			if (platform.isLogging()) {
 				writeLog(getLogCurrentPc());
 			}
-
+			
+			ioHandler(cpu, api, cpu.getPC());
             int cycle = cpu.step();
             cyclePerSecond += cycle;
             cycleGuestTotal += cycle;
-
-            isCatchingUp = true;
         }
 
         // normal cycle
-        if (!isCatchingUp) {
-            ioHandler(cpu, api, cpu.getPC());
+        if (getSystemNanoTime() < timePrev + NANO_SEC) {
             if (platform.isLogging()) {
 				writeLog(getLogCurrentPc());
 			}
-
+			
+			ioHandler(cpu, api, cpu.getPC());
             int cycle = cpu.step();
             cyclePerSecond += cycle;
             cycleGuestTotal += cycle;
         }
 
         // cycle reset
-        if (timeNow >= timePrev + (NANO_SEC)) {
+        if (getSystemNanoTime() > timePrev + NANO_SEC) {
             cyclePerSecond = 0;
-            isTimePrevNeedsUpdate = true;
+			timePrev = getSystemNanoTime();
         }
 
-        if (isTimePrevNeedsUpdate) timePrev = timeNow;
         cycleHostTotal++;
     }
 
@@ -281,7 +260,7 @@ public class Emulator implements IOAdapter {
         return this.isPaused;
     }
 
-    private long getNano() {
+    private long getSystemNanoTime() {
         return System.nanoTime() / 1_000;
     }
 
