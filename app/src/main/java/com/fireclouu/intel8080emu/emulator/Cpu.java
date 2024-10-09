@@ -185,7 +185,7 @@ public class Cpu {
                 pc++;
                 break; // MVI L, D8
             case 0x36:
-                mmu.writeMemory(addr, mmu.readMemory(opcode + 1));
+                mmu.writeMemoryRomSafe(addr, mmu.readMemory(opcode + 1));
                 pc++;
                 break; // MVI M, D8
             case 0x3e:
@@ -345,25 +345,25 @@ public class Cpu {
 
             // MEMORY
             case 0x70:
-                mmu.writeMemory(addr, b);
+                mmu.writeMemoryRomSafe(addr, b);
                 break; // MOV M, B
             case 0x71:
-                mmu.writeMemory(addr, c);
+                mmu.writeMemoryRomSafe(addr, c);
                 break; // MOV M, C
             case 0x72:
-                mmu.writeMemory(addr, d);
+                mmu.writeMemoryRomSafe(addr, d);
                 break; // MOV M, D
             case 0x73:
-                mmu.writeMemory(addr, e);
+                mmu.writeMemoryRomSafe(addr, e);
                 break; // MOV M, E
             case 0x74:
-                mmu.writeMemory(addr, h);
+                mmu.writeMemoryRomSafe(addr, h);
                 break; // MOV M, H
             case 0x75:
-                mmu.writeMemory(addr, l);
+                mmu.writeMemoryRomSafe(addr, l);
                 break; // MOV M, L
             case 0x77:
-                mmu.writeMemory(addr, a);
+                mmu.writeMemoryRomSafe(addr, a);
                 break; // MOV M, A
 
             // A
@@ -621,7 +621,7 @@ public class Cpu {
                 l = instr_inr(l);
                 break; // INR L
             case 0x34:
-                mmu.writeMemory(addr, instr_inr(mmu.readMemory(addr)));
+                mmu.writeMemoryRomSafe(addr, instr_inr(mmu.readMemory(addr)));
                 break; // INR M
             case 0x3c:
                 a = instr_inr(a);
@@ -647,7 +647,7 @@ public class Cpu {
                 l = instr_dcr(l);
                 break; // DCR L
             case 0x35:
-                mmu.writeMemory(addr, instr_dcr(mmu.readMemory(addr)));
+                mmu.writeMemoryRomSafe(addr, instr_dcr(mmu.readMemory(addr)));
                 break; // DCR M
             case 0x3d:
                 a = instr_dcr(a);
@@ -939,8 +939,8 @@ public class Cpu {
     /// INTERRUPT
     public void sendInterrupt(int interrupt_num) {
         // PUSH PC
-        mmu.writeMemory(sp - 1, (short) ((pc & 0xff00) >> 8));
-        mmu.writeMemory(sp - 2, (short) (pc & 0xff));
+        mmu.writeMemoryRomSafe(sp - 1, (short) ((pc & 0xff00) >> 8));
+        mmu.writeMemoryRomSafe(sp - 2, (short) (pc & 0xff));
         sp = (sp - 2) & 0xffff;
         pc = 8 * interrupt_num;
         hasInterrupt = 0;
@@ -1070,8 +1070,8 @@ public class Cpu {
     // JUMPS
     private void instr_call(int opcode) {
         int nextAddr = opcode + 3;
-        mmu.writeMemory(sp - 1, (short) ((nextAddr >> 8) & 0xff));
-        mmu.writeMemory(sp - 2, (short) (nextAddr & 0xff));
+        mmu.writeMemoryRomSafe(sp - 1, (short) ((nextAddr >> 8) & 0xff));
+        mmu.writeMemoryRomSafe(sp - 2, (short) (nextAddr & 0xff));
         sp = (sp - 2) & 0xffff;
         instr_jmp(opcode);
     }
@@ -1123,14 +1123,14 @@ public class Cpu {
     }
 
     private void instr_push(int pair) {
-        mmu.writeMemory(sp - 1, (short) (pair >> 8));
-        mmu.writeMemory(sp - 2, (short) (pair & 0xff));
+        mmu.writeMemoryRomSafe(sp - 1, (short) (pair >> 8));
+        mmu.writeMemoryRomSafe(sp - 2, (short) (pair & 0xff));
         sp = (sp - 2) & 0xffff;
     }
 
     private void push_psw() {
         // A and PSW (formed binary value via flags , plus its filler value)
-        mmu.writeMemory(sp - 1, a);
+        mmu.writeMemoryRomSafe(sp - 1, a);
         // prepare variable higher than 0xff, but with 0's in bit 0-7
         // this way, it serves as flags' default state waiting to be flipped, like a template
         // also helps to retain flags proper positioning
@@ -1140,7 +1140,7 @@ public class Cpu {
                 (cc.ac << 4) |   // place aux. carry flag status on pos 4
                 (cc.p << 2) |   // place parity flag status on pos 2
                 (1 << 1) | (cc.cy);   // place carry flag status on pos 0
-        mmu.writeMemory(sp - 2, (short) (psw & 0xff));
+        mmu.writeMemoryRomSafe(sp - 2, (short) (psw & 0xff));
         sp = (sp - 2) & 0xffff;
     }
 
@@ -1174,8 +1174,8 @@ public class Cpu {
 
     private void instr_shld(int opcode) {
         int addr = mmu.readMemory(opcode + 2) << 8 | mmu.readMemory(opcode + 1);
-        mmu.writeMemory(addr + 1, h);
-        mmu.writeMemory(addr, l);
+        mmu.writeMemoryRomSafe(addr + 1, h);
+        mmu.writeMemoryRomSafe(addr, l);
     }
 
     private void instr_sphl(int address) {
@@ -1184,7 +1184,7 @@ public class Cpu {
 
     private void instr_sta(int hi_nib, int lo_nib) {
         int addr = (hi_nib << 8) | lo_nib;
-        mmu.writeMemory(addr, a);
+        mmu.writeMemoryRomSafe(addr, a);
     }
 
     private void instr_xchg() {
@@ -1202,11 +1202,11 @@ public class Cpu {
     private void instr_xthl() {
         // SWAP H and Top + 1  SP (under of top stack)
         h = (short) (h + mmu.readMemory(sp + 1));
-        mmu.writeMemory(sp + 1, (short) (h - mmu.readMemory(sp + 1)));
+        mmu.writeMemoryRomSafe(sp + 1, (short) (h - mmu.readMemory(sp + 1)));
         h = (short) (h - mmu.readMemory(sp + 1));
         // SWAP L and Top SP (top stack)
         l = (short) (l + mmu.readMemory(sp));
-        mmu.writeMemory(sp, (short) (l - mmu.readMemory(sp)));
+        mmu.writeMemoryRomSafe(sp, (short) (l - mmu.readMemory(sp)));
         l = (short) (l - mmu.readMemory(sp));
     }
 
