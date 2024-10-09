@@ -24,6 +24,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import com.fireclouu.intel8080emu.emulator.*;
 import android.media.*;
+import android.os.*;
 
 public class Platform extends PlatformAdapter implements ResourceAdapter {
     private final Context context;
@@ -60,7 +61,11 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 		AudioAttributes.Builder audioAttribBuilder = new AudioAttributes.Builder();
 		audioAttribBuilder.setUsage(AudioAttributes.USAGE_GAME);
 		audioAttribBuilder.setContentType(AudioAttributes.CONTENT_TYPE_UNKNOWN);
-		audioAttribBuilder.setAllowedCapturePolicy(AudioAttributes.ALLOW_CAPTURE_BY_ALL);
+		
+		if (Build.VERSION.SDK_INT >= 29) {
+			audioAttribBuilder.setAllowedCapturePolicy(AudioAttributes.ALLOW_CAPTURE_BY_ALL);
+		}
+		
 		audioAttribBuilder.setFlags(AudioAttributes.FLAG_LOW_LATENCY);
 		
 		SoundPool.Builder soundPoolBuilder = new SoundPool.Builder();
