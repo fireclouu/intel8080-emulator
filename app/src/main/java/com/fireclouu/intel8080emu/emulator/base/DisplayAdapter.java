@@ -1,4 +1,4 @@
-package com.fireclouu.intel8080emu.emulator.baseclass;
+package com.fireclouu.intel8080emu.emulator.base;
 
 public interface DisplayAdapter {
     int DISPLAY_WIDTH = (32 * 8); // 256 (0x2400 to 0x2407 = bit 0 to bit 7)

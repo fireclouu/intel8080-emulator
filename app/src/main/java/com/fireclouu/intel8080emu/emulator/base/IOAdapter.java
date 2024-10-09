@@ -1,4 +1,4 @@
-package com.fireclouu.intel8080emu.emulator.baseclass;
+package com.fireclouu.intel8080emu.emulator.base;
 
 import com.fireclouu.intel8080emu.emulator.Cpu;
 
