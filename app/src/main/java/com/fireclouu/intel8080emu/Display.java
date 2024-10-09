@@ -8,8 +8,8 @@ import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import com.fireclouu.intel8080emu.emulator.baseclass.DisplayAdapter;
-import com.fireclouu.intel8080emu.emulator.Machine;
+import com.fireclouu.intel8080emu.emulator.base.DisplayAdapter;
+import com.fireclouu.intel8080emu.emulator.Guest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -135,9 +135,9 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
         // change GUEST_WIDTH to orientationWidth
         final int guestLinearDataLength = GUEST_WIDTH / 8;
 
-        for (int vramPc = Machine.VRAM_START; vramPc <= Machine.VRAM_END; vramPc++) {
+        for (int vramPc = Guest.VRAM_START; vramPc <= Guest.VRAM_END; vramPc++) {
             data = memory[vramPc];
-            vramNormalized = vramPc - Machine.VRAM_START;
+            vramNormalized = vramPc - Guest.VRAM_START;
 
             // draws
             mapY = vramNormalized == 0 ? 0 : (float) vramNormalized / guestLinearDataLength;
