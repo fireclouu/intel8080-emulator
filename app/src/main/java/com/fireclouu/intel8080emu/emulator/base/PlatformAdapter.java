@@ -1,10 +1,11 @@
-package com.fireclouu.intel8080emu.emulator.baseclass;
+package com.fireclouu.intel8080emu.emulator.base;
 
 import android.os.Handler;
 import android.os.Looper;
 
 import com.fireclouu.intel8080emu.emulator.Emulator;
 import com.fireclouu.intel8080emu.emulator.Guest;
+import com.fireclouu.intel8080emu.emulator.Guest.MEDIA_AUDIO;
 import com.fireclouu.intel8080emu.emulator.KeyInterrupts;
 import com.fireclouu.intel8080emu.R;
 
@@ -12,22 +13,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.*;
+import com.fireclouu.intel8080emu.*;
 
 public abstract class PlatformAdapter implements ResourceAdapter {
     protected Handler handler;
     protected ExecutorService executor;
     private Emulator emulator;
     private DisplayAdapter display;
-    private Guest guest;
+    protected Guest guest;
     private KeyInterrupts keyInterrupts;
     private boolean isLogging;
-    private String testRomFileName;
+    private String romFileName;
     private boolean isTestSuite;
-
-    public PlatformAdapter(DisplayAdapter display, boolean isTestSuite) {
-        this.display = display;
-        this.isTestSuite = isTestSuite;
-    }
 
     public abstract InputStream openFile(String romName);
 
@@ -35,69 +33,31 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 
     public abstract boolean isDrawing();
 
-    public void setDisplay(DisplayAdapter display) {
-        this.display = display;
+	public PlatformAdapter(DisplayAdapter display, boolean isTestSuite) {
+        this.isTestSuite = isTestSuite;
+		this.display = display;
     }
 
     // Main
     public void start() {
-        init();
+		guest = new Guest();
+		emulator = new Emulator(guest);
+        keyInterrupts = new KeyInterrupts(emulator);
+        executor = Executors.newSingleThreadExecutor();
+        handler = new Handler(Looper.getMainLooper());
+		
         if (isTestSuite) {
-            loadFile("tests/" + testRomFileName, 0x100);
+            loadFile("tests/" + romFileName, 0x0100);
             guest.getMmu().writeTestSuitePatch();
-            guest.getCpu().setPC(0x100);
-            writeLog("File name: " + testRomFileName + "\n");
+            guest.getCpu().setPC(0x0100);
+            writeLog("File name: " + romFileName + "\n");
             for (int i = 0; i <= 25; i++) {
                 writeLog("-");
             }
             writeLog("\n");
         } else {
-            loadSplitFiles();
+            isFilesLoaded();
         }
-    }
-
-    public void init() {
-        guest = new Guest();
-        emulator = new Emulator(guest);
-        keyInterrupts = new KeyInterrupts(emulator);
-        executor = Executors.newSingleThreadExecutor();
-        handler = new Handler(Looper.getMainLooper());
-
-        // media
-        setEffectShipHit(R.raw.ship_hit);
-        setEffectAlienKilled(R.raw.alien_killed);
-        setEffectAlienMove(R.raw.enemy_move_1, R.raw.enemy_move_2, R.raw.enemy_move_3, R.raw.enemy_move_4);
-        setEffectFire(R.raw.fire);
-        setEffectPlayerExploded(R.raw.explosion);
-        setEffectShipIncoming(R.raw.ship_incoming);
-    }
-
-    public short[] loadFile(String filename, int addr, boolean sizeActual) {
-        short[] holder = null;
-        short[] tmp = new short[0x10_000];
-        InputStream file = openFile(filename);
-        short read;
-        int counter = 0;
-        try {
-            while ((read = (short) file.read()) != -1) {
-                tmp[addr++] = read;
-                counter++;
-            }
-            file.close();
-            file = null;
-        } catch (IOException e) {
-            // OUT_MSG = filename + " cannot be read!";
-            return null;
-        }
-
-        holder = new short[(sizeActual ? counter : StringUtils.Component.PROGRAM_LENGTH)];
-
-        counter = 0;
-        for (short tmp2 : tmp) {
-            holder[counter++] = tmp2;
-        }
-
-        return holder;
     }
 
     public void loadFile(String filename, int addr) {
@@ -106,41 +66,27 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 
         try {
             while ((read = (short) file.read()) != -1) {
-                guest.getMmu().writeMemory(addr++, read);
+				guest.getMmu().writeMemory(addr++, read);
             }
             file.close();
-            file = null;
         } catch (IOException e) {
             // OUT_MSG = filename + " cannot be read!";
         }
     }
 
-    private byte loadSplitFiles() {
-        int counter = 0;
-        for (String files : StringUtils.File.FILES) {
-            if (isAvailable(files)) {
-                loadFile(files, StringUtils.File.ROM_ADDRESS[counter++]);
+    private boolean isFilesLoaded() {
+        for (Map.Entry<String, Integer> item : Guest.mapFileData.entrySet()) {
+            if (isAvailable(item.getKey())) {
+                loadFile(item.getKey(), item.getValue());
             } else {
                 // System.out.println(OUT_MSG);
-                return 1;
+                return false;
             }
         }
-        return 0;
+        return true;
     }
 
     private boolean isAvailable(String filename) {
-        if (StringUtils.File.FILES.length == 0) {
-            // OUT_MSG = "No files specified.";
-            return false;
-        }
-        if (StringUtils.File.ROM_ADDRESS.length == 0) {
-            // OUT_MSG = "File is empty.";
-            return false;
-        }
-        if (StringUtils.File.ROM_ADDRESS.length != StringUtils.File.FILES.length) {
-            // OUT_MSG = "File online, but roms and memory address unaligned.";
-            return false;
-        }
         try {
             if (openFile(filename) == null) {
                 // OUT_MSG = "File \"" + filename + "\" could not be found.";
@@ -171,14 +117,14 @@ public abstract class PlatformAdapter implements ResourceAdapter {
     }
 
     public int getHighscore() {
-        return getPrefs(StringUtils.ITEM_HISCORE);
+        return getPrefs(HostHook.ITEM_HISCORE);
     }
 
     public void setHighscore(int data) {
-        int storedHiscore = getPrefs(StringUtils.ITEM_HISCORE);
+        int storedHiscore = getPrefs(HostHook.ITEM_HISCORE);
 
         if (data > storedHiscore) {
-            putPrefs(StringUtils.ITEM_HISCORE, data);
+            putPrefs(HostHook.ITEM_HISCORE, data);
         }
     }
 
@@ -228,11 +174,35 @@ public abstract class PlatformAdapter implements ResourceAdapter {
         this.isTestSuite = false;
     }
 
-    public String getTestRomFileName() {
-        return this.testRomFileName;
+    public void setRomFileName(String romFileName) {
+        this.romFileName = romFileName;
+    }
+	
+    public void setMediaAudioIdFire(int id) {
+        Guest.MEDIA_AUDIO.FIRE.setId(id);
     }
 
-    public void setTestRomFileName(String testRomFileName) {
-        this.testRomFileName = testRomFileName;
+    public void setMediaAudioIdPlayerExploded(int id) {
+		Guest.MEDIA_AUDIO.PLAYER_EXPLODED.setId(id);
     }
+
+    public void setMediaAudioIdShipIncoming(int id) {
+		Guest.MEDIA_AUDIO.SHIP_INCOMING.setId(id);
+    }
+	
+    public void setMediaAudioIdAlienMove(int id1, int id2, int id3, int id4) {
+		Guest.MEDIA_AUDIO.ALIEN_MOVE_1.setId(id1);
+		Guest.MEDIA_AUDIO.ALIEN_MOVE_2.setId(id2);
+		Guest.MEDIA_AUDIO.ALIEN_MOVE_3.setId(id3);
+		Guest.MEDIA_AUDIO.ALIEN_MOVE_4.setId(id4);
+    }
+
+    public void setMediaAudioIdAlienKilled(int id) {
+        Guest.MEDIA_AUDIO.ALIEN_KILLED.setId(id);
+    }
+
+    public void setMediaAudioIdShipHit(int id) {
+		Guest.MEDIA_AUDIO.SHIP_HIT.setId(id);
+    }
+	
 }
