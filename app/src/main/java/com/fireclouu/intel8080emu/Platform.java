@@ -14,21 +14,21 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.fireclouu.intel8080emu.emulator.baseclass.DisplayAdapter;
-import com.fireclouu.intel8080emu.emulator.baseclass.MachineResources;
-import com.fireclouu.intel8080emu.emulator.baseclass.PlatformAdapter;
-import com.fireclouu.intel8080emu.emulator.baseclass.ResourceAdapter;
-import com.fireclouu.intel8080emu.emulator.baseclass.StringUtils;
+import com.fireclouu.intel8080emu.emulator.base.DisplayAdapter;
+import com.fireclouu.intel8080emu.emulator.base.PlatformAdapter;
+import com.fireclouu.intel8080emu.emulator.base.ResourceAdapter;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import com.fireclouu.intel8080emu.emulator.*;
+import android.media.*;
 
 public class Platform extends PlatformAdapter implements ResourceAdapter {
     private final Context context;
     private SharedPreferences sp;
-    private SoundPool soundPool, spShipFX;
+    private SoundPool soundPool;
     private SharedPreferences.Editor editor;
     private Vibrator vibrator;
     private final DisplayAdapter display;
@@ -36,14 +36,15 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
     private final ScrollView svLogs;
     private final TextView tvLog;
     private final Button buttonPause;
-
     private final ExecutorService exec2;
-
+	
+	private int idSoundPoolPlayMediaShipIncoming;
+	
     public Platform(Activity activity, Context context, DisplayAdapter display, boolean isTestSuite) {
         super(display, isTestSuite);
+		this.context = context;
         this.display = display;
-        this.context = context;
-
+        
         tvLog = activity.findViewById(R.id.tvLog);
         llLogs = activity.findViewById(R.id.llLogs);
         buttonPause = activity.findViewById(R.id.buttonPause);
@@ -56,17 +57,36 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
         });
 
         tvLog.setText("");
-        platformInit();
+		AudioAttributes.Builder audioAttribBuilder = new AudioAttributes.Builder();
+		audioAttribBuilder.setUsage(AudioAttributes.USAGE_GAME);
+		audioAttribBuilder.setContentType(AudioAttributes.CONTENT_TYPE_UNKNOWN);
+		audioAttribBuilder.setAllowedCapturePolicy(AudioAttributes.ALLOW_CAPTURE_BY_ALL);
+		audioAttribBuilder.setFlags(AudioAttributes.FLAG_LOW_LATENCY);
+		
+		SoundPool.Builder soundPoolBuilder = new SoundPool.Builder();
+		soundPoolBuilder.setAudioAttributes(audioAttribBuilder.build());
+		soundPoolBuilder.setMaxStreams(2);
+		
+		soundPool = soundPoolBuilder.build();
+		
+        vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        sp = context.getSharedPreferences(HostHook.PREFS_NAME, 0);
+        editor = sp.edit();
+
+        // media
+		setMediaAudioIdFire(getSoundPoolLoadId(R.raw.fire, 0));
+		setMediaAudioIdPlayerExploded(getSoundPoolLoadId(R.raw.explosion, 0));
+		setMediaAudioIdShipIncoming(getSoundPoolLoadId(R.raw.ship_incoming, 1));
+		setMediaAudioIdAlienMove(
+			getSoundPoolLoadId(R.raw.enemy_move_1, 0),
+			getSoundPoolLoadId(R.raw.enemy_move_2, 0),
+			getSoundPoolLoadId(R.raw.enemy_move_3, 0),
+			getSoundPoolLoadId(R.raw.enemy_move_4, 0)
+		);
+		setMediaAudioIdAlienKilled(getSoundPoolLoadId(R.raw.alien_killed, 0));
+        setMediaAudioIdShipHit(getSoundPoolLoadId(R.raw.ship_hit, 0));
         exec2 = Executors.newSingleThreadExecutor();
         HostHook.getInstance().setPlatform(this);
-    }
-
-    private void platformInit() {
-        soundPool = new SoundPool(10, AudioManager.STREAM_MUSIC, 0);
-        spShipFX = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
-        vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-        sp = context.getSharedPreferences(StringUtils.PREFS_NAME, 0);
-        editor = sp.edit();
     }
 
     @Override
@@ -75,7 +95,7 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
             return context.getAssets().open(romName);
         } catch (IOException e) {
             String exception = e.getMessage() == null ? "openFile: Message is null" : e.getMessage();
-            Log.e(StringUtils.TAG, exception);
+            Log.e(HostHook.TAG, exception);
             return null;
         }
     }
@@ -87,62 +107,14 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
     }
 
     @Override
-    public void reloadResource() {
-        setEffectShipIncoming(R.raw.ship_incoming);
-    }
-
-    @Override
-    public void setEffectFire(int id) {
-        MachineResources.MEDIA_EFFECT_FIRE = soundPool.load(context, id, 1);
-    }
-
-    @Override
-    public void setEffectPlayerExploded(int id) {
-        MachineResources.MEDIA_EFFECT_PLAYER_EXPLODED = soundPool.load(context, id, 1);
-    }
-
-    @Override
-    public void setEffectShipIncoming(int id) {
-        MachineResources.MEDIA_EFFECT_SHIP_INCOMING = spShipFX.load(context, id, 1);
-    }
-
-    @Override
-    public void setEffectAlienMove(int id1, int id2, int id3, int id4) {
-        MachineResources.MEDIA_EFFECT_ALIEN_MOVE_1 = soundPool.load(context, id1, 1);
-        MachineResources.MEDIA_EFFECT_ALIEN_MOVE_2 = soundPool.load(context, id2, 1);
-        MachineResources.MEDIA_EFFECT_ALIEN_MOVE_3 = soundPool.load(context, id3, 1);
-        MachineResources.MEDIA_EFFECT_ALIEN_MOVE_4 = soundPool.load(context, id4, 1);
-    }
-
-    @Override
-    public void setEffectAlienKilled(int id) {
-        MachineResources.MEDIA_EFFECT_ALIEN_KILLED = soundPool.load(context, id, 1);
-    }
-
-    @Override
-    public void setEffectShipHit(int id) {
-        MachineResources.MEDIA_EFFECT_SHIP_HIT = soundPool.load(context, id, 1);
-    }
-
-    @Override
     public void playShipFX() {
-        spShipFX.play(MachineResources.MEDIA_EFFECT_SHIP_INCOMING, 1, 1, 0, -1, 1);
+        idSoundPoolPlayMediaShipIncoming = soundPool.play(Guest.MEDIA_AUDIO.SHIP_INCOMING.getId(), 1, 1, 1, -1, 1);
     }
 
     @Override
     public void releaseShipFX() {
-        spShipFX.stop(MachineResources.MEDIA_EFFECT_SHIP_INCOMING);
-        spShipFX.unload(MachineResources.MEDIA_EFFECT_SHIP_INCOMING);
-        spShipFX.release();
-        initShipFX();
+        soundPool.stop(idSoundPoolPlayMediaShipIncoming);
     }
-
-    @Override
-    public void initShipFX() {
-        spShipFX = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
-        reloadResource();
-    }
-
 
     public void releaseResource() {
         soundPool.release();
@@ -189,8 +161,8 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
     }
 
     @Override
-    public void toggleLog(boolean isLogging) {
-        super.toggleLog(isLogging);
+    public void toggleLog(boolean value) {
+        super.toggleLog(value);
         tvLog.setText("");
     }
 
@@ -202,12 +174,13 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
     @Override
     public void start() {
         super.start();
+		
         executor.execute(new Runnable() {
             @Override
             public void run() {
                 // FIXME: terminate when pause to
                 // optimize battery usage
-
+				
                 while (isLooping()) {
                     if (!isPaused()) {
                         if (!isTestSuite()) {
@@ -229,12 +202,11 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
                         Toast.makeText(context, "Emulation terminated", Toast.LENGTH_SHORT).show();
                     }
                 });
-
-                // if (isLooping()) handler.post(this);
-                // if (isLooping()) executorEmulator.execute(this);
             }
         });
     }
-
-
+	
+	private int getSoundPoolLoadId(int id, int priority) {
+		return soundPool.load(context, id, priority);
+	}
 }
