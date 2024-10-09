@@ -55,6 +55,10 @@ public class Guest {
         return this.mmu;
     }
 	
+	public void writeMemory(int address, short value) {
+		memory[address & 0xffff] = value;
+	}
+	
 	public short[] getMemory() {
         return memory;
     }

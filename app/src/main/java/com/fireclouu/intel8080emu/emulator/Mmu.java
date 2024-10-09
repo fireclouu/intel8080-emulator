@@ -77,8 +77,11 @@ public class Mmu {
     }
 	
 	public void writeMemory(int address, short value) {
-		if (!isTestSuite) value = interceptValue(address, value);
-        guest.getMemory()[address & 0xffff] = value;
+		if (!isTestSuite) {
+			value = interceptValue(address, value);
+		}
+		
+        guest.writeMemory(address, value);
 	}
 
     public short readMemory(int address) {
