@@ -6,33 +6,38 @@ import android.os.Looper;
 import com.fireclouu.intel8080emu.emulator.Emulator;
 import com.fireclouu.intel8080emu.emulator.Guest;
 import com.fireclouu.intel8080emu.emulator.Guest.MEDIA_AUDIO;
+import com.fireclouu.intel8080emu.emulator.Guest.Display.Orientation;
 import com.fireclouu.intel8080emu.emulator.KeyInterrupts;
-import com.fireclouu.intel8080emu.R;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.*;
-import com.fireclouu.intel8080emu.*;
+import java.util.Map;
+import com.fireclouu.intel8080emu.HostHook;
 
-public abstract class PlatformAdapter implements ResourceAdapter {
+public abstract class PlatformAdapter {
     protected Handler handler;
     protected ExecutorService executor;
+	protected Guest guest;
+	
     private Emulator emulator;
     private DisplayAdapter display;
-    protected Guest guest;
     private KeyInterrupts keyInterrupts;
     private boolean isLogging;
     private String romFileName;
     private boolean isTestSuite;
-
-    public abstract InputStream openFile(String romName);
-
-    public abstract void writeLog(String message);
-
-    public abstract boolean isDrawing();
-
+	private int idMediaPlayed;
+	
+	public abstract void stopSound(int id);
+	public abstract void vibrate(long milli);
+	public abstract void writeLog(String message);
+	public abstract void saveHighscoreOnPlatform(int data);
+	public abstract int playSound(int id, int loop);
+	public abstract int fetchHighscoreOnPlatform();
+	public abstract InputStream openFile(String romName);
+	// public abstract float[] convertVramToFloatPoints(Orientation drawOrientation, short[] memory);
+	
 	public PlatformAdapter(DisplayAdapter display, boolean isTestSuite) {
         this.isTestSuite = isTestSuite;
 		this.display = display;
@@ -66,7 +71,7 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 
         try {
             while ((read = (short) file.read()) != -1) {
-				guest.getMmu().writeMemory(addr++, read);
+				guest.writeMemoryRom(addr++, read);
             }
             file.close();
         } catch (IOException e) {
@@ -116,18 +121,6 @@ public abstract class PlatformAdapter implements ResourceAdapter {
         emulator.setPause(value);
     }
 
-    public int getHighscore() {
-        return getPrefs(HostHook.ITEM_HISCORE);
-    }
-
-    public void setHighscore(int data) {
-        int storedHiscore = getPrefs(HostHook.ITEM_HISCORE);
-
-        if (data > storedHiscore) {
-            putPrefs(HostHook.ITEM_HISCORE, data);
-        }
-    }
-
     public boolean isPaused() {
         return emulator.isPaused();
     }
@@ -151,7 +144,7 @@ public abstract class PlatformAdapter implements ResourceAdapter {
     }
 
     public void tickEmulator() {
-        emulator.tick(display, this);
+        emulator.tick(display);
     }
 
     public void tickCpuOnly() {
@@ -205,4 +198,11 @@ public abstract class PlatformAdapter implements ResourceAdapter {
 		Guest.MEDIA_AUDIO.SHIP_HIT.setId(id);
     }
 	
+	public void setIdMediaPlayed(int idMediaPlayed) {
+		this.idMediaPlayed = idMediaPlayed;
+	}
+
+	public int getIdMediaPlayed() {
+		return this.idMediaPlayed;
+	}
 }

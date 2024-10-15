@@ -16,7 +16,6 @@ import android.widget.Toast;
 
 import com.fireclouu.intel8080emu.emulator.base.DisplayAdapter;
 import com.fireclouu.intel8080emu.emulator.base.PlatformAdapter;
-import com.fireclouu.intel8080emu.emulator.base.ResourceAdapter;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +25,7 @@ import com.fireclouu.intel8080emu.emulator.*;
 import android.media.*;
 import android.os.*;
 
-public class Platform extends PlatformAdapter implements ResourceAdapter {
+public class Platform extends PlatformAdapter {
     private final Context context;
     private SharedPreferences sp;
     private SoundPool soundPool;
@@ -38,8 +37,6 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
     private final TextView tvLog;
     private final Button buttonPause;
     private final ExecutorService exec2;
-	
-	private int idSoundPoolPlayMediaShipIncoming;
 	
     public Platform(Activity activity, Context context, DisplayAdapter display, boolean isTestSuite) {
         super(display, isTestSuite);
@@ -107,19 +104,14 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
 
     /////   API   /////
     @Override
-    public void playSound(int id, int loop) {
-        soundPool.play(id, 1, 1, 0, loop, 1);
+    public int playSound(int id, int loop) {
+        return soundPool.play(id, 1, 1, 0, loop, 1);
     }
 
-    @Override
-    public void playShipFX() {
-        idSoundPoolPlayMediaShipIncoming = soundPool.play(Guest.MEDIA_AUDIO.SHIP_INCOMING.getId(), 1, 1, 1, -1, 1);
-    }
-
-    @Override
-    public void releaseShipFX() {
-        soundPool.stop(idSoundPoolPlayMediaShipIncoming);
-    }
+	@Override
+	public void stopSound(int id) {
+		soundPool.stop(id);
+	}
 
     public void releaseResource() {
         soundPool.release();
@@ -127,26 +119,33 @@ public class Platform extends PlatformAdapter implements ResourceAdapter {
     }
 
     /////   SHARED PREFS   /////
-    @Override
-    public void putPrefs(String name, int value) {
+    public void setPrefs(String name, int value) {
         editor.putInt(name, value);
         editor.apply();
     }
 
-    @Override
     public int getPrefs(String name) {
         return sp.getInt(name, 0);
+    }
+	
+	@Override
+	public int fetchHighscoreOnPlatform() {
+        return getPrefs(HostHook.ITEM_HISCORE);
+    }
+	
+	@Override
+    public void saveHighscoreOnPlatform(int data) {
+        int storedHiscore = getPrefs(HostHook.ITEM_HISCORE);
+
+        if (data > storedHiscore) {
+            setPrefs(HostHook.ITEM_HISCORE, data);
+        }
     }
 
     /////   ACCESSORIES   /////
     @Override
     public void vibrate(long milli) {
         vibrator.vibrate(milli);
-    }
-
-    @Override
-    public boolean isDrawing() {
-        return display.isDrawing();
     }
 
     @Override
