@@ -10,6 +10,8 @@ import android.view.SurfaceView;
 
 import com.fireclouu.intel8080emu.emulator.base.DisplayAdapter;
 import com.fireclouu.intel8080emu.emulator.Guest;
+import com.fireclouu.intel8080emu.emulator.Guest.Display;
+import com.fireclouu.intel8080emu.emulator.Guest.Display.Orientation;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,21 +30,20 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
     Canvas canvas;
     long expected = 23803381171L; // 24 billion (long crc32)
     private float pixelHostSize = 3.18f;
-    private final int DRAW_ORIENTATION = DRAW_ORIENTATION_PORTRAIT;
+    private final Orientation DRAW_ORIENTATION = Orientation.PORTRAIT;
     private int orientationWidth, orientationHeight;
     private Paint paintRed, paintWhite, paintGreen, paintText;
     private SurfaceHolder holder;
     private boolean enableOffset = false;
-    private boolean inDrawing = false;
 
     public Display(Context context) {
         super(context);
-        init(DRAW_ORIENTATION_PORTRAIT);
+        init(DRAW_ORIENTATION);
     }
 
     public Display(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init(DRAW_ORIENTATION_PORTRAIT);
+        init(DRAW_ORIENTATION);
     }
 
     @Override
@@ -60,17 +61,17 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
         // TODO: Implement this method
     }
 
-    private void init(int orientation) {
+    private void init(Orientation orientation) {
         holder = getHolder();
 
-        paintRed = setPaint(Color.RED);
-        paintWhite = setPaint(Color.WHITE);
-        paintGreen = setPaint(Color.GREEN);
+        paintRed = initPaintProperty(Color.RED);
+        paintWhite = initPaintProperty(Color.WHITE);
+        paintGreen = initPaintProperty(Color.GREEN);
 
-        paintText = setPaint(Color.WHITE);
+        paintText = initPaintProperty(Color.WHITE);
         paintText.setTextSize(12);
 
-        if (orientation == DRAW_ORIENTATION_PORTRAIT) {
+        if (orientation == Orientation.PORTRAIT) {
             orientationWidth = GUEST_HEIGHT;
             orientationHeight = GUEST_WIDTH;
         } else {
@@ -109,8 +110,11 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
         enableOffset = hasWidthSpace(scaleValue);
         return scaleValue;
     }
-
-    public float[] convertVramToFloatPoints(int drawOrientation, short[] memory) {
+	
+	public float[] vramToFloatArray(short[] memory) {
+		return new float[1];
+	}
+    public float[] convertVramToFloatPoints(Orientation drawOrientation, short[] memory) {
         float centerOffset = enableOffset ? getCenterOffset(orientationWidth * pixelHostSize) : 0;
         final float spacing = pixelHostSize;
         List<Float> plotList = new ArrayList<>();
@@ -121,9 +125,8 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
         float translateX = 0;
         float translateY = 0;
 
-        int vramNormalized;
         int data;
-        if (drawOrientation == DRAW_ORIENTATION_PORTRAIT) {
+        if (drawOrientation == Orientation.PORTRAIT) {
             orientationWidth = GUEST_HEIGHT;
             orientationHeight = GUEST_WIDTH;
         } else {
@@ -135,20 +138,19 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
         // change GUEST_WIDTH to orientationWidth
         final int guestLinearDataLength = GUEST_WIDTH / 8;
 
-        for (int vramPc = Guest.VRAM_START; vramPc <= Guest.VRAM_END; vramPc++) {
-            data = memory[vramPc];
-            vramNormalized = vramPc - Guest.VRAM_START;
+        for (int map = 0; map < memory.length; map++) {
+            data = memory[map];
 
             // draws
-            mapY = vramNormalized == 0 ? 0 : (float) vramNormalized / guestLinearDataLength;
+            mapY = map == 0 ? 0 : (float) map / guestLinearDataLength;
             for (int bit = 0; bit < 8; bit++) {
                 int pixel = ((data >> bit) & 1);
                 if (pixel == 0) continue;
 
-                mapX = bit + (8 * (vramNormalized % guestLinearDataLength));
+                mapX = bit + (8 * (map % guestLinearDataLength));
 
                 // translate pixel
-                if (drawOrientation == DRAW_ORIENTATION_PORTRAIT) {
+                if (drawOrientation == Orientation.PORTRAIT) {
                     translateX = mapY;
                     translateY = Math.abs(mapX - orientationHeight);
                 } else {
@@ -166,12 +168,11 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
         return returnValue;
     }
 
-    private Paint setPaint(int color) {
+    private Paint initPaintProperty(int color) {
         Paint mPaint;
         mPaint = new Paint();
         mPaint.setStyle(Paint.Style.FILL);
         mPaint.setColor(color);
-
         return mPaint;
     }
 
@@ -185,7 +186,6 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
 
     @Override
     public void draw(short[] memory) {
-        inDrawing = true;
         while (!holder.getSurface().isValid()) continue;
 
         pixelHostSize = getScaleValueLogical();
@@ -197,15 +197,8 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
         canvas = holder.getSurface().lockHardwareCanvas();
         canvas.drawColor(Color.BLACK);
         canvas.drawPoints(convertVramToFloatPoints(DRAW_ORIENTATION, memory), paintWhite);
-
-        canvas.drawText("fireclouu", (int) (getWidth() / 1.1), getHeight() - 10, paintWhite);
+		
         // release
         holder.getSurface().unlockCanvasAndPost(canvas);
-        inDrawing = false;
-    }
-
-    @Override
-    public boolean isDrawing() {
-        return inDrawing;
     }
 }
