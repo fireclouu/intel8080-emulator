@@ -53,38 +53,86 @@ public class Mmu {
                 readHiscoreLsb = false;
             }
         }
-
-        // TODO: prevent writing to VRAM if host is still drawing if threaded
-
+		
         return value;
     }
 
     // tests suite patches
     public void writeTestSuitePatch() {
-        // run only if rom has loaded on memory
-        if (guest.getMemory() == null || guest.getMemory().length <= 0) return;
-        writeMemoryRomSafe(0x0000, (short) 0xD3);
-        writeMemoryRomSafe(0x0001, (short) 0x00);
-        writeMemoryRomSafe(0x0005, (short) 0xDB);
-        writeMemoryRomSafe(0x0006, (short) 0x00);
-        writeMemoryRomSafe(0x0007, (short) 0xC9);
+        writeMemory(0x0000, (short) 0xD3);
+        writeMemory(0x0001, (short) 0x00);
+        writeMemory(0x0005, (short) 0xDB);
+        writeMemory(0x0006, (short) 0x00);
+        writeMemory(0x0007, (short) 0xC9);
     }
 
-    public void writeMemoryRomSafe(int address, short value) {
-		if (address < 0x1FFF) return;
-		writeMemory(address, value);
-        
-    }
-	
 	public void writeMemory(int address, short value) {
+		// TODO: separate
 		if (!isTestSuite) {
 			value = interceptValue(address, value);
 		}
 		
-        guest.writeMemory(address, value);
+		int map = address & 0xF000;
+		switch (map) {
+			case 0x0000:
+			case 0x1000:
+				break;
+			case 0x2000:
+				map = address & 0x0F00;
+				switch (map) {
+					case 0x0000:
+					case 0x0100:
+					case 0x0200:
+					case 0x0300:
+						map = address & 0x0FFF;
+						guest.writeMemoryRam(map, value);
+						break;
+					default:
+						map = address - 0x2400;
+						guest.writeMemoryVram(map, value);
+				}
+				break;
+			case 0x3000:
+				map = address - 0x2400;
+				guest.writeMemoryVram(map, value);
+				break;
+			case 0x4000:
+				break;
+		}
 	}
-
+	
     public short readMemory(int address) {
-        return guest.getMemory()[address & 0xffff];
+		int map = address & 0xF000;
+		short data = 0;
+		switch (map) {
+			case 0x0000:
+			case 0x1000:
+				data = guest.getDataOnRom(address);
+				break;
+			case 0x2000:
+				map = address & 0x0F00;
+				switch (map) {
+					case 0x0000:
+					case 0x0100:
+					case 0x0200:
+					case 0x0300:
+						map = address & 0x0FFF;
+						data = guest.getDataOnRam(map);
+						break;
+					default:
+						map = address - 0x2400;
+						data = guest.getDataOnVram(map);
+						break;
+				}
+				break;
+			case 0x3000:
+				map = address - 0x2400;
+				data = guest.getDataOnVram(map);
+				break;
+			case 0x4000:
+				break;
+		}
+		
+		return data;
     }
 }

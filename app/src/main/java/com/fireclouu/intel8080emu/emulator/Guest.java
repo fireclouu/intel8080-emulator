@@ -26,14 +26,33 @@ public class Guest {
 			this.id = id;
 		}
 	}
-	public static LinkedHashMap<String, Integer> mapFileData;
 	
-	public static final int VRAM_START = 0x2400;
-    public static final int VRAM_END = 0x3FFF;
-	public static final int MAX_PROGRAM_SIZE = 0x10_000;
+	public class Display {
+		public enum Orientation {
+			DEFAULT, PORTRAIT, LANDSCAPE;
+		}
+		public static final int WIDTH = (32 * 8); // 256 (0x2400 to 0x2407 = bit 0 to bit 7)
+		public static final int HEIGHT = (224);   // 224
+	}
+	
+	public static LinkedHashMap<String, Integer> mapFileData;
+	private final int MEMORY_MAP_ROM_MIN = 0x0000;
+	private final int MEMORY_MAP_ROM_MAX = 0x1FFF;
+	private final int MEMORY_MAP_RAM_MIN = 0x2000;
+	private final int MEMORY_MAP_RAM_MAX = 0x23FF;
+	private final int MEMORY_MAP_VRAM_MIN = 0x2400;
+	private final int MEMORY_MAP_VRAM_MAX = 0x3FFF;
+	private final int RAM_MIRROR = 0x4000;
+	
+	private final int SIZE_ROM = (MEMORY_MAP_ROM_MAX - MEMORY_MAP_ROM_MIN) + 1;
+	private final int SIZE_RAM = (MEMORY_MAP_RAM_MAX - MEMORY_MAP_RAM_MIN) + 1;
+	private final int SIZE_VRAM = (MEMORY_MAP_VRAM_MAX - MEMORY_MAP_VRAM_MIN) + 1;
+	
     private final Cpu cpu;
     private final Mmu mmu;
-	private short[] memory;
+	private final short[] memoryRom = new short[SIZE_ROM];
+	private final short[] memoryRam = new short[SIZE_RAM];
+	private final short[] memoryVram = new short[SIZE_VRAM];
 
     public Guest() {
 		mapFileData = new LinkedHashMap<>();
@@ -44,7 +63,6 @@ public class Guest {
 		
         this.mmu = new Mmu(this);
         this.cpu = new Cpu(mmu);
-		memory = new short[MAX_PROGRAM_SIZE];
     }
 
     public Cpu getCpu() {
@@ -55,11 +73,31 @@ public class Guest {
         return this.mmu;
     }
 	
-	public void writeMemory(int address, short value) {
-		memory[address & 0xffff] = value;
+	public short getDataOnRom(int address) {
+		return memoryRom[address];
 	}
 	
-	public short[] getMemory() {
-        return memory;
-    }
+	public short getDataOnRam(int address) {
+		return memoryRam[address];
+	}
+	
+	public short getDataOnVram(int address) {
+		return memoryVram[address];
+	}
+	
+	public short[] getMemoryVram() {
+		return memoryVram;
+	}
+	
+	public void writeMemoryRom(int address, short value) {
+		memoryRom[address] = value;
+	}
+	
+	public void writeMemoryRam(int address, short value) {
+		memoryRam[address] = value;
+	}
+	
+	public void writeMemoryVram(int address, short value) {
+		memoryVram[address] = value;
+	}
 }
