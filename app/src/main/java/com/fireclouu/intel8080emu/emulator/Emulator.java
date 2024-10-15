@@ -1,12 +1,10 @@
 package com.fireclouu.intel8080emu.emulator;
 
 import com.fireclouu.intel8080emu.emulator.base.DisplayAdapter;
-import com.fireclouu.intel8080emu.emulator.base.IOAdapter;
 import com.fireclouu.intel8080emu.emulator.base.PlatformAdapter;
-import com.fireclouu.intel8080emu.emulator.base.ResourceAdapter;
 import com.fireclouu.intel8080emu.HostHook;
 
-public class Emulator implements IOAdapter {
+public class Emulator {
 	PlatformAdapter platform;
     // Timer and interrupts
     private final long MAX_CYCLE_PER_SECOND = 2_000_000;
@@ -49,7 +47,6 @@ public class Emulator implements IOAdapter {
         cycleHostTotal = 0;
     }
 
-    @Override
     public short handleIn(Cpu cpu, short port) {
         short a = 0;
         switch (port) {
@@ -67,8 +64,7 @@ public class Emulator implements IOAdapter {
         return a;
     }
 
-    @Override
-    public void handleOut(Cpu cpu, ResourceAdapter api, short port, short value) {
+    public void handleOut(Cpu cpu, short port, short value) {
         switch (port) {
             case 2: // shift amount
                 shift_offset = (byte) (value & 0x7);
@@ -76,57 +72,54 @@ public class Emulator implements IOAdapter {
             case 3: // sound 1
                 if (value != last_port_value[3]) {
                     if ((value & 0x1) > 0 && (last_port_value[3] & 0x1) == 0) {
-                        api.playShipFX();
+                        int id = platform.playSound(Guest.MEDIA_AUDIO.SHIP_INCOMING.getId(), -1);
+						platform.setIdMediaPlayed(id);
                     } else if ((value & 0x1) == 0 && (last_port_value[3] & 0x1) > 0) {
-                        api.releaseShipFX();
+						platform.stopSound(platform.getIdMediaPlayed());
                     }
 
                     if ((value & 0x2) > 0 && (last_port_value[3] & 0x2) == 0) {
-                        api.playSound(Guest.MEDIA_AUDIO.FIRE.getId(), 0);
+                        platform.playSound(Guest.MEDIA_AUDIO.FIRE.getId(), 0);
                     }
 
                     if ((value & 0x4) > 0 && (last_port_value[3] & 0x4) == 0) {
-                        api.playSound(Guest.MEDIA_AUDIO.PLAYER_EXPLODED.getId(), 0);
-                        api.vibrate(300);
-
+                        platform.playSound(Guest.MEDIA_AUDIO.PLAYER_EXPLODED.getId(), 0);
+                        platform.vibrate(300);
                     }
 
                     if ((value & 0x8) > 0 && (last_port_value[3] & 0x8) == 0) {
-                        api.playSound(Guest.MEDIA_AUDIO.ALIEN_KILLED.getId(), 0);
+                        platform.playSound(Guest.MEDIA_AUDIO.ALIEN_KILLED.getId(), 0);
                     }
 
                     last_port_value[3] = value;
                 }
-
                 break;
-
             case 4:
                 shift_lsb = shift_msb;
                 shift_msb = value;
                 break;
-
             case 5:
                 // alien moving sound
                 // bit 0 (0)
                 if (value != last_port_value[5]) {
                     if ((value & 0x1) > 0 && (last_port_value[5] & 0x1) == 0) {
-                        api.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_1.getId(), 0);
+                        platform.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_1.getId(), 0);
                     }
 
                     if ((value & 0x2) > 0 && (last_port_value[5] & 0x2) == 0) {
-                        api.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_2.getId(), 0);
+                        platform.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_2.getId(), 0);
                     }
 
                     if ((value & 0x4) > 0 && (last_port_value[5] & 0x4) == 0) {
-                        api.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_3.getId(), 0);
+                        platform.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_3.getId(), 0);
                     }
 
                     if ((value & 0x8) > 0 && (last_port_value[5] & 0x8) == 0) {
-                        api.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_4.getId(), 0);
+                        platform.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_4.getId(), 0);
                     }
 
                     if ((value & 0x10) > 0 && (last_port_value[5] & 0x10) == 0) {
-                        api.playSound(Guest.MEDIA_AUDIO.SHIP_HIT.getId(), 0);
+                        platform.playSound(Guest.MEDIA_AUDIO.SHIP_HIT.getId(), 0);
                     }
 
                     last_port_value[5] = value;
@@ -134,7 +127,7 @@ public class Emulator implements IOAdapter {
         }
     }
 
-    public void ioHandler(Cpu cpu, ResourceAdapter media, int opcode) {
+    public void ioHandler(Cpu cpu, int opcode) {
         readPort = 0;
         short dataPort = mmu.readMemory(opcode + 1);
         int data = mmu.readMemory(opcode);
@@ -145,18 +138,18 @@ public class Emulator implements IOAdapter {
                 break;
             case 0xd3: // out
                 readPort = dataPort;
-                handleOut(cpu, media, readPort, cpu.getRegA());
+                handleOut(cpu, readPort, cpu.getRegA());
                 break;
         }
     }
 
-    public void tick(DisplayAdapter display, ResourceAdapter api) {
+    public void tick(DisplayAdapter display) {
         // interrupt for space invaders
         // Check midframe interrupt and rst 1 if true
         // check final frame interrupt and rst 2 if true
         if ((cpu.getInterrupt() == 1) && (getSystemNanoTime() >= timeNextInterrupt)) {
             cpu.sendInterrupt(interruptType);
-			if (interruptType == INTERRUPT_FULL) display.draw(guest.getMemory());
+			if (interruptType == INTERRUPT_FULL) display.draw(guest.getMemoryVram());
             interruptType = (interruptType == INTERRUPT_MID) ? INTERRUPT_FULL : INTERRUPT_MID;
             timeNextInterrupt = getSystemNanoTime() + MIDFRAME;
         }
@@ -168,7 +161,7 @@ public class Emulator implements IOAdapter {
 				writeLog(getLogCurrentPc());
 			}
 			
-			ioHandler(cpu, api, cpu.getPC());
+			ioHandler(cpu, cpu.getPC());
             int cycle = cpu.step();
             cyclePerSecond += cycle;
             cycleGuestTotal += cycle;
@@ -180,7 +173,7 @@ public class Emulator implements IOAdapter {
 				writeLog(getLogCurrentPc());
 			}
 			
-			ioHandler(cpu, api, cpu.getPC());
+			ioHandler(cpu, cpu.getPC());
             int cycle = cpu.step();
             cyclePerSecond += cycle;
             cycleGuestTotal += cycle;
