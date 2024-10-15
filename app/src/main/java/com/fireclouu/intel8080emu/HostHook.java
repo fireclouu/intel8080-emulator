@@ -5,7 +5,7 @@ import android.os.Environment;
 
 public class HostHook {
 	private static HostHook hostHook;
-	private Platform platform;
+	private PlatformAdapter platform;
 	
 	public static final String ITEM_HISCORE = "HISCORE";
     public static final String PREFS_NAME = "data";
@@ -30,7 +30,7 @@ public class HostHook {
 
         switch (type) {
             case GET_HISCORE:
-                return platform.getHighscore();
+                return platform.fetchHighscoreOnPlatform();
         }
 
         return null;
@@ -48,7 +48,7 @@ public class HostHook {
         if (platform == null) return;
         switch (type) {
             case SET_HISCORE:
-                platform.setHighscore((int) data);
+                platform.saveHighscoreOnPlatform((int) data);
                 break;
         }
     }
