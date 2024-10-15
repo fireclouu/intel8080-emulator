@@ -5,13 +5,13 @@ public class Disassembler
 	// SOURCE: superzazu
 	public final static String[] DISASSEMBLE_TABLE = {
 		"nop", "lxi b,#", "stax b", "inx b", "inr b", "dcr b", "mvi b,#", "rlc",
-		"ill", "dad b", "ldax b", "dcx b", "inr c", "dcr c", "mvi c,#", "rrc",
-		"ill", "lxi d,#", "stax d", "inx d", "inr d", "dcr d", "mvi d,#", "ral",
-		"ill", "dad d", "ldax d", "dcx d", "inr e", "dcr e", "mvi e,#", "rar",
-		"ill", "lxi h,#", "shld", "inx h", "inr h", "dcr h", "mvi h,#", "daa",
-		"ill", "dad h", "lhld", "dcx h", "inr l", "dcr l", "mvi l,#", "cma",
-		"ill", "lxi sp,#","sta $", "inx sp", "inr M", "dcr M", "mvi M,#", "stc",
-		"ill", "dad sp", "lda $", "dcx sp", "inr a", "dcr a", "mvi a,#", "cmc",
+		"nop", "dad b", "ldax b", "dcx b", "inr c", "dcr c", "mvi c,#", "rrc",
+		"nop", "lxi d,#", "stax d", "inx d", "inr d", "dcr d", "mvi d,#", "ral",
+		"nop", "dad d", "ldax d", "dcx d", "inr e", "dcr e", "mvi e,#", "rar",
+		"nop", "lxi h,#", "shld", "inx h", "inr h", "dcr h", "mvi h,#", "daa",
+		"nop", "dad h", "lhld", "dcx h", "inr l", "dcr l", "mvi l,#", "cma",
+		"nop", "lxi sp,#","sta $", "inx sp", "inr M", "dcr M", "mvi M,#", "stc",
+		"nop", "dad sp", "lda $", "dcx sp", "inr a", "dcr a", "mvi a,#", "cmc",
 		"mov b,b", "mov b,c", "mov b,d", "mov b,e", "mov b,h", "mov b,l",
 		"mov b,M", "mov b,a", "mov c,b", "mov c,c", "mov c,d", "mov c,e",
 		"mov c,h", "mov c,l", "mov c,M", "mov c,a", "mov d,b", "mov d,c",
@@ -31,13 +31,13 @@ public class Disassembler
 		"xra h", "xra l", "xra M", "xra a", "ora b", "ora c", "ora d", "ora e",
 		"ora h", "ora l", "ora M", "ora a", "cmp b", "cmp c", "cmp d", "cmp e",
 		"cmp h", "cmp l", "cmp M", "cmp a", "rnz", "pop b", "jnz $", "jmp $",
-		"cnz $", "push b", "adi #", "rst 0", "rz", "ret", "jz $", "ill", "cz $",
+		"cnz $", "push b", "adi #", "rst 0", "rz", "ret", "jz $", "nop", "cz $",
 		"call $", "aci #", "rst 1", "rnc", "pop d", "jnc $", "out p", "cnc $",
-		"push d", "sui #", "rst 2", "rc", "ill", "jc $", "in p", "cc $", "ill",
+		"push d", "sui #", "rst 2", "rc", "nop", "jc $", "in p", "cc $", "nop",
 		"sbi #", "rst 3", "rpo", "pop h", "jpo $", "xthl", "cpo $", "push h",
-		"ani #", "rst 4", "rpe", "pchl", "jpe $", "xchg", "cpe $", "ill", "xri #",
+		"ani #", "rst 4", "rpe", "pchl", "jpe $", "xchg", "cpe $", "nop", "xri #",
 		"rst 5", "rp", "pop psw", "jp $", "di", "cp $", "push psw","ori #",
-		"rst 6", "rm", "sphl", "jm $", "ei", "cm $", "ill", "cpi #", "rst 7"
+		"rst 6", "rm", "sphl", "jm $", "ei", "cm $", "nop", "cpi #", "rst 7"
 	};
 
 	public static String disassemble(Mmu mmu, int pc, int data) {
