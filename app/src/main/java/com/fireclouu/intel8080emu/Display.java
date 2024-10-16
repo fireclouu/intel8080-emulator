@@ -8,7 +8,6 @@ import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import com.fireclouu.intel8080emu.emulator.Guest;
-import com.fireclouu.intel8080emu.emulator.Guest.Display;
 import com.fireclouu.intel8080emu.emulator.Guest.Display.Orientation;
 
 import java.util.ArrayList;
@@ -28,7 +27,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
     Canvas canvas;
     long expected = 23803381171L; // 24 billion (long crc32)
     private float pixelHostSize = 3.18f;
-    private final Orientation DRAW_ORIENTATION = Orientation.PORTRAIT;
+    private final int DRAW_ORIENTATION = Orientation.PORTRAIT;
     private int orientationWidth, orientationHeight;
     private Paint paintRed, paintWhite, paintGreen, paintText;
     private SurfaceHolder holder;
@@ -59,7 +58,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
         // TODO: Implement this method
     }
 
-    private void init(Orientation orientation) {
+    private void init(int orientation) {
         holder = getHolder();
 
         paintRed = initPaintProperty(Color.RED);
@@ -112,7 +111,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
 	public float[] vramToFloatArray(short[] memory) {
 		return new float[1];
 	}
-    public float[] convertVramToFloatPoints(Orientation drawOrientation, short[] memory) {
+    public float[] convertVramToFloatPoints(int drawOrientation, short[] memory) {
         float centerOffset = enableOffset ? getCenterOffset(orientationWidth * pixelHostSize) : 0;
         final float spacing = pixelHostSize;
         List<Float> plotList = new ArrayList<>();
