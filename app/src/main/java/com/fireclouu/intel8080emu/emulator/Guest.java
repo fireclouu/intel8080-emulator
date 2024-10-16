@@ -2,28 +2,30 @@ package com.fireclouu.intel8080emu.emulator;
 import java.util.LinkedHashMap;
 
 public class Guest {
-	public enum MEDIA_AUDIO {
-		FIRE (0),
-		PLAYER_EXPLODED (1),
-		SHIP_INCOMING (2),
-		ALIEN_MOVE_1 (3),
-		ALIEN_MOVE_2 (3),
-		ALIEN_MOVE_3 (3),
-		ALIEN_MOVE_4 (3),
-		ALIEN_KILLED (0),
-		SHIP_HIT (1);
-		
-		private int id;
-		MEDIA_AUDIO(int id) {
-			this.id = id;
-		}
-		
-		public int getId() {
-			return id;
-		}
-		
-		public void setId(int id) {
-			this.id = id;
+	public class Media {
+		public enum AUDIO {
+			FIRE (0),
+			PLAYER_EXPLODED (1),
+			SHIP_INCOMING (2),
+			ALIEN_MOVE_1 (3),
+			ALIEN_MOVE_2 (3),
+			ALIEN_MOVE_3 (3),
+			ALIEN_MOVE_4 (3),
+			ALIEN_KILLED (0),
+			SHIP_HIT (1);
+
+			private int id;
+			AUDIO(int id) {
+				this.id = id;
+			}
+
+			public int getId() {
+				return id;
+			}
+
+			public void setId(int id) {
+				this.id = id;
+			}
 		}
 	}
 	

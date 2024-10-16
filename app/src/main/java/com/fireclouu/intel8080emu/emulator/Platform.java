@@ -5,7 +5,6 @@ import android.os.Looper;
 
 import com.fireclouu.intel8080emu.emulator.Emulator;
 import com.fireclouu.intel8080emu.emulator.Guest;
-import com.fireclouu.intel8080emu.emulator.Guest.MEDIA_AUDIO;
 import com.fireclouu.intel8080emu.emulator.Guest.Display.Orientation;
 import com.fireclouu.intel8080emu.emulator.KeyInterrupts;
 
@@ -171,30 +170,30 @@ public abstract class Platform {
     }
 	
     public void setMediaAudioIdFire(int id) {
-        Guest.MEDIA_AUDIO.FIRE.setId(id);
+        Guest.Media.AUDIO.FIRE.setId(id);
     }
 
     public void setMediaAudioIdPlayerExploded(int id) {
-		Guest.MEDIA_AUDIO.PLAYER_EXPLODED.setId(id);
+		Guest.Media.AUDIO.PLAYER_EXPLODED.setId(id);
     }
 
     public void setMediaAudioIdShipIncoming(int id) {
-		Guest.MEDIA_AUDIO.SHIP_INCOMING.setId(id);
+		Guest.Media.AUDIO.SHIP_INCOMING.setId(id);
     }
 	
     public void setMediaAudioIdAlienMove(int id1, int id2, int id3, int id4) {
-		Guest.MEDIA_AUDIO.ALIEN_MOVE_1.setId(id1);
-		Guest.MEDIA_AUDIO.ALIEN_MOVE_2.setId(id2);
-		Guest.MEDIA_AUDIO.ALIEN_MOVE_3.setId(id3);
-		Guest.MEDIA_AUDIO.ALIEN_MOVE_4.setId(id4);
+		Guest.Media.AUDIO.ALIEN_MOVE_1.setId(id1);
+		Guest.Media.AUDIO.ALIEN_MOVE_2.setId(id2);
+		Guest.Media.AUDIO.ALIEN_MOVE_3.setId(id3);
+		Guest.Media.AUDIO.ALIEN_MOVE_4.setId(id4);
     }
 
     public void setMediaAudioIdAlienKilled(int id) {
-        Guest.MEDIA_AUDIO.ALIEN_KILLED.setId(id);
+        Guest.Media.AUDIO.ALIEN_KILLED.setId(id);
     }
 
     public void setMediaAudioIdShipHit(int id) {
-		Guest.MEDIA_AUDIO.SHIP_HIT.setId(id);
+		Guest.Media.AUDIO.SHIP_HIT.setId(id);
     }
 	
 	public void setIdMediaPlayed(int idMediaPlayed) {

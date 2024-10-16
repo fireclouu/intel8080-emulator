@@ -71,23 +71,23 @@ public class Emulator {
             case 3: // sound 1
                 if (value != lastPortValue[3]) {
                     if ((value & 0x1) > 0 && (lastPortValue[3] & 0x1) == 0) {
-                        int id = platform.playSound(Guest.MEDIA_AUDIO.SHIP_INCOMING.getId(), -1);
+                        int id = platform.playSound(Guest.Media.AUDIO.SHIP_INCOMING.getId(), -1);
 						platform.setIdMediaPlayed(id);
                     } else if ((value & 0x1) == 0 && (lastPortValue[3] & 0x1) > 0) {
 						platform.stopSound(platform.getIdMediaPlayed());
                     }
 
                     if ((value & 0x2) > 0 && (lastPortValue[3] & 0x2) == 0) {
-                        platform.playSound(Guest.MEDIA_AUDIO.FIRE.getId(), 0);
+                        platform.playSound(Guest.Media.AUDIO.FIRE.getId(), 0);
                     }
 
                     if ((value & 0x4) > 0 && (lastPortValue[3] & 0x4) == 0) {
-                        platform.playSound(Guest.MEDIA_AUDIO.PLAYER_EXPLODED.getId(), 0);
+                        platform.playSound(Guest.Media.AUDIO.PLAYER_EXPLODED.getId(), 0);
                         platform.vibrate(300);
                     }
 
                     if ((value & 0x8) > 0 && (lastPortValue[3] & 0x8) == 0) {
-                        platform.playSound(Guest.MEDIA_AUDIO.ALIEN_KILLED.getId(), 0);
+                        platform.playSound(Guest.Media.AUDIO.ALIEN_KILLED.getId(), 0);
                     }
 
                     lastPortValue[3] = value;
@@ -102,23 +102,23 @@ public class Emulator {
                 // bit 0 (0)
                 if (value != lastPortValue[5]) {
                     if ((value & 0x1) > 0 && (lastPortValue[5] & 0x1) == 0) {
-                        platform.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_1.getId(), 0);
+                        platform.playSound(Guest.Media.AUDIO.ALIEN_MOVE_1.getId(), 0);
                     }
 
                     if ((value & 0x2) > 0 && (lastPortValue[5] & 0x2) == 0) {
-                        platform.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_2.getId(), 0);
+                        platform.playSound(Guest.Media.AUDIO.ALIEN_MOVE_2.getId(), 0);
                     }
 
                     if ((value & 0x4) > 0 && (lastPortValue[5] & 0x4) == 0) {
-                        platform.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_3.getId(), 0);
+                        platform.playSound(Guest.Media.AUDIO.ALIEN_MOVE_3.getId(), 0);
                     }
 
                     if ((value & 0x8) > 0 && (lastPortValue[5] & 0x8) == 0) {
-                        platform.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_4.getId(), 0);
+                        platform.playSound(Guest.Media.AUDIO.ALIEN_MOVE_4.getId(), 0);
                     }
 
                     if ((value & 0x10) > 0 && (lastPortValue[5] & 0x10) == 0) {
-                        platform.playSound(Guest.MEDIA_AUDIO.SHIP_HIT.getId(), 0);
+                        platform.playSound(Guest.Media.AUDIO.SHIP_HIT.getId(), 0);
                     }
 
                     lastPortValue[5] = value;
