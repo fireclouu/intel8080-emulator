@@ -1,10 +1,9 @@
 package com.fireclouu.intel8080emu.emulator;
 
 import com.fireclouu.intel8080emu.emulator.Platform;
-import com.fireclouu.intel8080emu.HostHook;
 
 public class Emulator {
-	Platform platform;
+	private Platform platform;
     // Timer and interrupts
     private final long MAX_CYCLE_PER_SECOND = 2_000_000;
     private final double NANO_SEC = 1_000_000.0;
@@ -21,7 +20,6 @@ public class Emulator {
     private boolean isPaused = false;
     private Cpu cpu;
 	private Guest guest;
-    private HostHook hostHook;
     private Mmu mmu;
     private double timePrev;
     private double timeNextInterrupt;
@@ -37,10 +35,9 @@ public class Emulator {
 
     public Emulator(Guest guest) {
 		this.guest = guest;
+		this.platform = guest.getPlatform();
         this.cpu = guest.getCpu();
         this.mmu = guest.getMmu();
-        this.hostHook = HostHook.getInstance();
-		platform = hostHook.getPlatform();
 
         cyclePerSecond = 0;
         cycleHostTotal = 0;
@@ -68,26 +65,26 @@ public class Emulator {
             case 2: // shift amount
                 shiftOffset = (byte) (value & 0x7);
                 break;
-            case 3: // sound 1
+            case 3: // sound 18
                 if (value != lastPortValue[3]) {
                     if ((value & 0x1) > 0 && (lastPortValue[3] & 0x1) == 0) {
-                        int id = platform.playSound(Guest.Media.AUDIO.SHIP_INCOMING.getId(), -1);
+                        int id = platform.playSound(Guest.Media.Audio.SHIP_INCOMING, -1);
 						platform.setIdMediaPlayed(id);
                     } else if ((value & 0x1) == 0 && (lastPortValue[3] & 0x1) > 0) {
 						platform.stopSound(platform.getIdMediaPlayed());
                     }
 
                     if ((value & 0x2) > 0 && (lastPortValue[3] & 0x2) == 0) {
-                        platform.playSound(Guest.Media.AUDIO.FIRE.getId(), 0);
+                        platform.playSound(Guest.Media.Audio.FIRE, 0);
                     }
 
                     if ((value & 0x4) > 0 && (lastPortValue[3] & 0x4) == 0) {
-                        platform.playSound(Guest.Media.AUDIO.PLAYER_EXPLODED.getId(), 0);
+                        platform.playSound(Guest.Media.Audio.PLAYER_EXPLODED, 0);
                         platform.vibrate(300);
                     }
 
                     if ((value & 0x8) > 0 && (lastPortValue[3] & 0x8) == 0) {
-                        platform.playSound(Guest.Media.AUDIO.ALIEN_KILLED.getId(), 0);
+                        platform.playSound(Guest.Media.Audio.ALIEN_KILLED, 0);
                     }
 
                     lastPortValue[3] = value;
@@ -102,23 +99,23 @@ public class Emulator {
                 // bit 0 (0)
                 if (value != lastPortValue[5]) {
                     if ((value & 0x1) > 0 && (lastPortValue[5] & 0x1) == 0) {
-                        platform.playSound(Guest.Media.AUDIO.ALIEN_MOVE_1.getId(), 0);
+                        platform.playSound(Guest.Media.Audio.ALIEN_MOVE_1, 0);
                     }
 
                     if ((value & 0x2) > 0 && (lastPortValue[5] & 0x2) == 0) {
-                        platform.playSound(Guest.Media.AUDIO.ALIEN_MOVE_2.getId(), 0);
+                        platform.playSound(Guest.Media.Audio.ALIEN_MOVE_2, 0);
                     }
 
                     if ((value & 0x4) > 0 && (lastPortValue[5] & 0x4) == 0) {
-                        platform.playSound(Guest.Media.AUDIO.ALIEN_MOVE_3.getId(), 0);
+                        platform.playSound(Guest.Media.Audio.ALIEN_MOVE_3, 0);
                     }
 
                     if ((value & 0x8) > 0 && (lastPortValue[5] & 0x8) == 0) {
-                        platform.playSound(Guest.Media.AUDIO.ALIEN_MOVE_4.getId(), 0);
+                        platform.playSound(Guest.Media.Audio.ALIEN_MOVE_4, 0);
                     }
 
                     if ((value & 0x10) > 0 && (lastPortValue[5] & 0x10) == 0) {
-                        platform.playSound(Guest.Media.AUDIO.SHIP_HIT.getId(), 0);
+                        platform.playSound(Guest.Media.Audio.SHIP_HIT, 0);
                     }
 
                     lastPortValue[5] = value;

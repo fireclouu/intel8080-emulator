@@ -3,41 +3,31 @@ import java.util.LinkedHashMap;
 
 public class Guest {
 	public class Media {
-		public enum AUDIO {
-			FIRE (0),
-			PLAYER_EXPLODED (1),
-			SHIP_INCOMING (2),
-			ALIEN_MOVE_1 (3),
-			ALIEN_MOVE_2 (3),
-			ALIEN_MOVE_3 (3),
-			ALIEN_MOVE_4 (3),
-			ALIEN_KILLED (0),
-			SHIP_HIT (1);
-
-			private int id;
-			AUDIO(int id) {
-				this.id = id;
-			}
-
-			public int getId() {
-				return id;
-			}
-
-			public void setId(int id) {
-				this.id = id;
-			}
+		public class Audio {
+			public static final int FIRE = 0;
+			public static final int PLAYER_EXPLODED = 1;
+			public static final int SHIP_INCOMING = 2;
+			public static final int ALIEN_MOVE_1 = 3;
+			public static final int ALIEN_MOVE_2 = 4;
+			public static final int ALIEN_MOVE_3 = 5;
+			public static final int ALIEN_MOVE_4 = 6;
+			public static final int ALIEN_KILLED = 7;
+			public static final int SHIP_HIT = 8;
 		}
 	}
 	
 	public class Display {
-		public enum Orientation {
-			DEFAULT, PORTRAIT, LANDSCAPE;
+		public class Orientation {
+			public static final int DEFAULT = 0;
+			public static final int PORTRAIT = 1;
+			public static final int LANDSCAPE = 2;
 		}
 		public static final int WIDTH = (32 * 8); // 256 (32 = byte per line; 8 = bit per byte)
 		public static final int HEIGHT = (224);   // 224
 	}
 	
 	public static LinkedHashMap<String, Integer> mapFileData;
+	
 	private final int MEMORY_MAP_ROM_MIN = 0x0000;
 	private final int MEMORY_MAP_ROM_MAX = 0x1FFF;
 	private final int MEMORY_MAP_RAM_MIN = 0x2000;
@@ -50,20 +40,22 @@ public class Guest {
 	private final int SIZE_RAM = (MEMORY_MAP_RAM_MAX - MEMORY_MAP_RAM_MIN) + 1;
 	private final int SIZE_VRAM = (MEMORY_MAP_VRAM_MAX - MEMORY_MAP_VRAM_MIN) + 1;
 	
+	private final Platform platform;
     private final Cpu cpu;
     private final Mmu mmu;
 	private final short[] memoryRom = new short[SIZE_ROM];
 	private final short[] memoryRam = new short[SIZE_RAM];
 	private final short[] memoryVram = new short[SIZE_VRAM];
 
-    public Guest() {
+    public Guest(Platform platform) {
 		mapFileData = new LinkedHashMap<>();
 		mapFileData.put("invaders.h", 0x0000);
 		mapFileData.put("invaders.g", 0x0800);
 		mapFileData.put("invaders.f", 0x1000);
 		mapFileData.put("invaders.e", 0x1800);
 		
-        this.mmu = new Mmu(this);
+		this.platform = platform;
+        this.mmu = new Mmu(this, platform);
         this.cpu = new Cpu(mmu);
     }
 
@@ -89,6 +81,10 @@ public class Guest {
 	
 	public short[] getMemoryVram() {
 		return memoryVram;
+	}
+	
+	public Platform getPlatform() {
+		return platform;
 	}
 	
 	public void writeMemoryRom(int address, short value) {

@@ -31,8 +31,8 @@ public class EmulatorActivity extends Activity implements Button.OnTouchListener
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_emulation);
-        isTestSuite = getIntent().getBooleanExtra(HostHook.INTENT_FILE_IS_TEST_ROM, false);
-        romFileName = getIntent().getStringExtra(HostHook.INTENT_ROM_FILE_NAME);
+        isTestSuite = getIntent().getBooleanExtra(HostUtils.INTENT_FILE_IS_TEST_ROM, false);
+        romFileName = getIntent().getStringExtra(HostUtils.INTENT_ROM_FILE_NAME);
 
 		llLogs2 = findViewById(R.id.llLogs2);
         llLogs = findViewById(R.id.llLogs);

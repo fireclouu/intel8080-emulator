@@ -34,8 +34,7 @@ public class HostPlatform extends Platform {
     private final ScrollView svLogs;
     private final TextView tvLog;
     private final Button buttonPause;
-    private final ExecutorService exec2;
-	
+ 
     public HostPlatform(Activity activity, Context context, Display display, boolean isTestSuite) {
         super(isTestSuite);
 		this.context = context;
@@ -65,12 +64,12 @@ public class HostPlatform extends Platform {
 		
 		SoundPool.Builder soundPoolBuilder = new SoundPool.Builder();
 		soundPoolBuilder.setAudioAttributes(audioAttribBuilder.build());
-		soundPoolBuilder.setMaxStreams(2);
+		soundPoolBuilder.setMaxStreams(3);
 		
 		soundPool = soundPoolBuilder.build();
 		
         vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-        sp = context.getSharedPreferences(HostHook.PREFS_NAME, 0);
+        sp = context.getSharedPreferences(HostUtils.PREFS_NAME, 0);
         editor = sp.edit();
 
         // media
@@ -85,8 +84,6 @@ public class HostPlatform extends Platform {
 		);
 		setMediaAudioIdAlienKilled(getSoundPoolLoadId(R.raw.alien_killed, 0));
         setMediaAudioIdShipHit(getSoundPoolLoadId(R.raw.ship_hit, 0));
-        exec2 = Executors.newSingleThreadExecutor();
-        HostHook.getInstance().setPlatform(this);
     }
 
     @Override
@@ -95,7 +92,7 @@ public class HostPlatform extends Platform {
             return context.getAssets().open(romName);
         } catch (IOException e) {
             String exception = e.getMessage() == null ? "openFile: Message is null" : e.getMessage();
-            Log.e(HostHook.TAG, exception);
+            Log.e(HostUtils.TAG, exception);
             return null;
         }
     }
@@ -105,10 +102,9 @@ public class HostPlatform extends Platform {
 		display.draw(memoryVram);
 	}
 
-    /////   API   /////
     @Override
-    public int playSound(int id, int loop) {
-        return soundPool.play(id, 1, 1, 0, loop, 1);
+    public int playSound(int index, int loop) {
+        return soundPool.play(getMediaId(index), 1, 1, 0, loop, 1);
     }
 
 	@Override
@@ -121,7 +117,6 @@ public class HostPlatform extends Platform {
         soundPool = null;
     }
 
-    /////   SHARED PREFS   /////
     public void setPrefs(String name, int value) {
         editor.putInt(name, value);
         editor.apply();
@@ -133,19 +128,18 @@ public class HostPlatform extends Platform {
 	
 	@Override
 	public int fetchHighscoreOnPlatform() {
-        return getPrefs(HostHook.ITEM_HISCORE);
+        return getPrefs(HostUtils.ITEM_HISCORE);
     }
 	
 	@Override
     public void saveHighscoreOnPlatform(int data) {
-        int storedHiscore = getPrefs(HostHook.ITEM_HISCORE);
+        int storedHiscore = getPrefs(HostUtils.ITEM_HISCORE);
 
         if (data > storedHiscore) {
-            setPrefs(HostHook.ITEM_HISCORE, data);
+            setPrefs(HostUtils.ITEM_HISCORE, data);
         }
     }
 
-    /////   ACCESSORIES   /////
     @Override
     public void vibrate(long milli) {
         vibrator.vibrate(milli);

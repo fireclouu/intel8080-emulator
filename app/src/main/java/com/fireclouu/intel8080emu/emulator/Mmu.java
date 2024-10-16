@@ -1,19 +1,20 @@
 package com.fireclouu.intel8080emu.emulator;
-import com.fireclouu.intel8080emu.HostHook;
 
 public class Mmu {
     private static final int SP_MEM_ADDR_HI_SCORE_MSB = 0x20f5;
     private static final int SP_MEM_ADDR_HI_SCORE_LSB = 0x20f4;
 	
-	private Guest guest;
+	private final Guest guest;
+	private final Platform platform;
     private boolean isInitialHiscoreInjected;
     private boolean readHiscoreMsb;
     private boolean readHiscoreLsb;
 
-    private HostHook hostHook;
     private boolean isTestSuite;
 
-    public Mmu(Guest guest) {
+    public Mmu(Guest guest, Platform platform) {
+		this.guest = guest;
+		this.platform = platform;
         init(guest);
     }
 	
@@ -21,10 +22,7 @@ public class Mmu {
         isInitialHiscoreInjected = false;
         readHiscoreMsb = false;
         readHiscoreLsb = false;
-		
-		this.guest = guest;
-        this.hostHook = HostHook.getInstance();
-        isTestSuite = hostHook.getPlatform().isTestSuite();
+        isTestSuite = platform.isTestSuite();
     }
 
     private short interceptValue(int address, short value) {
@@ -32,7 +30,7 @@ public class Mmu {
             readHiscoreMsb = address == SP_MEM_ADDR_HI_SCORE_MSB || readHiscoreMsb;
             readHiscoreLsb = address == SP_MEM_ADDR_HI_SCORE_LSB || readHiscoreLsb;
             if (!isInitialHiscoreInjected) {
-                Object data = hostHook.getData(HostHook.ACTION_TYPE.GET_HISCORE);
+                Object data = platform.fetchHighscoreOnPlatform();
                 int storedHiscore = data != null ? (int) data : 0;
                 short hiscoreNibble = 0;
                 if (address == SP_MEM_ADDR_HI_SCORE_MSB) {
@@ -48,7 +46,7 @@ public class Mmu {
                 short hiScoreDataMsb = address == SP_MEM_ADDR_HI_SCORE_MSB ? value : readMemory(SP_MEM_ADDR_HI_SCORE_MSB);
                 short hiScoreDataLsb = address == SP_MEM_ADDR_HI_SCORE_LSB ? value : readMemory(SP_MEM_ADDR_HI_SCORE_LSB);
                 int hiScore = hiScoreDataMsb << 8 | hiScoreDataLsb;
-                hostHook.setData(HostHook.ACTION_TYPE.SET_HISCORE, hiScore);
+                platform.saveHighscoreOnPlatform(hiScore);
                 readHiscoreMsb = false;
                 readHiscoreLsb = false;
             }

@@ -58,7 +58,7 @@ public class MainActivity extends Activity implements View.OnClickListener, Chec
         try {
             files = assetManager.list("tests");
         } catch (IOException e) {
-            Log.e(HostHook.TAG, e.getMessage());
+            Log.e(HostUtils.TAG, e.getMessage());
         }
 
         ArrayAdapter arrayAdapter = new ArrayAdapter(this, android.R.layout.simple_spinner_item, files);
@@ -78,8 +78,8 @@ public class MainActivity extends Activity implements View.OnClickListener, Chec
 
         if (id == R.id.buttonLoadEmulator) {
             Intent intent = new Intent(MainActivity.this, EmulatorActivity.class);
-            intent.putExtra(HostHook.INTENT_FILE_IS_TEST_ROM, cbTestRom.isChecked());
-            intent.putExtra(HostHook.INTENT_ROM_FILE_NAME, testRomFilename);
+            intent.putExtra(HostUtils.INTENT_FILE_IS_TEST_ROM, cbTestRom.isChecked());
+            intent.putExtra(HostUtils.INTENT_ROM_FILE_NAME, testRomFilename);
             startActivity(intent);
         }
     }

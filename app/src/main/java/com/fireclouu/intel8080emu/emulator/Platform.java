@@ -5,7 +5,6 @@ import android.os.Looper;
 
 import com.fireclouu.intel8080emu.emulator.Emulator;
 import com.fireclouu.intel8080emu.emulator.Guest;
-import com.fireclouu.intel8080emu.emulator.Guest.Display.Orientation;
 import com.fireclouu.intel8080emu.emulator.KeyInterrupts;
 
 import java.io.IOException;
@@ -13,13 +12,13 @@ import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.Map;
-import com.fireclouu.intel8080emu.HostHook;
 
 public abstract class Platform {
     protected Handler handler;
     protected ExecutorService executor;
 	protected Guest guest;
 	
+	private final int[] mediaIds = new int[9];
     private Emulator emulator;
     private KeyInterrupts keyInterrupts;
     private boolean isLogging;
@@ -39,11 +38,11 @@ public abstract class Platform {
 	
 	public Platform(boolean isTestSuite) {
         this.isTestSuite = isTestSuite;
+		guest = new Guest(this);
     }
 
     // Main
     public void start() {
-		guest = new Guest();
 		emulator = new Emulator(guest);
         keyInterrupts = new KeyInterrupts(emulator);
         executor = Executors.newSingleThreadExecutor();
@@ -170,34 +169,42 @@ public abstract class Platform {
     }
 	
     public void setMediaAudioIdFire(int id) {
-        Guest.Media.AUDIO.FIRE.setId(id);
+		setMediaId(Guest.Media.Audio.FIRE, id);
     }
 
     public void setMediaAudioIdPlayerExploded(int id) {
-		Guest.Media.AUDIO.PLAYER_EXPLODED.setId(id);
+		setMediaId(Guest.Media.Audio.PLAYER_EXPLODED, id);
     }
 
     public void setMediaAudioIdShipIncoming(int id) {
-		Guest.Media.AUDIO.SHIP_INCOMING.setId(id);
+		setMediaId(Guest.Media.Audio.SHIP_INCOMING, id);
     }
 	
     public void setMediaAudioIdAlienMove(int id1, int id2, int id3, int id4) {
-		Guest.Media.AUDIO.ALIEN_MOVE_1.setId(id1);
-		Guest.Media.AUDIO.ALIEN_MOVE_2.setId(id2);
-		Guest.Media.AUDIO.ALIEN_MOVE_3.setId(id3);
-		Guest.Media.AUDIO.ALIEN_MOVE_4.setId(id4);
+		setMediaId(Guest.Media.Audio.ALIEN_MOVE_1, id1);
+		setMediaId(Guest.Media.Audio.ALIEN_MOVE_2, id2);
+		setMediaId(Guest.Media.Audio.ALIEN_MOVE_3, id3);
+		setMediaId(Guest.Media.Audio.ALIEN_MOVE_4, id4);
     }
 
     public void setMediaAudioIdAlienKilled(int id) {
-        Guest.Media.AUDIO.ALIEN_KILLED.setId(id);
+		setMediaId(Guest.Media.Audio.ALIEN_KILLED, id);
     }
 
     public void setMediaAudioIdShipHit(int id) {
-		Guest.Media.AUDIO.SHIP_HIT.setId(id);
+		setMediaId(Guest.Media.Audio.SHIP_HIT, id);
     }
 	
 	public void setIdMediaPlayed(int idMediaPlayed) {
 		this.idMediaPlayed = idMediaPlayed;
+	}
+	
+	private void setMediaId(int index, int id) {
+		mediaIds[index] = id;
+	}
+	
+	public int getMediaId(int index) {
+		return mediaIds[index];
 	}
 
 	public int getIdMediaPlayed() {
