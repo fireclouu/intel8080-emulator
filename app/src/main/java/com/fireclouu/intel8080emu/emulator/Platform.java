@@ -1,4 +1,4 @@
-package com.fireclouu.intel8080emu.emulator.base;
+package com.fireclouu.intel8080emu.emulator;
 
 import android.os.Handler;
 import android.os.Looper;
@@ -16,19 +16,19 @@ import java.util.concurrent.Executors;
 import java.util.Map;
 import com.fireclouu.intel8080emu.HostHook;
 
-public abstract class PlatformAdapter {
+public abstract class Platform {
     protected Handler handler;
     protected ExecutorService executor;
 	protected Guest guest;
 	
     private Emulator emulator;
-    private DisplayAdapter display;
     private KeyInterrupts keyInterrupts;
     private boolean isLogging;
     private String romFileName;
     private boolean isTestSuite;
 	private int idMediaPlayed;
 	
+	public abstract void draw(short[] memoryVram);
 	public abstract void stopSound(int id);
 	public abstract void vibrate(long milli);
 	public abstract void writeLog(String message);
@@ -38,9 +38,8 @@ public abstract class PlatformAdapter {
 	public abstract InputStream openFile(String romName);
 	// public abstract float[] convertVramToFloatPoints(Orientation drawOrientation, short[] memory);
 	
-	public PlatformAdapter(DisplayAdapter display, boolean isTestSuite) {
+	public Platform(boolean isTestSuite) {
         this.isTestSuite = isTestSuite;
-		this.display = display;
     }
 
     // Main
@@ -144,7 +143,7 @@ public abstract class PlatformAdapter {
     }
 
     public void tickEmulator() {
-        emulator.tick(display);
+        emulator.tick();
     }
 
     public void tickCpuOnly() {

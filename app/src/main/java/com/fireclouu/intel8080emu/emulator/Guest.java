@@ -31,7 +31,7 @@ public class Guest {
 		public enum Orientation {
 			DEFAULT, PORTRAIT, LANDSCAPE;
 		}
-		public static final int WIDTH = (32 * 8); // 256 (0x2400 to 0x2407 = bit 0 to bit 7)
+		public static final int WIDTH = (32 * 8); // 256 (32 = byte per line; 8 = bit per byte)
 		public static final int HEIGHT = (224);   // 224
 	}
 	

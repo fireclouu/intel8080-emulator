@@ -1,11 +1,11 @@
 package com.fireclouu.intel8080emu;
 
-import com.fireclouu.intel8080emu.emulator.base.PlatformAdapter;
+import com.fireclouu.intel8080emu.emulator.Platform;
 import android.os.Environment;
 
 public class HostHook {
 	private static HostHook hostHook;
-	private PlatformAdapter platform;
+	private Platform platform;
 	
 	public static final String ITEM_HISCORE = "HISCORE";
     public static final String PREFS_NAME = "data";
@@ -36,11 +36,11 @@ public class HostHook {
         return null;
     }
 
-    public PlatformAdapter getPlatform() {
+    public Platform getPlatform() {
         return this.platform;
     }
 
-    public void setPlatform(Platform platform) {
+    public void setPlatform(HostPlatform platform) {
         this.platform = platform;
     }
 

@@ -1,22 +1,21 @@
 package com.fireclouu.intel8080emu.emulator;
 
-import com.fireclouu.intel8080emu.emulator.base.DisplayAdapter;
-import com.fireclouu.intel8080emu.emulator.base.PlatformAdapter;
+import com.fireclouu.intel8080emu.emulator.Platform;
 import com.fireclouu.intel8080emu.HostHook;
 
 public class Emulator {
-	PlatformAdapter platform;
+	Platform platform;
     // Timer and interrupts
     private final long MAX_CYCLE_PER_SECOND = 2_000_000;
     private final double NANO_SEC = 1_000_000.0;
     private final double VBLANK_START = (1.0 / 60.0) * (NANO_SEC);
     private final double MIDFRAME = VBLANK_START / 2.0;
-    private final double WHEN_TO_RUN_CYCLE = 1.0 / 2_000_000.0;
-    private final double fixedMhz = (WHEN_TO_RUN_CYCLE * (NANO_SEC * 10.0));
+    // private final double WHEN_TO_RUN_CYCLE = 1.0 / 2_000_000.0;
+    // private final double fixedMhz = (WHEN_TO_RUN_CYCLE * (NANO_SEC * 10.0));
     private final byte INTERRUPT_MID = 1;
     private final byte INTERRUPT_FULL = 2;
     public short[] port = new short[8];
-    public short[] last_port_value = new short[8];
+    public short[] lastPortValue = new short[8];
     // states
     private boolean isLooping = true;
     private boolean isPaused = false;
@@ -28,9 +27,9 @@ public class Emulator {
     private double timeNextInterrupt;
     private byte interruptType = INTERRUPT_MID;
     // I/O
-    private short shift_lsb;
-    private short shift_msb;
-    private byte shift_offset = 0;
+    private short shiftLsb;
+    private short shiftMsb;
+    private byte shiftOffset = 0;
     private short readPort;
     private long cycleHostTotal = 0;
     private long cyclePerSecond = 0;
@@ -57,8 +56,8 @@ public class Emulator {
             case 2: // input
                 return this.port[KeyInterrupts.INPUT_PORT_2];
             case 3: // rotate shift register
-                int v = (shift_msb << 8) | shift_lsb;
-                a = (short) ((v >> (8 - shift_offset)) & 0xff);
+                int v = (shiftMsb << 8) | shiftLsb;
+                a = (short) ((v >> (8 - shiftOffset)) & 0xff);
                 break;
         }
         return a;
@@ -67,62 +66,62 @@ public class Emulator {
     public void handleOut(Cpu cpu, short port, short value) {
         switch (port) {
             case 2: // shift amount
-                shift_offset = (byte) (value & 0x7);
+                shiftOffset = (byte) (value & 0x7);
                 break;
             case 3: // sound 1
-                if (value != last_port_value[3]) {
-                    if ((value & 0x1) > 0 && (last_port_value[3] & 0x1) == 0) {
+                if (value != lastPortValue[3]) {
+                    if ((value & 0x1) > 0 && (lastPortValue[3] & 0x1) == 0) {
                         int id = platform.playSound(Guest.MEDIA_AUDIO.SHIP_INCOMING.getId(), -1);
 						platform.setIdMediaPlayed(id);
-                    } else if ((value & 0x1) == 0 && (last_port_value[3] & 0x1) > 0) {
+                    } else if ((value & 0x1) == 0 && (lastPortValue[3] & 0x1) > 0) {
 						platform.stopSound(platform.getIdMediaPlayed());
                     }
 
-                    if ((value & 0x2) > 0 && (last_port_value[3] & 0x2) == 0) {
+                    if ((value & 0x2) > 0 && (lastPortValue[3] & 0x2) == 0) {
                         platform.playSound(Guest.MEDIA_AUDIO.FIRE.getId(), 0);
                     }
 
-                    if ((value & 0x4) > 0 && (last_port_value[3] & 0x4) == 0) {
+                    if ((value & 0x4) > 0 && (lastPortValue[3] & 0x4) == 0) {
                         platform.playSound(Guest.MEDIA_AUDIO.PLAYER_EXPLODED.getId(), 0);
                         platform.vibrate(300);
                     }
 
-                    if ((value & 0x8) > 0 && (last_port_value[3] & 0x8) == 0) {
+                    if ((value & 0x8) > 0 && (lastPortValue[3] & 0x8) == 0) {
                         platform.playSound(Guest.MEDIA_AUDIO.ALIEN_KILLED.getId(), 0);
                     }
 
-                    last_port_value[3] = value;
+                    lastPortValue[3] = value;
                 }
                 break;
             case 4:
-                shift_lsb = shift_msb;
-                shift_msb = value;
+                shiftLsb = shiftMsb;
+                shiftMsb = value;
                 break;
             case 5:
                 // alien moving sound
                 // bit 0 (0)
-                if (value != last_port_value[5]) {
-                    if ((value & 0x1) > 0 && (last_port_value[5] & 0x1) == 0) {
+                if (value != lastPortValue[5]) {
+                    if ((value & 0x1) > 0 && (lastPortValue[5] & 0x1) == 0) {
                         platform.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_1.getId(), 0);
                     }
 
-                    if ((value & 0x2) > 0 && (last_port_value[5] & 0x2) == 0) {
+                    if ((value & 0x2) > 0 && (lastPortValue[5] & 0x2) == 0) {
                         platform.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_2.getId(), 0);
                     }
 
-                    if ((value & 0x4) > 0 && (last_port_value[5] & 0x4) == 0) {
+                    if ((value & 0x4) > 0 && (lastPortValue[5] & 0x4) == 0) {
                         platform.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_3.getId(), 0);
                     }
 
-                    if ((value & 0x8) > 0 && (last_port_value[5] & 0x8) == 0) {
+                    if ((value & 0x8) > 0 && (lastPortValue[5] & 0x8) == 0) {
                         platform.playSound(Guest.MEDIA_AUDIO.ALIEN_MOVE_4.getId(), 0);
                     }
 
-                    if ((value & 0x10) > 0 && (last_port_value[5] & 0x10) == 0) {
+                    if ((value & 0x10) > 0 && (lastPortValue[5] & 0x10) == 0) {
                         platform.playSound(Guest.MEDIA_AUDIO.SHIP_HIT.getId(), 0);
                     }
 
-                    last_port_value[5] = value;
+                    lastPortValue[5] = value;
                 }
         }
     }
@@ -143,13 +142,13 @@ public class Emulator {
         }
     }
 
-    public void tick(DisplayAdapter display) {
+    public void tick() {
         // interrupt for space invaders
         // Check midframe interrupt and rst 1 if true
         // check final frame interrupt and rst 2 if true
         if ((cpu.getInterrupt() == 1) && (getSystemNanoTime() >= timeNextInterrupt)) {
             cpu.sendInterrupt(interruptType);
-			if (interruptType == INTERRUPT_FULL) display.draw(guest.getMemoryVram());
+			if (interruptType == INTERRUPT_FULL) platform.draw(guest.getMemoryVram());
             interruptType = (interruptType == INTERRUPT_MID) ? INTERRUPT_FULL : INTERRUPT_MID;
             timeNextInterrupt = getSystemNanoTime() + MIDFRAME;
         }

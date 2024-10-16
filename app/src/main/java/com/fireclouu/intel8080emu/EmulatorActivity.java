@@ -13,7 +13,7 @@ import android.graphics.*;
 
 public class EmulatorActivity extends Activity implements Button.OnTouchListener, Button.OnClickListener {
     Display display;
-    Platform platform;
+    HostPlatform platform;
 	
     // Buttons
     private Button mButtonCoin, mButtonP1Start, mButtonP1Left, mButtonP1Right, mButtonP1Fire, mButtonSetPlayer, mButtonLogs;
@@ -71,7 +71,7 @@ public class EmulatorActivity extends Activity implements Button.OnTouchListener
 	
 	private void startEmulation() {
         if (platform == null) {
-            platform = new Platform(this, this, display, isTestSuite);
+            platform = new HostPlatform(this, this, display, isTestSuite);
             platform.setRomFileName(romFileName);
         }
 

@@ -7,8 +7,6 @@ import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-
-import com.fireclouu.intel8080emu.emulator.base.DisplayAdapter;
 import com.fireclouu.intel8080emu.emulator.Guest;
 import com.fireclouu.intel8080emu.emulator.Guest.Display;
 import com.fireclouu.intel8080emu.emulator.Guest.Display.Orientation;
@@ -16,7 +14,7 @@ import com.fireclouu.intel8080emu.emulator.Guest.Display.Orientation;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Display extends SurfaceView implements SurfaceHolder.Callback, DisplayAdapter {
+public class Display extends SurfaceView implements SurfaceHolder.Callback {
 
     // get float value only
     // on emulation class devise array that can hold 0x2400 - 0x3fff and pass it here
@@ -183,8 +181,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback, Disp
     private String parseFps(double fps) {
         return String.format("fps: %.2f", fps);
     }
-
-    @Override
+	
     public void draw(short[] memory) {
         while (!holder.getSurface().isValid()) continue;
 

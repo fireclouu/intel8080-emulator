@@ -13,9 +13,7 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
-
-import com.fireclouu.intel8080emu.emulator.base.DisplayAdapter;
-import com.fireclouu.intel8080emu.emulator.base.PlatformAdapter;
+import com.fireclouu.intel8080emu.emulator.Platform;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,23 +23,23 @@ import com.fireclouu.intel8080emu.emulator.*;
 import android.media.*;
 import android.os.*;
 
-public class Platform extends PlatformAdapter {
+public class HostPlatform extends Platform {
+	private final Display display;
     private final Context context;
     private SharedPreferences sp;
     private SoundPool soundPool;
     private SharedPreferences.Editor editor;
     private Vibrator vibrator;
-    private final DisplayAdapter display;
     private final LinearLayout llLogs;
     private final ScrollView svLogs;
     private final TextView tvLog;
     private final Button buttonPause;
     private final ExecutorService exec2;
 	
-    public Platform(Activity activity, Context context, DisplayAdapter display, boolean isTestSuite) {
-        super(display, isTestSuite);
+    public HostPlatform(Activity activity, Context context, Display display, boolean isTestSuite) {
+        super(isTestSuite);
 		this.context = context;
-        this.display = display;
+		this.display = display;
         
         tvLog = activity.findViewById(R.id.tvLog);
         llLogs = activity.findViewById(R.id.llLogs);
@@ -101,6 +99,11 @@ public class Platform extends PlatformAdapter {
             return null;
         }
     }
+	
+	@Override
+	public void draw(short[] memoryVram) {
+		display.draw(memoryVram);
+	}
 
     /////   API   /////
     @Override
