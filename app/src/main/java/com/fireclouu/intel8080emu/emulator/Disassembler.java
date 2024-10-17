@@ -2,6 +2,8 @@ package com.fireclouu.intel8080emu.emulator;
 
 public class Disassembler
 {
+	private Disassembler () { }
+	
 	// SOURCE: superzazu
 	public final static String[] DISASSEMBLE_TABLE = {
 		"nop", "lxi b,#", "stax b", "inx b", "inr b", "dcr b", "mvi b,#", "rlc",

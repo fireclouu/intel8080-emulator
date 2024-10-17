@@ -1,7 +1,8 @@
 package com.fireclouu.intel8080emu.emulator;
 
 public class Cpu {
-
+	private final Mmu mmu;
+	
     // SOURCES: superzazu
     private final static short[] OPCODES_CYCLES = {    //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
             4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4,  // 0
@@ -22,14 +23,13 @@ public class Cpu {
             5, 10, 10, 4, 11, 11, 7, 11, 5, 5, 10, 4, 11, 17, 7, 11  // F
     };
     ///  PSW FLAG POSITIONS  ///
-    public final int PSW_FLAG_POS_CY = 0b00000001, // on bit pos 0 (Carry)
-            PSW_FLAG_POS_PA = 0b00000100, // on bit pos 2 (Parity)
-            PSW_FLAG_POS_AC = 0b00010000, // on bit pos 4 (Aux. carry)
-            PSW_FLAG_POS_ZE = 0b01000000, // on bit pos 6 (Zero)
-            PSW_FLAG_POS_SN = 0b10000000; // on bit pos 7 (Sign)
-    private final Mmu mmu;
-    public short opcodeCycle = 0;
-    Flags cc;
+    private final int PSW_FLAG_POS_CY = 0b00000001; // on bit pos 0 (Carry)
+    private final int PSW_FLAG_POS_PA = 0b00000100; // on bit pos 2 (Parity)
+    private final int PSW_FLAG_POS_AC = 0b00010000; // on bit pos 4 (Aux. carry)
+    private final int PSW_FLAG_POS_ZE = 0b01000000; // on bit pos 6 (Zero)
+    private final int PSW_FLAG_POS_SN = 0b10000000; // on bit pos 7 (Sign)
+    private short opcodeCycle = 0;
+    private Flags cc;
     ///  REGISTERS  ///
     private short b, c, d, e, h, l, a;
     ///  16-BIT REGISTER ADDRESSES  ///

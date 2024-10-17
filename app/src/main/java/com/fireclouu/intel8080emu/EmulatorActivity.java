@@ -8,8 +8,6 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout; 
 import com.fireclouu.intel8080emu.emulator.KeyInterrupts;
-import android.widget.*;
-import android.graphics.*;
 
 public class EmulatorActivity extends Activity implements Button.OnTouchListener, Button.OnClickListener {
     Display display;

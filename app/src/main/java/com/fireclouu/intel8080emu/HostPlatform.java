@@ -25,74 +25,111 @@ import android.os.*;
 
 public class HostPlatform extends Platform {
 	private final Display display;
+	private final Activity activity;
     private final Context context;
     private SharedPreferences sp;
     private SoundPool soundPool;
     private SharedPreferences.Editor editor;
     private Vibrator vibrator;
-    private final LinearLayout llLogs;
-    private final ScrollView svLogs;
-    private final TextView tvLog;
-    private final Button buttonPause;
+    private LinearLayout llLogs;
+    private ScrollView svLogs;
+    private TextView tvLog;
+    private Button buttonPause;
+	private Handler handler;
  
     public HostPlatform(Activity activity, Context context, Display display, boolean isTestSuite) {
-        super(isTestSuite);
+		super(isTestSuite);
+		this.activity = activity;
 		this.context = context;
 		this.display = display;
-        
-        tvLog = activity.findViewById(R.id.tvLog);
+		tvLog = activity.findViewById(R.id.tvLog);
         llLogs = activity.findViewById(R.id.llLogs);
         buttonPause = activity.findViewById(R.id.buttonPause);
         svLogs = activity.findViewById(R.id.svLogs);
         buttonPause.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View p1) {
-                togglePause();
-            }
-        });
+				@Override
+				public void onClick(View p1) {
+					togglePause();
+				}
+			});
 
         tvLog.setText("");
+		
+		vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
+        sp = context.getSharedPreferences(HostUtils.PREFS_NAME, 0);
+        editor = sp.edit();
+    }
+	
+	@Override
+	public void initMediaHandler() {
 		AudioAttributes.Builder audioAttribBuilder = new AudioAttributes.Builder();
 		audioAttribBuilder.setUsage(AudioAttributes.USAGE_GAME);
 		audioAttribBuilder.setContentType(AudioAttributes.CONTENT_TYPE_UNKNOWN);
-		
+
 		if (Build.VERSION.SDK_INT >= 29) {
 			audioAttribBuilder.setAllowedCapturePolicy(AudioAttributes.ALLOW_CAPTURE_BY_ALL);
 		}
-		
+
 		audioAttribBuilder.setFlags(AudioAttributes.FLAG_LOW_LATENCY);
-		
+
 		SoundPool.Builder soundPoolBuilder = new SoundPool.Builder();
 		soundPoolBuilder.setAudioAttributes(audioAttribBuilder.build());
 		soundPoolBuilder.setMaxStreams(3);
-		
-		soundPool = soundPoolBuilder.build();
-		
-        vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-        sp = context.getSharedPreferences(HostUtils.PREFS_NAME, 0);
-        editor = sp.edit();
 
-        // media
-		setMediaAudioIdFire(getSoundPoolLoadId(R.raw.fire, 0));
-		setMediaAudioIdPlayerExploded(getSoundPoolLoadId(R.raw.explosion, 0));
-		setMediaAudioIdShipIncoming(getSoundPoolLoadId(R.raw.ship_incoming, 1));
-		setMediaAudioIdAlienMove(
-			getSoundPoolLoadId(R.raw.enemy_move_1, 0),
-			getSoundPoolLoadId(R.raw.enemy_move_2, 0),
-			getSoundPoolLoadId(R.raw.enemy_move_3, 0),
-			getSoundPoolLoadId(R.raw.enemy_move_4, 0)
-		);
-		setMediaAudioIdAlienKilled(getSoundPoolLoadId(R.raw.alien_killed, 0));
-        setMediaAudioIdShipHit(getSoundPoolLoadId(R.raw.ship_hit, 0));
-    }
+		soundPool = soundPoolBuilder.build();
+	}
+	
+	@Override
+	public int getMediaAudioIdAlienKilled() {
+		return getSoundPoolLoadId(R.raw.alien_killed, 0);
+	}
+
+	@Override
+	public int getMediaAudioIdAlienMove1() {
+		return getSoundPoolLoadId(R.raw.enemy_move_1, 0);
+	}
+
+	@Override
+	public int getMediaAudioIdAlienMove2() {
+		return getSoundPoolLoadId(R.raw.enemy_move_2, 0);
+	}
+
+	@Override
+	public int getMediaAudioIdAlienMove3() {
+		return getSoundPoolLoadId(R.raw.enemy_move_3, 0);
+	}
+
+	@Override
+	public int getMediaAudioIdAlienMove4() {
+		return getSoundPoolLoadId(R.raw.enemy_move_4, 0);
+	}
+
+	@Override
+	public int getMediaAudioIdFire() {
+		return getSoundPoolLoadId(R.raw.fire, 0);
+	}
+
+	@Override
+	public int getMediaAudioIdPlayerExploded() {
+		return getSoundPoolLoadId(R.raw.explosion, 0);
+	}
+
+	@Override
+	public int getMediaAudioIdShipHit() {
+		return getSoundPoolLoadId(R.raw.ship_hit, 0);
+	}
+
+	@Override
+	public int getMediaAudioIdShipIncoming() {
+		return getSoundPoolLoadId(R.raw.ship_incoming, 0);
+	}
 
     @Override
     public InputStream openFile(String romName) {
         try {
             return context.getAssets().open(romName);
         } catch (IOException e) {
-            String exception = e.getMessage() == null ? "openFile: Message is null" : e.getMessage();
-            Log.e(HostUtils.TAG, exception);
+            Log.e(HostUtils.TAG, e.getMessage());
             return null;
         }
     }
@@ -103,7 +140,7 @@ public class HostPlatform extends Platform {
 	}
 
     @Override
-    public int playSound(int index, int loop) {
+    public int playMedia(int index, int loop) {
         return soundPool.play(getMediaId(index), 1, 1, 0, loop, 1);
     }
 
@@ -172,41 +209,6 @@ public class HostPlatform extends Platform {
         super.togglePause();
     }
 
-    @Override
-    public void start() {
-        super.start();
-		
-        executor.execute(new Runnable() {
-            @Override
-            public void run() {
-                // FIXME: terminate when pause to
-                // optimize battery usage
-				
-                while (isLooping()) {
-                    if (!isPaused()) {
-                        if (!isTestSuite()) {
-                            tickEmulator();
-                        } else {
-                            tickCpuOnly();
-                        }
-                    }
-                }
-
-                writeLog("\n");
-                for (int i = 0; i < 25; i++) {
-                    writeLog("-");
-                }
-
-                handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(context, "Emulation terminated", Toast.LENGTH_SHORT).show();
-                    }
-                });
-            }
-        });
-    }
-	
 	private int getSoundPoolLoadId(int id, int priority) {
 		return soundPool.load(context, id, priority);
 	}

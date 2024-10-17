@@ -1,8 +1,5 @@
 package com.fireclouu.intel8080emu.emulator;
 
-import android.os.Handler;
-import android.os.Looper;
-
 import com.fireclouu.intel8080emu.emulator.Emulator;
 import com.fireclouu.intel8080emu.emulator.Guest;
 import com.fireclouu.intel8080emu.emulator.KeyInterrupts;
@@ -14,7 +11,6 @@ import java.util.concurrent.Executors;
 import java.util.Map;
 
 public abstract class Platform {
-    protected Handler handler;
     protected ExecutorService executor;
 	protected Guest guest;
 	
@@ -23,7 +19,7 @@ public abstract class Platform {
     private KeyInterrupts keyInterrupts;
     private boolean isLogging;
     private String romFileName;
-    private boolean isTestSuite;
+    private boolean isTestSuite = false;
 	private int idMediaPlayed;
 	
 	public abstract void draw(short[] memoryVram);
@@ -31,22 +27,46 @@ public abstract class Platform {
 	public abstract void vibrate(long milli);
 	public abstract void writeLog(String message);
 	public abstract void saveHighscoreOnPlatform(int data);
-	public abstract int playSound(int id, int loop);
+	public abstract int playMedia(int id, int loop);
 	public abstract int fetchHighscoreOnPlatform();
 	public abstract InputStream openFile(String romName);
+	
+	public abstract int getMediaAudioIdAlienKilled();
+	public abstract int getMediaAudioIdAlienMove1();
+	public abstract int getMediaAudioIdAlienMove2();
+	public abstract int getMediaAudioIdAlienMove3();
+	public abstract int getMediaAudioIdAlienMove4();
+	public abstract int getMediaAudioIdFire();
+	public abstract int getMediaAudioIdPlayerExploded();
+	public abstract int getMediaAudioIdShipHit();
+	public abstract int getMediaAudioIdShipIncoming();
+	public abstract void initMediaHandler();
 	// public abstract float[] convertVramToFloatPoints(Orientation drawOrientation, short[] memory);
 	
 	public Platform(boolean isTestSuite) {
-        this.isTestSuite = isTestSuite;
-		guest = new Guest(this);
+		this.guest = new Guest(this);
+		this.executor = Executors.newSingleThreadExecutor();
+		this.isTestSuite = isTestSuite;
     }
-
+	
+	private void init() {
+		initMediaHandler();
+		// audio assets
+		setMediaId(Guest.Media.Audio.ALIEN_KILLED, getMediaAudioIdAlienKilled());
+		setMediaId(Guest.Media.Audio.ALIEN_MOVE_1, getMediaAudioIdAlienMove1());
+		setMediaId(Guest.Media.Audio.ALIEN_MOVE_2, getMediaAudioIdAlienMove2());
+		setMediaId(Guest.Media.Audio.ALIEN_MOVE_3, getMediaAudioIdAlienMove3());
+		setMediaId(Guest.Media.Audio.ALIEN_MOVE_4, getMediaAudioIdAlienMove4());
+		setMediaId(Guest.Media.Audio.FIRE, getMediaAudioIdFire());
+		setMediaId(Guest.Media.Audio.PLAYER_EXPLODED, getMediaAudioIdPlayerExploded());
+		setMediaId(Guest.Media.Audio.SHIP_HIT, getMediaAudioIdShipHit());
+		setMediaId(Guest.Media.Audio.SHIP_INCOMING, getMediaAudioIdShipIncoming());
+	}
     // Main
     public void start() {
+		init();
 		emulator = new Emulator(guest);
         keyInterrupts = new KeyInterrupts(emulator);
-        executor = Executors.newSingleThreadExecutor();
-        handler = new Handler(Looper.getMainLooper());
 		
         if (isTestSuite) {
             loadFile("tests/" + romFileName, 0x0100);
@@ -60,6 +80,23 @@ public abstract class Platform {
         } else {
             isFilesLoaded();
         }
+		
+		executor.execute(new Runnable() {
+			@Override
+			public void run() {
+				// FIXME: terminate when pause to
+				// optimize battery usage
+				while (isLooping()) {
+					if (!isPaused()) {
+						if (!isTestSuite()) {
+							tickEmulator();
+						} else {
+							tickCpuOnly();
+						}
+					}
+				}
+			}
+		});
     }
 
     public void loadFile(String filename, int addr) {
@@ -166,33 +203,6 @@ public abstract class Platform {
 
     public void setRomFileName(String romFileName) {
         this.romFileName = romFileName;
-    }
-	
-    public void setMediaAudioIdFire(int id) {
-		setMediaId(Guest.Media.Audio.FIRE, id);
-    }
-
-    public void setMediaAudioIdPlayerExploded(int id) {
-		setMediaId(Guest.Media.Audio.PLAYER_EXPLODED, id);
-    }
-
-    public void setMediaAudioIdShipIncoming(int id) {
-		setMediaId(Guest.Media.Audio.SHIP_INCOMING, id);
-    }
-	
-    public void setMediaAudioIdAlienMove(int id1, int id2, int id3, int id4) {
-		setMediaId(Guest.Media.Audio.ALIEN_MOVE_1, id1);
-		setMediaId(Guest.Media.Audio.ALIEN_MOVE_2, id2);
-		setMediaId(Guest.Media.Audio.ALIEN_MOVE_3, id3);
-		setMediaId(Guest.Media.Audio.ALIEN_MOVE_4, id4);
-    }
-
-    public void setMediaAudioIdAlienKilled(int id) {
-		setMediaId(Guest.Media.Audio.ALIEN_KILLED, id);
-    }
-
-    public void setMediaAudioIdShipHit(int id) {
-		setMediaId(Guest.Media.Audio.SHIP_HIT, id);
     }
 	
 	public void setIdMediaPlayed(int idMediaPlayed) {
