@@ -85,6 +85,7 @@ public class Emulator {
 
                     if ((value & 0x8) > 0 && (lastPortValue[3] & 0x8) == 0) {
                         platform.playMedia(Guest.Media.Audio.ALIEN_KILLED, 0);
+						platform.vibrate(20);
                     }
 
                     lastPortValue[3] = value;
@@ -115,6 +116,7 @@ public class Emulator {
 
                     if ((value & 0x10) > 0 && (lastPortValue[5] & 0x10) == 0) {
                         platform.playMedia(Guest.Media.Audio.SHIP_HIT, 0);
+						platform.vibrate(800);
                     }
 
                     lastPortValue[5] = value;

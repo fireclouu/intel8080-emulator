@@ -27,9 +27,8 @@ public class HostPlatform extends Platform {
 	private final Display display;
 	private final Activity activity;
     private final Context context;
-    private SharedPreferences sp;
+    private SharedPreferences sharedPreferences;
     private SoundPool soundPool;
-    private SharedPreferences.Editor editor;
     private LinearLayout llLogs;
     private ScrollView svLogs;
     private TextView tvLog;
@@ -47,17 +46,16 @@ public class HostPlatform extends Platform {
         buttonPause = activity.findViewById(R.id.buttonPause);
         svLogs = activity.findViewById(R.id.svLogs);
         buttonPause.setOnClickListener(new View.OnClickListener() {
-				@Override
-				public void onClick(View p1) {
-					togglePause();
-				}
-			});
+			@Override
+			public void onClick(View p1) {
+				togglePause();
+			}
+		});
 
         tvLog.setText("");
 		
 		vibrator = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
-        sp = context.getSharedPreferences(HostUtils.PREFS_NAME, 0);
-        editor = sp.edit();
+        sharedPreferences = context.getSharedPreferences(HostUtils.PREFS_NAME, 0);
     }
 	
 	@Override
@@ -121,7 +119,7 @@ public class HostPlatform extends Platform {
 
 	@Override
 	public int getMediaAudioIdShipIncoming() {
-		return getSoundPoolLoadId(R.raw.ship_incoming, 0);
+		return getSoundPoolLoadId(R.raw.ship_incoming, 1);
 	}
 
     @Override
@@ -154,26 +152,25 @@ public class HostPlatform extends Platform {
         soundPool = null;
     }
 
-    public void setPrefs(String name, int value) {
-        editor.putInt(name, value);
-        editor.apply();
+    public void putIntOnSharedPreferences(String name, int value) {
+        sharedPreferences.edit().putInt(name, value).apply();
     }
 
-    public int getPrefs(String name) {
-        return sp.getInt(name, 0);
+    public int getIntOnSharedPreferences(String name) {
+        return sharedPreferences.getInt(name, 0);
     }
 	
 	@Override
 	public int fetchHighscoreOnPlatform() {
-        return getPrefs(HostUtils.ITEM_HISCORE);
+        return getIntOnSharedPreferences(HostUtils.ITEM_HISCORE);
     }
 	
 	@Override
     public void saveHighscoreOnPlatform(int data) {
-        int storedHiscore = getPrefs(HostUtils.ITEM_HISCORE);
+        int storedHiscore = getIntOnSharedPreferences(HostUtils.ITEM_HISCORE);
 
         if (data > storedHiscore) {
-            setPrefs(HostUtils.ITEM_HISCORE, data);
+            putIntOnSharedPreferences(HostUtils.ITEM_HISCORE, data);
         }
     }
 
