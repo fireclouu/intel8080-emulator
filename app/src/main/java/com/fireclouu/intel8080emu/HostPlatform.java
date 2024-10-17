@@ -125,11 +125,11 @@ public class HostPlatform extends Platform {
 	}
 
     @Override
-    public InputStream openFile(String romName) {
+    public InputStream openFile(String fileName) {
         try {
-            return context.getAssets().open(romName);
+            return context.getAssets().open(fileName);
         } catch (IOException e) {
-            Log.e(HostUtils.TAG, e.getMessage());
+            log(e, fileName + " could not be found!");
             return null;
         }
     }
@@ -197,6 +197,13 @@ public class HostPlatform extends Platform {
             }
         });
     }
+
+	@Override
+	public void log(Exception e, String message) {
+		Log.e(HostUtils.TAG, message);
+		if (e == null) return;
+		Log.e(HostUtils.TAG, e.getMessage());
+	}
 
     @Override
     public void toggleLog(boolean value) {

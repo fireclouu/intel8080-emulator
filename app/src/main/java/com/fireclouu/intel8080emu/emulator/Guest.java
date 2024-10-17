@@ -28,13 +28,13 @@ public class Guest {
 	
 	public static LinkedHashMap<String, Integer> mapFileData;
 	
-	private final int MEMORY_MAP_ROM_MIN = 0x0000;
-	private final int MEMORY_MAP_ROM_MAX = 0x1FFF;
-	private final int MEMORY_MAP_RAM_MIN = 0x2000;
-	private final int MEMORY_MAP_RAM_MAX = 0x23FF;
-	private final int MEMORY_MAP_VRAM_MIN = 0x2400;
-	private final int MEMORY_MAP_VRAM_MAX = 0x3FFF;
-	private final int RAM_MIRROR = 0x4000;
+	public static final int MEMORY_MAP_ROM_MIN = 0x0000;
+	public static final int MEMORY_MAP_ROM_MAX = 0x1FFF;
+	public static final int MEMORY_MAP_RAM_MIN = 0x2000;
+	public static final int MEMORY_MAP_RAM_MAX = 0x23FF;
+	public static final int MEMORY_MAP_VRAM_MIN = 0x2400;
+	public static final int MEMORY_MAP_VRAM_MAX = 0x3FFF;
+	public static final int RAM_MIRROR = 0x4000;
 	
 	private final int SIZE_ROM = (MEMORY_MAP_ROM_MAX - MEMORY_MAP_ROM_MIN) + 1;
 	private final int SIZE_RAM = (MEMORY_MAP_RAM_MAX - MEMORY_MAP_RAM_MIN) + 1;

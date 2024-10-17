@@ -95,6 +95,8 @@ public class Mmu {
 				guest.writeMemoryVram(map, value);
 				break;
 			case 0x4000:
+				if ((address & 0x0F00) >= 0x0400) break;
+				writeMemory(address - Guest.MEMORY_MAP_RAM_MIN, value);
 				break;
 		}
 	}
@@ -128,6 +130,8 @@ public class Mmu {
 				data = guest.getDataOnVram(map);
 				break;
 			case 0x4000:
+				if ((address & 0x0F00) >= 0x0400) break;
+				data = readMemory(address - Guest.MEMORY_MAP_RAM_MIN);
 				break;
 		}
 		

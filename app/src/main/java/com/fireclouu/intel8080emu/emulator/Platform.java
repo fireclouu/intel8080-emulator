@@ -11,8 +11,8 @@ import java.util.concurrent.Executors;
 import java.util.Map;
 
 public abstract class Platform {
-    protected ExecutorService executor;
-	protected Guest guest;
+    private ExecutorService executor;
+	private Guest guest;
 	
 	private final int[] mediaIds = new int[9];
     private Emulator emulator;
@@ -26,6 +26,7 @@ public abstract class Platform {
 	public abstract void stopSound(int id);
 	public abstract void vibrate(long milli);
 	public abstract void writeLog(String message);
+	public abstract void log(Exception e, String message);
 	public abstract void saveHighscoreOnPlatform(int data);
 	public abstract int playMedia(int id, int loop);
 	public abstract int fetchHighscoreOnPlatform();
@@ -62,7 +63,7 @@ public abstract class Platform {
 		setMediaId(Guest.Media.Audio.SHIP_HIT, getMediaAudioIdShipHit());
 		setMediaId(Guest.Media.Audio.SHIP_INCOMING, getMediaAudioIdShipIncoming());
 	}
-    // Main
+	
     public void start() {
 		init();
 		emulator = new Emulator(guest);
@@ -88,11 +89,12 @@ public abstract class Platform {
 				// optimize battery usage
 				while (isLooping()) {
 					if (!isPaused()) {
-						if (!isTestSuite()) {
-							tickEmulator();
-						} else {
-							tickCpuOnly();
-						}
+//						if (!isTestSuite()) {
+//							tickEmulator();
+//						} else {
+//							tickCpuOnly();
+//						}
+						tickEmulator();
 					}
 				}
 			}
@@ -109,7 +111,7 @@ public abstract class Platform {
             }
             file.close();
         } catch (IOException e) {
-            // OUT_MSG = filename + " cannot be read!";
+			log(e, filename + " cannot be read!");
         }
     }
 
@@ -125,18 +127,8 @@ public abstract class Platform {
         return true;
     }
 
-    private boolean isAvailable(String filename) {
-        try {
-            if (openFile(filename) == null) {
-                // OUT_MSG = "File \"" + filename + "\" could not be found.";
-                return false;
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
-            e.printStackTrace();
-            return false;
-        }
-        // OUT_MSG = "File online , loaded successfully!";
-        return true;
+    private boolean isAvailable(String fileName) {
+        return openFile(fileName) != null;
     }
 
     public void sendInput(int port, byte key, boolean isDown) {
