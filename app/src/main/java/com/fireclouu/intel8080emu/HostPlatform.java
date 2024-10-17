@@ -30,12 +30,12 @@ public class HostPlatform extends Platform {
     private SharedPreferences sp;
     private SoundPool soundPool;
     private SharedPreferences.Editor editor;
-    private Vibrator vibrator;
     private LinearLayout llLogs;
     private ScrollView svLogs;
     private TextView tvLog;
     private Button buttonPause;
 	private Handler handler;
+	private Vibrator vibrator;
  
     public HostPlatform(Activity activity, Context context, Display display, boolean isTestSuite) {
 		super(isTestSuite);
@@ -179,7 +179,7 @@ public class HostPlatform extends Platform {
 
     @Override
     public void vibrate(long milli) {
-        vibrator.vibrate(milli);
+        vibrator.vibrate(VibrationEffect.createOneShot(milli, 20));
     }
 
     @Override

@@ -48,15 +48,15 @@ public class Guest {
 	private final short[] memoryVram = new short[SIZE_VRAM];
 
     public Guest(Platform platform) {
+		this.platform = platform;
+        this.mmu = new Mmu(this, platform);
+        this.cpu = new Cpu(mmu);
+		
 		mapFileData = new LinkedHashMap<>();
 		mapFileData.put("invaders.h", 0x0000);
 		mapFileData.put("invaders.g", 0x0800);
 		mapFileData.put("invaders.f", 0x1000);
 		mapFileData.put("invaders.e", 0x1800);
-		
-		this.platform = platform;
-        this.mmu = new Mmu(this, platform);
-        this.cpu = new Cpu(mmu);
     }
 
     public Cpu getCpu() {
