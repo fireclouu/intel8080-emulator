@@ -12,14 +12,15 @@ import java.util.Map;
 
 public abstract class Platform {
     private ExecutorService executor;
+	private Runnable runnable;
 	private Guest guest;
 	
 	private final int[] mediaIds = new int[9];
     private Emulator emulator;
     private KeyInterrupts keyInterrupts;
     private boolean isLogging;
-    private String romFileName;
-    private boolean isTestSuite = false;
+    private String fileName;
+    private boolean isFileTestSuite = false;
 	private int idMediaPlayed;
 	
 	public abstract void draw(short[] memoryVram);
@@ -31,6 +32,7 @@ public abstract class Platform {
 	public abstract int playMedia(int id, int loop);
 	public abstract int fetchHighscoreOnPlatform();
 	public abstract InputStream openFile(String romName);
+	public abstract String getTestAssetPath();
 	
 	public abstract int getMediaAudioIdAlienKilled();
 	public abstract int getMediaAudioIdAlienMove1();
@@ -47,10 +49,14 @@ public abstract class Platform {
 	public Platform(boolean isTestSuite) {
 		this.guest = new Guest(this);
 		this.executor = Executors.newSingleThreadExecutor();
-		this.isTestSuite = isTestSuite;
+		this.runnable = null;
+		this.isFileTestSuite = isTestSuite;
+		this.emulator = new Emulator(guest);
+        this.keyInterrupts = new KeyInterrupts(emulator);
     }
 	
 	private void init() {
+		initRunnable();
 		initMediaHandler();
 		// audio assets
 		setMediaId(Guest.Media.Audio.ALIEN_KILLED, getMediaAudioIdAlienKilled());
@@ -66,69 +72,70 @@ public abstract class Platform {
 	
     public void start() {
 		init();
-		emulator = new Emulator(guest);
-        keyInterrupts = new KeyInterrupts(emulator);
 		
-        if (isTestSuite) {
-            loadFile("tests/" + romFileName, 0x0100);
-            guest.getMmu().writeTestSuitePatch();
-            guest.getCpu().setPC(0x0100);
-            writeLog("File name: " + romFileName + "\n");
-            for (int i = 0; i <= 25; i++) {
-                writeLog("-");
-            }
-            writeLog("\n");
-        } else {
-            isFilesLoaded();
-        }
-		
-		executor.execute(new Runnable() {
-			@Override
-			public void run() {
-				// FIXME: terminate when pause to
-				// optimize battery usage
-				while (isLooping()) {
-					if (!isPaused()) {
-//						if (!isTestSuite()) {
-//							tickEmulator();
-//						} else {
-//							tickCpuOnly();
-//						}
-						tickEmulator();
+		if (fileIsTestSuite()) {
+			if (!isFileLoadedToRom(getTestAssetPath() + fileName, 0x0100)) return;
+			guest.getMmu().writeTestSuitePatch();
+			guest.getCpu().setPC(0x0100);
+		}
+        
+		if (!isExpectedFilesLoaded()) return;
+		executor.execute(runnable);
+    }
+	
+	private void initRunnable() {
+		if (fileIsTestSuite()) {
+			runnable = new Runnable() {
+				
+				@Override
+				public void run() {
+					while (emulator.isLooping()) {
+						if (isPaused()) continue;
+						emulator.tickCpuOnly();
 					}
 				}
-			}
-		});
-    }
+				
+			};
+		} else {
+			runnable = new Runnable() {
 
-    public void loadFile(String filename, int addr) {
-        InputStream file = openFile(filename);
+				@Override
+				public void run() {
+					while (emulator.isLooping()) {
+						if (isPaused()) continue;
+						emulator.tick();
+					}
+				}
+					
+			};
+		}
+	}
+	
+    private boolean isFileLoadedToRom(String fileName, int startAddress) {
+		boolean result = true;
+        InputStream file = openFile(fileName);
         short read;
 
         try {
             while ((read = (short) file.read()) != -1) {
-				guest.writeMemoryRom(addr++, read);
+				guest.writeMemoryRom(startAddress++, read);
             }
             file.close();
         } catch (IOException e) {
-			log(e, filename + " cannot be read!");
-        }
+			log(e, fileName + " cannot be read!");
+			result = false;
+        } finally {
+			file = null;
+		}
+		
+		return result;
     }
 
-    private boolean isFilesLoaded() {
+    private boolean isExpectedFilesLoaded() {
         for (Map.Entry<String, Integer> item : Guest.mapFileData.entrySet()) {
-            if (isAvailable(item.getKey())) {
-                loadFile(item.getKey(), item.getValue());
-            } else {
-                // System.out.println(OUT_MSG);
-                return false;
-            }
+            if (!isFileLoadedToRom(item.getKey(), item.getValue())) return false;
         }
         return true;
-    }
-
-    private boolean isAvailable(String fileName) {
-        return openFile(fileName) != null;
     }
 
     public void sendInput(int port, byte key, boolean isDown) {
@@ -169,32 +176,14 @@ public abstract class Platform {
         emulator.setPause(pause);
     }
 
-    public void tickEmulator() {
-        emulator.tick();
-    }
+    
 
-    public void tickCpuOnly() {
-        emulator.tickCpuOnly();
-    }
-
-    public boolean isLooping() {
-        return emulator.isLooping();
-    }
-
-    public boolean isTestSuite() {
-        return this.isTestSuite;
-    }
-
-    public void enableTestSuite() {
-        this.isTestSuite = true;
-    }
-
-    public void disableTestSuite() {
-        this.isTestSuite = false;
+    public boolean fileIsTestSuite() {
+        return this.isFileTestSuite;
     }
 
     public void setRomFileName(String romFileName) {
-        this.romFileName = romFileName;
+        this.fileName = romFileName;
     }
 	
 	public void setIdMediaPlayed(int idMediaPlayed) {

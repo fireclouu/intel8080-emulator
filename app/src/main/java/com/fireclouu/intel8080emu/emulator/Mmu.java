@@ -22,7 +22,7 @@ public class Mmu {
         isInitialHiscoreInjected = false;
         readHiscoreMsb = false;
         readHiscoreLsb = false;
-        isTestSuite = platform.isTestSuite();
+        isTestSuite = platform.fileIsTestSuite();
     }
 
     private short interceptValue(int address, short value) {

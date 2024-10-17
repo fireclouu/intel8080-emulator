@@ -216,6 +216,11 @@ public class HostPlatform extends Platform {
         super.togglePause();
     }
 
+	@Override
+	public String getTestAssetPath() {
+		return "tests/";
+	}
+
 	private int getSoundPoolLoadId(int id, int priority) {
 		return soundPool.load(context, id, priority);
 	}
