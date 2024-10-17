@@ -1,6 +1,6 @@
 package com.fireclouu.intel8080emu.emulator;
 
-public class KeyInterrupts {
+public class Inputs {
     public static final byte KEY_COIN = 0b00000001;
     public static final byte KEY_P2_START = 0b00000010;
     public static final byte KEY_P1_START = 0b00000100;
@@ -14,7 +14,7 @@ public class KeyInterrupts {
     private Emulator emulator = null;
     private byte playerPort = INPUT_PORT_1;
 
-    public KeyInterrupts(Emulator emulator) {
+    public Inputs(Emulator emulator) {
         this.emulator = emulator;
     }
 

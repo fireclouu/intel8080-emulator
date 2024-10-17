@@ -49,9 +49,9 @@ public class Emulator {
             case 0: // ?
                 return 0;
             case 1: // input
-                return this.port[KeyInterrupts.INPUT_PORT_1];
+                return this.port[Inputs.INPUT_PORT_1];
             case 2: // input
-                return this.port[KeyInterrupts.INPUT_PORT_2];
+                return this.port[Inputs.INPUT_PORT_2];
             case 3: // rotate shift register
                 int v = (shiftMsb << 8) | shiftLsb;
                 a = (short) ((v >> (8 - shiftOffset)) & 0xff);

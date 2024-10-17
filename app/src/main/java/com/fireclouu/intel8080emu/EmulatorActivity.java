@@ -7,7 +7,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout; 
-import com.fireclouu.intel8080emu.emulator.KeyInterrupts;
+import com.fireclouu.intel8080emu.emulator.Inputs;
 
 public class EmulatorActivity extends Activity implements Button.OnTouchListener, Button.OnClickListener {
     Display display;
@@ -108,11 +108,11 @@ public class EmulatorActivity extends Activity implements Button.OnTouchListener
         int buttonId = view.getId();
         byte key = 0;
 
-        if (buttonId == R.id.btn_p1_coin) key = KeyInterrupts.KEY_COIN;
-        if (buttonId == R.id.btn_p1_start) key = KeyInterrupts.KEY_P1_START;
-        if (buttonId == R.id.btn_p1_fire) key = KeyInterrupts.KEY_FIRE;
-        if (buttonId == R.id.btn_p1_left) key = KeyInterrupts.KEY_LEFT;
-        if (buttonId == R.id.btn_p1_right) key = KeyInterrupts.KEY_RIGHT;
+        if (buttonId == R.id.btn_p1_coin) key = Inputs.KEY_COIN;
+        if (buttonId == R.id.btn_p1_start) key = Inputs.KEY_P1_START;
+        if (buttonId == R.id.btn_p1_fire) key = Inputs.KEY_FIRE;
+        if (buttonId == R.id.btn_p1_left) key = Inputs.KEY_LEFT;
+        if (buttonId == R.id.btn_p1_right) key = Inputs.KEY_RIGHT;
 
         if (hasAction) platform.sendInput(playerPort, key, isDown);
         return false;
@@ -123,7 +123,7 @@ public class EmulatorActivity extends Activity implements Button.OnTouchListener
         byte playerPort = platform.getPlayerPort();
         int buttonId = view.getId();
         if (buttonId == R.id.btn_change_player) {
-            playerPort = playerPort == KeyInterrupts.INPUT_PORT_1 ? KeyInterrupts.INPUT_PORT_2 : KeyInterrupts.INPUT_PORT_1;
+            playerPort = playerPort == Inputs.INPUT_PORT_1 ? Inputs.INPUT_PORT_2 : Inputs.INPUT_PORT_1;
             platform.setPlayerPort(playerPort);
             mButtonSetPlayer.setText("P" + playerPort);
         }

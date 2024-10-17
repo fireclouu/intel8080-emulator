@@ -2,7 +2,7 @@ package com.fireclouu.intel8080emu.emulator;
 
 import com.fireclouu.intel8080emu.emulator.Emulator;
 import com.fireclouu.intel8080emu.emulator.Guest;
-import com.fireclouu.intel8080emu.emulator.KeyInterrupts;
+import com.fireclouu.intel8080emu.emulator.Inputs;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,7 +17,7 @@ public abstract class Platform {
 	
 	private final int[] mediaIds = new int[9];
     private Emulator emulator;
-    private KeyInterrupts keyInterrupts;
+    private Inputs keyInterrupts;
     private boolean isLogging;
     private String fileName;
     private boolean isFileTestSuite = false;
@@ -52,7 +52,7 @@ public abstract class Platform {
 		this.runnable = null;
 		this.isFileTestSuite = isTestSuite;
 		this.emulator = new Emulator(guest);
-        this.keyInterrupts = new KeyInterrupts(emulator);
+        this.keyInterrupts = new Inputs(emulator);
     }
 	
 	private void init() {
