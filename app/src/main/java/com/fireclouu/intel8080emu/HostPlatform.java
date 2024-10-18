@@ -176,7 +176,11 @@ public class HostPlatform extends Platform {
 
     @Override
     public void vibrate(long milli) {
-        vibrator.vibrate(VibrationEffect.createOneShot(milli, 20));
+		if (Build.VERSION.SDK_INT >= 26) {
+			vibrator.vibrate(VibrationEffect.createOneShot(milli, 20));
+		} else {
+			vibrator.vibrate(milli);
+		}
     }
 
     @Override
@@ -216,6 +220,17 @@ public class HostPlatform extends Platform {
 	@Override
 	public String getTestAssetPath() {
 		return "tests/";
+	}
+
+	@Override
+	public void sendNotification(final String message) {
+		Handler handler = new Handler(Looper.getMainLooper());
+		handler.post(new Runnable() {
+				@Override
+				public void run() {
+					Toast.makeText(context, message, Toast.LENGTH_LONG).show();
+				}
+		});
 	}
 
 	private int getSoundPoolLoadId(int id, int priority) {

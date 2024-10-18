@@ -161,7 +161,8 @@ public class Emulator {
 			}
 		}
 
-        // cycle catch-up
+        // catch-up routine
+		/*
 		while (cpuElapsedTime >= ONE_SECOND_IN_NANO && cyclePerSecond < MAX_CYCLE_PER_SECOND) {
 			if (platform.isLogging()) {
 				writeLog(getLogCurrentPc());
@@ -172,6 +173,7 @@ public class Emulator {
 			cyclePerSecond += cycle;
 			cycleGuestTotal += cycle;
 		}
+		*/
 
 		// normal cycle
 		if (cpuElapsedTime < ONE_SECOND_IN_NANO) {

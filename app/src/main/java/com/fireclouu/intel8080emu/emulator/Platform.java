@@ -33,6 +33,7 @@ public abstract class Platform {
 	public abstract int fetchHighscoreOnPlatform();
 	public abstract InputStream openFile(String romName);
 	public abstract String getTestAssetPath();
+	public abstract void sendNotification(String message);
 	
 	public abstract int getMediaAudioIdAlienKilled();
 	public abstract int getMediaAudioIdAlienMove1();
