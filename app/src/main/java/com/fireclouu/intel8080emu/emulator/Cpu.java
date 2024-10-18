@@ -35,7 +35,7 @@ public class Cpu {
     ///  16-BIT REGISTER ADDRESSES  ///
     private int pc, sp;
     ///  INTERRUPT  ///
-    private byte hasInterrupt;
+    private boolean hasInterrupt;
 
     public Cpu(Mmu mmu) {
         this.mmu = mmu;
@@ -55,7 +55,7 @@ public class Cpu {
         pc = 0;
         sp = 0;
 
-        hasInterrupt = 0;
+        hasInterrupt = false;
         cc.init();
     }
 
@@ -899,10 +899,10 @@ public class Cpu {
 
             // INTERRUPTS
             case 0xf3:
-                hasInterrupt = 0;
+                hasInterrupt = false;
                 break; // DI
             case 0xfb:
-                hasInterrupt = 1;
+                hasInterrupt = true;
                 break; // EI
 
             // I/O
@@ -937,13 +937,13 @@ public class Cpu {
     }
 
     /// INTERRUPT
-    public void sendInterrupt(int interrupt_num) {
+    public void sendInterrupt(int vectorAddress) {
         // PUSH PC
         mmu.writeMemory(sp - 1, (short) ((pc & 0xff00) >> 8));
         mmu.writeMemory(sp - 2, (short) (pc & 0xff));
         sp = (sp - 2) & 0xffff;
-        pc = 8 * interrupt_num;
-        hasInterrupt = 0;
+        pc = vectorAddress;
+        hasInterrupt = false;
     }
 
     /// SUBROUTINES
@@ -1274,7 +1274,7 @@ public class Cpu {
         this.pc = pc;
     }
 
-    public byte getInterrupt() {
+    public boolean hasInterrupt() {
         return this.hasInterrupt;
     }
 }

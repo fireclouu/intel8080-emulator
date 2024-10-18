@@ -5,33 +5,35 @@ import com.fireclouu.intel8080emu.emulator.Platform;
 public class Emulator {
 	private Platform platform;
     // Timer and interrupts
+	private final long FRAME_INTERVAL_VBLANK = 8_330_000L;
+	private final long FRAME_INTERVAL_END = 16_670_000L;
+	private final long ONE_SECOND_IN_NANO = 1_000_000_000L;
     private final long MAX_CYCLE_PER_SECOND = 2_000_000;
-    private final double NANO_SEC = 1_000_000.0;
-    private final double VBLANK_START = (1.0 / 60.0) * (NANO_SEC);
-    private final double MIDFRAME = VBLANK_START / 2.0;
-    // private final double WHEN_TO_RUN_CYCLE = 1.0 / 2_000_000.0;
-    // private final double fixedMhz = (WHEN_TO_RUN_CYCLE * (NANO_SEC * 10.0));
-    private final byte INTERRUPT_MID = 1;
-    private final byte INTERRUPT_FULL = 2;
-    public short[] port = new short[8];
-    public short[] lastPortValue = new short[8];
+    
+	private boolean isVblankServiced = false;
+    private short[] port = new short[8];
+    private short[] lastPortValue = new short[8];
     // states
     private boolean isLooping = true;
     private boolean isPaused = false;
     private Cpu cpu;
 	private Guest guest;
     private Mmu mmu;
-    private double timePrev;
-    private double timeNextInterrupt;
-    private byte interruptType = INTERRUPT_MID;
+    
     // I/O
     private short shiftLsb;
     private short shiftMsb;
     private byte shiftOffset = 0;
     private short readPort;
-    private long cycleHostTotal = 0;
+   
     private long cyclePerSecond = 0;
     private long cycleGuestTotal = 0;
+	
+	private long currentTime;
+	private long cpuLastTime;
+	private long cpuElapsedTime;
+	private long frameLastTime;
+	private long frameElapsedTime;
 
     public Emulator(Guest guest) {
 		this.guest = guest;
@@ -40,7 +42,6 @@ public class Emulator {
         this.mmu = guest.getMmu();
 
         cyclePerSecond = 0;
-        cycleHostTotal = 0;
     }
 
     public short handleIn(Cpu cpu, short port) {
@@ -141,48 +142,50 @@ public class Emulator {
     }
 
     public void tick() {
-        // interrupt for space invaders
-        // Check midframe interrupt and rst 1 if true
-        // check final frame interrupt and rst 2 if true
-        if ((cpu.getInterrupt() == 1) && (getSystemNanoTime() >= timeNextInterrupt)) {
-            cpu.sendInterrupt(interruptType);
-			if (interruptType == INTERRUPT_FULL) platform.draw(guest.getMemoryVram());
-            interruptType = (interruptType == INTERRUPT_MID) ? INTERRUPT_FULL : INTERRUPT_MID;
-            timeNextInterrupt = getSystemNanoTime() + MIDFRAME;
-        }
+		currentTime = System.nanoTime();
+		frameElapsedTime = currentTime - frameLastTime;
+		cpuElapsedTime = currentTime - cpuLastTime;
+		if (cpu.hasInterrupt()) {
+			if (frameElapsedTime >= FRAME_INTERVAL_VBLANK && !isVblankServiced) {
+				cpu.sendInterrupt(0x08);
+				isVblankServiced = true;
+			} else if (frameElapsedTime >= FRAME_INTERVAL_END) {
+				cpu.sendInterrupt(0x10);
+				platform.draw(guest.getMemoryVram());
+				frameLastTime = currentTime;
+				isVblankServiced = false;
+			}
+		}
 
-        // 2mhz cycle catch-up
-        while (getSystemNanoTime() > timePrev + NANO_SEC && cyclePerSecond < MAX_CYCLE_PER_SECOND) {
-            
+        // cycle catch-up
+		while (cpuElapsedTime > ONE_SECOND_IN_NANO && cyclePerSecond < MAX_CYCLE_PER_SECOND) {
 			if (platform.isLogging()) {
 				writeLog(getLogCurrentPc());
 			}
-			
-			ioHandler(cpu, cpu.getPC());
-            int cycle = cpu.step();
-            cyclePerSecond += cycle;
-            cycleGuestTotal += cycle;
-        }
 
-        // normal cycle
-        if (getSystemNanoTime() < timePrev + NANO_SEC) {
-            if (platform.isLogging()) {
+			ioHandler(cpu, cpu.getPC());
+			int cycle = cpu.step();
+			cyclePerSecond += cycle;
+			cycleGuestTotal += cycle;
+		}
+
+		// normal cycle
+		if (cpuElapsedTime < ONE_SECOND_IN_NANO) {
+			if (platform.isLogging()) {
 				writeLog(getLogCurrentPc());
 			}
-			
+
 			ioHandler(cpu, cpu.getPC());
-            int cycle = cpu.step();
-            cyclePerSecond += cycle;
-            cycleGuestTotal += cycle;
-        }
+			int cycle = cpu.step();
+			cyclePerSecond += cycle;
+			cycleGuestTotal += cycle;
+		}
 
-        // cycle reset
-        if (getSystemNanoTime() > timePrev + NANO_SEC) {
-            cyclePerSecond = 0;
-			timePrev = getSystemNanoTime();
-        }
-
-        cycleHostTotal++;
+		// cycle reset
+		if (cpuElapsedTime > ONE_SECOND_IN_NANO) {
+			cyclePerSecond = 0;
+			cpuLastTime = currentTime;
+		}
     }
 
     public void tickCpuOnly() {
@@ -250,10 +253,6 @@ public class Emulator {
         return this.isPaused;
     }
 
-    private long getSystemNanoTime() {
-        return System.nanoTime() / 1_000;
-    }
-
     private void writeLog(String message) {
         // platform.writeLog(message);
     }
@@ -261,4 +260,20 @@ public class Emulator {
     private String getLogCurrentPc() {
         return Disassembler.disassemble(mmu, cpu.getPC(), mmu.readMemory(cpu.getPC()));
     }
+	
+	public void setPortValue(int index, byte key) {
+		port[index] = key;
+	}
+	
+	public short getPortValue(int index) {
+		return port[index];
+	}
+	
+	public void setPortXor(int index, byte key) {
+		port[index] |= key;
+	}
+	
+	public void setPortAnd(int index, byte key) {
+		port[index] &= key;
+	}
 }

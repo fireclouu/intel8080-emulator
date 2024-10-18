@@ -19,16 +19,15 @@ public class Inputs {
     }
 
     public void sendInput(int port, byte key, boolean isDown) {
-        // player 2 button fix
         if (port == INPUT_PORT_2 && key == KEY_P1_START) {
             port = 1;
             key = KEY_P2_START;
         }
 
         if (isDown) {
-            emulator.port[port] |= key;
+			emulator.setPortXor(port, key);
         } else {
-            emulator.port[port] &= ~key;
+			emulator.setPortAnd(port, (byte) ~key);
         }
     }
 
