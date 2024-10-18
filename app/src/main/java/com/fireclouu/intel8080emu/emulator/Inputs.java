@@ -11,7 +11,7 @@ public class Inputs {
     public static final byte INPUT_PORT_1 = 0x1;
     public static final byte INPUT_PORT_2 = 0x2;
 
-    private Emulator emulator = null;
+    private final Emulator emulator;
     private byte playerPort = INPUT_PORT_1;
 
     public Inputs(Emulator emulator) {

@@ -102,7 +102,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Chec
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        // TODO: Implement this method
         super.onActivityResult(requestCode, resultCode, data);
 
         if (requestCode == REQUEST_PICK_DOC_MULTI && resultCode == RESULT_OK) {

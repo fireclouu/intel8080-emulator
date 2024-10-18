@@ -12,7 +12,7 @@ import com.fireclouu.intel8080emu.emulator.Inputs;
 public class EmulatorActivity extends Activity implements Button.OnTouchListener, Button.OnClickListener {
     Display display;
     HostPlatform platform;
-	
+
     // Buttons
     private Button mButtonCoin, mButtonP1Start, mButtonP1Left, mButtonP1Right, mButtonP1Fire, mButtonSetPlayer, mButtonLogs;
 
@@ -32,7 +32,7 @@ public class EmulatorActivity extends Activity implements Button.OnTouchListener
         isTestSuite = getIntent().getBooleanExtra(HostUtils.INTENT_FILE_IS_TEST_ROM, false);
         romFileName = getIntent().getStringExtra(HostUtils.INTENT_ROM_FILE_NAME);
 
-		llLogs2 = findViewById(R.id.llLogs2);
+        llLogs2 = findViewById(R.id.llLogs2);
         llLogs = findViewById(R.id.llLogs);
         rlEmulator = findViewById(R.id.rlEmulator);
 

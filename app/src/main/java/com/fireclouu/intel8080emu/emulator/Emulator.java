@@ -1,40 +1,34 @@
 package com.fireclouu.intel8080emu.emulator;
 
-import com.fireclouu.intel8080emu.emulator.Platform;
-
 public class Emulator {
-	private Platform platform;
+	private final Platform platform;
     // Timer and interrupts
 	private final long FRAME_INTERVAL_VBLANK = 8_330_000L;
 	private final long FRAME_INTERVAL_END = 16_670_000L;
 	private final long ONE_SECOND_IN_NANO = 1_000_000_000L;
-    private final long MAX_CYCLE_PER_SECOND = 2_000_000;
+    private final long MAX_CYCLE_PER_SECOND = 2_000_000L;
     
-	private boolean isVblankServiced = false;
-    private short[] port = new short[8];
-    private short[] lastPortValue = new short[8];
+	private boolean isVBlankServiced = false;
+    private final short[] port = new short[8];
+    private final short[] lastPortValue = new short[8];
     // states
     private boolean isLooping = true;
     private boolean isPaused = false;
-    private Cpu cpu;
-	private Guest guest;
-    private Mmu mmu;
+    private final Cpu cpu;
+	private final Guest guest;
+    private final Mmu mmu;
     
     // I/O
     private short shiftLsb;
     private short shiftMsb;
     private byte shiftOffset = 0;
-    private short readPort;
-   
-    private long cyclePerSecond = 0;
-    private long cycleGuestTotal = 0;
+
+    private long cyclePerSecond;
+    private long cycleGuestTotal;
 	
 	private final long programTimeEpoch;
-	private long currentTime;
-	private long cpuLastTime;
-	private long cpuElapsedTime;
-	private long frameLastTime;
-	private long frameElapsedTime;
+    private long cpuLastTime;
+    private long frameLastTime;
 
     public Emulator(Guest guest) {
 		this.guest = guest;
@@ -46,7 +40,7 @@ public class Emulator {
         cyclePerSecond = 0;
     }
 
-    public short handleIn(Cpu cpu, short port) {
+    public short handleIn(short port) {
         short a = 0;
         switch (port) {
             case 0: // ?
@@ -63,7 +57,7 @@ public class Emulator {
         return a;
     }
 
-    public void handleOut(Cpu cpu, short port, short value) {
+    public void handleOut(short port, short value) {
         switch (port) {
             case 2: // shift amount
                 shiftOffset = (byte) (value & 0x7);
@@ -128,52 +122,35 @@ public class Emulator {
     }
 
     public void ioHandler() {
-        readPort = 0;
-        short dataPort = mmu.readMemory(cpu.getPC() + 1);
-        int data = mmu.readMemory(cpu.getPC());
-        switch (data) {
+        short portNumber = mmu.readMemory(cpu.getPC() + 1);
+        int opcode = mmu.readMemory(cpu.getPC());
+        switch (opcode) {
             case 0xdb: // in
-                readPort = dataPort;
-                cpu.setRegA(handleIn(cpu, readPort));
+                cpu.setRegA(handleIn(portNumber));
                 break;
             case 0xd3: // out
-                readPort = dataPort;
-                handleOut(cpu, readPort, cpu.getRegA());
+                handleOut(portNumber, cpu.getRegA());
                 break;
         }
     }
 
     public void tick() {
-		currentTime = getRelativeTimeEpoch();
-		frameElapsedTime = currentTime - frameLastTime;
-		cpuElapsedTime = currentTime - cpuLastTime;
+        long currentTime = getRelativeTimeEpoch();
+        long frameElapsedTime = currentTime - frameLastTime;
+        long cpuElapsedTime = currentTime - cpuLastTime;
 		
 		// frame timings
 		if (cpu.hasInterrupt()) {
-			if (frameElapsedTime >= FRAME_INTERVAL_VBLANK && !isVblankServiced) {
+			if (frameElapsedTime >= FRAME_INTERVAL_VBLANK && !isVBlankServiced) {
 				cpu.sendInterrupt(0x08);
-				isVblankServiced = true;
+				isVBlankServiced = true;
 			} else if (frameElapsedTime >= FRAME_INTERVAL_END) {
 				cpu.sendInterrupt(0x10);
 				platform.draw(guest.getMemoryVram());
 				frameLastTime = currentTime;
-				isVblankServiced = false;
+				isVBlankServiced = false;
 			}
 		}
-
-        // catch-up routine
-		/*
-		while (cpuElapsedTime >= ONE_SECOND_IN_NANO && cyclePerSecond < MAX_CYCLE_PER_SECOND) {
-			if (platform.isLogging()) {
-				writeLog(getLogCurrentPc());
-			}
-
-			ioHandler();
-			int cycle = cpu.step();
-			cyclePerSecond += cycle;
-			cycleGuestTotal += cycle;
-		}
-		*/
 
 		// normal cycle
 		if (cpuElapsedTime < ONE_SECOND_IN_NANO) {
@@ -220,20 +197,18 @@ public class Emulator {
                 writeLog("\n");
             }
         } else if (operation == 9) {
-            int addr = (cpu.getRegD() << 8) | cpu.getRegE();
+            int address = (cpu.getRegD() << 8) | cpu.getRegE();
             char data;
 
-            do {
-                data = (char) mmu.readMemory(addr);
-                if (data == '$') break;
+            while ((data = (char) mmu.readMemory(address)) != '$') {
                 String dataString = Character.valueOf(data).toString();
                 writeLog(dataString);
 
                 if (cpu.getRegE() == 10) {
                     writeLog("\n");
                 }
-                addr++;
-            } while (data != '$');
+                address++;
+            }
         }
 
         cpu.setRegA((short) 0xff);
@@ -266,15 +241,7 @@ public class Emulator {
     private String getLogCurrentPc() {
         return Disassembler.disassemble(mmu, cpu.getPC(), mmu.readMemory(cpu.getPC()));
     }
-	
-	public void setPortValue(int index, byte key) {
-		port[index] = key;
-	}
-	
-	public short getPortValue(int index) {
-		return port[index];
-	}
-	
+
 	public void setPortXor(int index, byte key) {
 		port[index] |= key;
 	}

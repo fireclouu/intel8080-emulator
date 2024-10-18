@@ -2,8 +2,8 @@ package com.fireclouu.intel8080emu.emulator;
 import java.util.LinkedHashMap;
 
 public class Guest {
-	public class Media {
-		public class Audio {
+	public static class Media {
+		public static class Audio {
 			public static final int FIRE = 0;
 			public static final int PLAYER_EXPLODED = 1;
 			public static final int SHIP_INCOMING = 2;
@@ -16,8 +16,8 @@ public class Guest {
 		}
 	}
 	
-	public class Display {
-		public class Orientation {
+	public static class Display {
+		public static class Orientation {
 			public static final int DEFAULT = 0;
 			public static final int PORTRAIT = 1;
 			public static final int LANDSCAPE = 2;

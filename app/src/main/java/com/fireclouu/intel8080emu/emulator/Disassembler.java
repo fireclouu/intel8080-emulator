@@ -43,7 +43,7 @@ public class Disassembler
 	};
 
 	public static String disassemble(Mmu mmu, int pc, int data) {
-		String returnValue = "";
+		String returnValue;
 		String inst = DISASSEMBLE_TABLE[data];
 
 		switch(data) {

@@ -1,36 +1,32 @@
 package com.fireclouu.intel8080emu.emulator;
 
-import com.fireclouu.intel8080emu.emulator.Emulator;
-import com.fireclouu.intel8080emu.emulator.Guest;
-import com.fireclouu.intel8080emu.emulator.Inputs;
-
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.Map;
 
 public abstract class Platform {
-    private ExecutorService executor;
+    private final ExecutorService executor;
 	private Runnable runnable;
-	private Guest guest;
+	private final Guest guest;
 	
 	private final int[] mediaIds = new int[9];
-    private Emulator emulator;
-    private Inputs keyInterrupts;
+    private final Emulator emulator;
+    private final Inputs keyInterrupts;
     private boolean isLogging;
     private String fileName;
-    private boolean isFileTestSuite = false;
+    private final boolean isFileTestSuite;
 	private int idMediaPlayed;
 	
-	public abstract void draw(short[] memoryVram);
+	public abstract void draw(short[] memoryVideoRam);
 	public abstract void stopSound(int id);
 	public abstract void vibrate(long milli);
 	public abstract void writeLog(String message);
 	public abstract void log(Exception e, String message);
-	public abstract void saveHighscoreOnPlatform(int data);
+	public abstract void saveHighScoreOnPlatform(int data);
 	public abstract int playMedia(int id, int loop);
-	public abstract int fetchHighscoreOnPlatform();
+	public abstract int fetchHighScoreOnPlatform();
 	public abstract InputStream openFile(String romName);
 	public abstract String getTestAssetPath();
 	public abstract void sendNotification(String message);
@@ -45,7 +41,7 @@ public abstract class Platform {
 	public abstract int getMediaAudioIdShipHit();
 	public abstract int getMediaAudioIdShipIncoming();
 	public abstract void initMediaHandler();
-	// public abstract float[] convertVramToFloatPoints(Orientation drawOrientation, short[] memory);
+	// public abstract float[] convertVideoRamToFloatPoints(Orientation drawOrientation, short[] memory);
 	
 	public Platform(boolean isTestSuite) {
 		this.guest = new Guest(this);
@@ -83,11 +79,10 @@ public abstract class Platform {
 		if (!isExpectedFilesLoaded()) return;
 		executor.execute(runnable);
     }
-	
+
 	private void initRunnable() {
 		if (fileIsTestSuite()) {
 			runnable = new Runnable() {
-				
 				@Override
 				public void run() {
 					while (emulator.isLooping()) {
@@ -95,11 +90,9 @@ public abstract class Platform {
 						emulator.tickCpuOnly();
 					}
 				}
-				
 			};
 		} else {
 			runnable = new Runnable() {
-
 				@Override
 				public void run() {
 					while (emulator.isLooping()) {
@@ -107,7 +100,6 @@ public abstract class Platform {
 						emulator.tick();
 					}
 				}
-					
 			};
 		}
 	}
@@ -117,7 +109,7 @@ public abstract class Platform {
         InputStream file = openFile(fileName);
         short read;
 
-        try {
+		try {
             while ((read = (short) file.read()) != -1) {
 				guest.writeMemoryRom(startAddress++, read);
             }
@@ -125,10 +117,7 @@ public abstract class Platform {
         } catch (IOException e) {
 			log(e, fileName + " cannot be read!");
 			result = false;
-        } finally {
-			file = null;
-		}
-		
+        }
 		return result;
     }
 

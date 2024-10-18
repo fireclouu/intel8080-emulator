@@ -22,14 +22,8 @@ public class Cpu {
             5, 10, 10, 18, 11, 11, 7, 11, 5, 5, 10, 4, 11, 17, 7, 11, // E
             5, 10, 10, 4, 11, 11, 7, 11, 5, 5, 10, 4, 11, 17, 7, 11  // F
     };
-    ///  PSW FLAG POSITIONS  ///
-    private final int PSW_FLAG_POS_CY = 0b00000001; // on bit pos 0 (Carry)
-    private final int PSW_FLAG_POS_PA = 0b00000100; // on bit pos 2 (Parity)
-    private final int PSW_FLAG_POS_AC = 0b00010000; // on bit pos 4 (Aux. carry)
-    private final int PSW_FLAG_POS_ZE = 0b01000000; // on bit pos 6 (Zero)
-    private final int PSW_FLAG_POS_SN = 0b10000000; // on bit pos 7 (Sign)
     private short opcodeCycle = 0;
-    private Flags cc;
+    private final Flags cc;
     ///  REGISTERS  ///
     private short b, c, d, e, h, l, a;
     ///  16-BIT REGISTER ADDRESSES  ///
@@ -63,7 +57,7 @@ public class Cpu {
         int opcode = pc;
 
         // HL (M)
-        int addr = ((h << 8) | l);
+        int address = ((h << 8) | l);
 
         // increment PC every calls
         pc++;
@@ -121,7 +115,7 @@ public class Cpu {
                 if (cc.ac == 1 || lsb > 9) {
                     correction += 0x06;
                 }
-                if (cc.cy == 1 || msb > 9 || (msb >= 9 && lsb > 9)) {
+                if (cc.cy == 1 || msb > 9 || (msb == 9 && lsb > 9)) {
                     correction += 0x60;
                     cy = 1;
                 }
@@ -157,8 +151,6 @@ public class Cpu {
                 instr_xchg();
                 break; // XCHG (HL to DE vice-versa)
 
-            ///  MOV  ///
-
             // IMMEDIATE
             case 0x06:
                 b = mmu.readMemory(opcode + 1);
@@ -185,7 +177,7 @@ public class Cpu {
                 pc++;
                 break; // MVI L, D8
             case 0x36:
-                mmu.writeMemory(addr, mmu.readMemory(opcode + 1));
+                mmu.writeMemory(address, mmu.readMemory(opcode + 1));
                 pc++;
                 break; // MVI M, D8
             case 0x3e:
@@ -212,7 +204,7 @@ public class Cpu {
                 b = l;
                 break; // MOV B, L
             case 0x46:
-                b = mmu.readMemory(addr);
+                b = mmu.readMemory(address);
                 break; // MOV B, M
             case 0x47:
                 b = a;
@@ -237,7 +229,7 @@ public class Cpu {
                 c = l;
                 break; // MOV C, L
             case 0x4e:
-                c = mmu.readMemory(addr);
+                c = mmu.readMemory(address);
                 break; // MOV C, M
             case 0x4f:
                 c = a;
@@ -262,7 +254,7 @@ public class Cpu {
                 d = l;
                 break; // MOV D, L
             case 0x56:
-                d = mmu.readMemory(addr);
+                d = mmu.readMemory(address);
                 break; // MOV D, M
             case 0x57:
                 d = a;
@@ -287,7 +279,7 @@ public class Cpu {
                 e = l;
                 break; // MOV E, L
             case 0x5e:
-                e = mmu.readMemory(addr);
+                e = mmu.readMemory(address);
                 break; // MOV E, M
             case 0x5f:
                 e = a;
@@ -312,7 +304,7 @@ public class Cpu {
                 h = l;
                 break; // MOV H, L
             case 0x66:
-                h = mmu.readMemory(addr);
+                h = mmu.readMemory(address);
                 break; // MOV H, M
             case 0x67:
                 h = a;
@@ -337,7 +329,7 @@ public class Cpu {
             case 0x6d:
                 break; // MOV L, L
             case 0x6e:
-                l = mmu.readMemory(addr);
+                l = mmu.readMemory(address);
                 break; // MOV L, M
             case 0x6f:
                 l = a;
@@ -345,25 +337,25 @@ public class Cpu {
 
             // MEMORY
             case 0x70:
-                mmu.writeMemory(addr, b);
+                mmu.writeMemory(address, b);
                 break; // MOV M, B
             case 0x71:
-                mmu.writeMemory(addr, c);
+                mmu.writeMemory(address, c);
                 break; // MOV M, C
             case 0x72:
-                mmu.writeMemory(addr, d);
+                mmu.writeMemory(address, d);
                 break; // MOV M, D
             case 0x73:
-                mmu.writeMemory(addr, e);
+                mmu.writeMemory(address, e);
                 break; // MOV M, E
             case 0x74:
-                mmu.writeMemory(addr, h);
+                mmu.writeMemory(address, h);
                 break; // MOV M, H
             case 0x75:
-                mmu.writeMemory(addr, l);
+                mmu.writeMemory(address, l);
                 break; // MOV M, L
             case 0x77:
-                mmu.writeMemory(addr, a);
+                mmu.writeMemory(address, a);
                 break; // MOV M, A
 
             // A
@@ -386,12 +378,10 @@ public class Cpu {
                 a = l;
                 break; // MOV A, L
             case 0x7e:
-                a = mmu.readMemory(addr);
+                a = mmu.readMemory(address);
                 break; // MOV A, M
             case 0x7f:
                 break; // MOV A, A
-
-            ///  ALU  ///
 
             // ADD
             case 0x80:
@@ -413,7 +403,7 @@ public class Cpu {
                 instr_add(l, 0);
                 break; // ADD L
             case 0x86:
-                instr_add(mmu.readMemory(addr), 0);
+                instr_add(mmu.readMemory(address), 0);
                 break; // ADD M
             case 0x87:
                 instr_add(a, 0);
@@ -439,7 +429,7 @@ public class Cpu {
                 instr_add(l, cc.cy);
                 break; // ADC L
             case 0x8e:
-                instr_add(mmu.readMemory(addr), cc.cy);
+                instr_add(mmu.readMemory(address), cc.cy);
                 break; // ADC M
             case 0x8f:
                 instr_add(a, cc.cy);
@@ -465,7 +455,7 @@ public class Cpu {
                 instr_sub(l, 0);
                 break; // SUB L
             case 0x96:
-                instr_sub(mmu.readMemory(addr), 0);
+                instr_sub(mmu.readMemory(address), 0);
                 break; // SUB M
             case 0x97:
                 instr_sub(a, 0);
@@ -491,7 +481,7 @@ public class Cpu {
                 instr_sub(l, cc.cy);
                 break; // SBB L
             case 0x9e:
-                instr_sub(mmu.readMemory(addr), cc.cy);
+                instr_sub(mmu.readMemory(address), cc.cy);
                 break; // SBB M
             case 0x9f:
                 instr_sub(a, cc.cy);
@@ -517,7 +507,7 @@ public class Cpu {
                 instr_ana(l);
                 break; // ANA L
             case 0xa6:
-                instr_ana(mmu.readMemory(addr));
+                instr_ana(mmu.readMemory(address));
                 break; // ANA M
             case 0xa7:
                 instr_ana(a);
@@ -543,7 +533,7 @@ public class Cpu {
                 instr_xra(l);
                 break; // XRA L
             case 0xae:
-                instr_xra(mmu.readMemory(addr));
+                instr_xra(mmu.readMemory(address));
                 break; // XRA M
             case 0xaf:
                 instr_xra(a);
@@ -569,7 +559,7 @@ public class Cpu {
                 instr_ora(l);
                 break; // ORA L
             case 0xb6:
-                instr_ora(mmu.readMemory(addr));
+                instr_ora(mmu.readMemory(address));
                 break; // ORA M
             case 0xb7:
                 instr_ora(a);
@@ -595,7 +585,7 @@ public class Cpu {
                 instr_cmp(l);
                 break; // CMP L
             case 0xbe:
-                instr_cmp(mmu.readMemory(addr));
+                instr_cmp(mmu.readMemory(address));
                 break; // CMP M
             case 0xbf:
                 instr_cmp(a);
@@ -621,7 +611,7 @@ public class Cpu {
                 l = instr_inr(l);
                 break; // INR L
             case 0x34:
-                mmu.writeMemory(addr, instr_inr(mmu.readMemory(addr)));
+                mmu.writeMemory(address, instr_inr(mmu.readMemory(address)));
                 break; // INR M
             case 0x3c:
                 a = instr_inr(a);
@@ -647,7 +637,7 @@ public class Cpu {
                 l = instr_dcr(l);
                 break; // DCR L
             case 0x35:
-                mmu.writeMemory(addr, instr_dcr(mmu.readMemory(addr)));
+                mmu.writeMemory(address, instr_dcr(mmu.readMemory(address)));
                 break; // DCR M
             case 0x3d:
                 a = instr_dcr(a);
@@ -737,8 +727,6 @@ public class Cpu {
                 pc++;
                 break; // CPI D8
 
-            ///  BRANCH  ////
-
             // JUMPS
             case 0xc3:
                 instr_jmp(opcode);
@@ -750,7 +738,7 @@ public class Cpu {
                 instr_call(opcode);
                 break; // CALL adr
             case 0xe9:
-                pc = addr;
+                pc = address;
                 break; // PCHL
 
             // RET (conditional)
@@ -831,8 +819,6 @@ public class Cpu {
                 conditional_call(opcode, cc.s == 1);
                 break; // CM adr
 
-            ///  STACK  ///
-
             // POP
             case 0xc1:
                 set_pair_bc(instr_pop());
@@ -866,10 +852,8 @@ public class Cpu {
                 instr_xthl();
                 break; // XTHL
             case 0xf9:
-                instr_sphl(addr);
+                instr_sphl(address);
                 break; // SPHL
-
-            ///  SIGNAL  ///
 
             // RST
             case 0xc7:
@@ -918,7 +902,6 @@ public class Cpu {
                 System.exit(0);
                 break; // HLT
 
-            ///  NO OPERATIONS  ///
             case 0x00:
             case 0x08:
             case 0x10:
@@ -1069,22 +1052,22 @@ public class Cpu {
 
     // JUMPS
     private void instr_call(int opcode) {
-        int nextAddr = opcode + 3;
-        mmu.writeMemory(sp - 1, (short) ((nextAddr >> 8) & 0xff));
-        mmu.writeMemory(sp - 2, (short) (nextAddr & 0xff));
+        int nextAddress = opcode + 3;
+        mmu.writeMemory(sp - 1, (short) ((nextAddress >> 8) & 0xff));
+        mmu.writeMemory(sp - 2, (short) (nextAddress & 0xff));
         sp = (sp - 2) & 0xffff;
         instr_jmp(opcode);
     }
 
     private void instr_dad(int... var) {
-        int hl = (h << 8) | l; // addr = 16bit
+        int hl = (h << 8) | l;
         int pair;
         if (var.length == 2) {
             pair = (var[0] << 8) | var[1];
         } else {
             pair = var[0];
         }
-        int res = hl + pair; // may result greater than 16 bit, raise CY if occured
+        int res = hl + pair; // may result greater than 16 bit, raise CY if occurred
         cc.cy = ((res & 0xf_0000) > 0) ? (byte) 1 : 0; // cut all values from lower 16 bit and check if higher 16 bit has value
         h = (short) ((res & 0xff00) >> 8); // store higher 8-bit to H
         l = (short) (res & 0xff); // store lower  8-bit to L
@@ -1095,18 +1078,24 @@ public class Cpu {
     }
 
     private void instr_lda(int hi_nib, int lo_nib) {
-        int addr = (hi_nib << 8) | lo_nib;
-        a = mmu.readMemory(addr);
+        int address = (hi_nib << 8) | lo_nib;
+        a = mmu.readMemory(address);
     }
 
     private void instr_lhld(int opcode) {
-        int addr = (mmu.readMemory(opcode + 2) << 8) | mmu.readMemory(opcode + 1);
-        h = mmu.readMemory(addr + 1);
-        l = mmu.readMemory(addr);
+        int address = (mmu.readMemory(opcode + 2) << 8) | mmu.readMemory(opcode + 1);
+        h = mmu.readMemory(address + 1);
+        l = mmu.readMemory(address);
     }
 
     private void pop_psw() {
         int PSW = mmu.readMemory(sp);
+        int PSW_FLAG_POS_CY = 0b00000001;
+        int PSW_FLAG_POS_PA = 0b00000100;
+        int PSW_FLAG_POS_AC = 0b00010000;
+        int PSW_FLAG_POS_ZE = 0b01000000;
+        int PSW_FLAG_POS_SN = 0b10000000;
+
         cc.cy = ((PSW & PSW_FLAG_POS_CY) != 0) ? (byte) 1 : 0;
         cc.p = ((PSW & PSW_FLAG_POS_PA) != 0) ? (byte) 1 : 0;
         cc.ac = ((PSW & PSW_FLAG_POS_AC) != 0) ? (byte) 1 : 0;
@@ -1157,9 +1146,9 @@ public class Cpu {
     }
 
     private void instr_ret() {
-        int addr = mmu.readMemory(sp + 1) << 8 | mmu.readMemory(sp);
+        int address = mmu.readMemory(sp + 1) << 8 | mmu.readMemory(sp);
         sp = (sp + 2) & 0xffff;
-        pc = addr;
+        pc = address;
     }
 
     private void instr_rlc() {
@@ -1173,9 +1162,9 @@ public class Cpu {
     }
 
     private void instr_shld(int opcode) {
-        int addr = mmu.readMemory(opcode + 2) << 8 | mmu.readMemory(opcode + 1);
-        mmu.writeMemory(addr + 1, h);
-        mmu.writeMemory(addr, l);
+        int address = mmu.readMemory(opcode + 2) << 8 | mmu.readMemory(opcode + 1);
+        mmu.writeMemory(address + 1, h);
+        mmu.writeMemory(address, l);
     }
 
     private void instr_sphl(int address) {
@@ -1183,8 +1172,8 @@ public class Cpu {
     }
 
     private void instr_sta(int hi_nib, int lo_nib) {
-        int addr = (hi_nib << 8) | lo_nib;
-        mmu.writeMemory(addr, a);
+        int address = (hi_nib << 8) | lo_nib;
+        mmu.writeMemory(address, a);
     }
 
     private void instr_xchg() {
@@ -1198,13 +1187,10 @@ public class Cpu {
         l = (short) (l - e);
     }
 
-    // FIXME
     private void instr_xthl() {
-        // SWAP H and Top + 1  SP (under of top stack)
         h = (short) (h + mmu.readMemory(sp + 1));
         mmu.writeMemory(sp + 1, (short) (h - mmu.readMemory(sp + 1)));
         h = (short) (h - mmu.readMemory(sp + 1));
-        // SWAP L and Top SP (top stack)
         l = (short) (l + mmu.readMemory(sp));
         mmu.writeMemory(sp, (short) (l - mmu.readMemory(sp)));
         l = (short) (l - mmu.readMemory(sp));
@@ -1234,10 +1220,6 @@ public class Cpu {
         return ((carry & (1 << bit_no)) != 0) ? (byte) 1 : 0;
     }
 
-    public short getRegB() {
-        return this.b;
-    }
-
     public short getRegC() {
         return this.c;
     }
@@ -1248,14 +1230,6 @@ public class Cpu {
 
     public short getRegE() {
         return this.e;
-    }
-
-    public short getRegH() {
-        return this.h;
-    }
-
-    public short getRegL() {
-        return this.l;
     }
 
     public short getRegA() {

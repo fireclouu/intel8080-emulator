@@ -3,8 +3,12 @@ package com.fireclouu.intel8080emu;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.media.AudioManager;
+import android.media.AudioAttributes;
 import android.media.SoundPool;
+import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
 import android.view.View;
@@ -13,32 +17,27 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import com.fireclouu.intel8080emu.emulator.Platform;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import com.fireclouu.intel8080emu.emulator.*;
-import android.media.*;
-import android.os.*;
+import java.util.Objects;
 
 public class HostPlatform extends Platform {
 	private final Display display;
-	private final Activity activity;
     private final Context context;
-    private SharedPreferences sharedPreferences;
+    private final SharedPreferences sharedPreferences;
     private SoundPool soundPool;
-    private LinearLayout llLogs;
-    private ScrollView svLogs;
-    private TextView tvLog;
-    private Button buttonPause;
+    private final LinearLayout llLogs;
+    private final ScrollView svLogs;
+    private final TextView tvLog;
+    private final Button buttonPause;
 	private Handler handler;
-	private Vibrator vibrator;
- 
+	private final Vibrator vibrator;
+
     public HostPlatform(Activity activity, Context context, Display display, boolean isTestSuite) {
 		super(isTestSuite);
-		this.activity = activity;
 		this.context = context;
 		this.display = display;
 		tvLog = activity.findViewById(R.id.tvLog);
@@ -68,7 +67,9 @@ public class HostPlatform extends Platform {
 			audioAttribBuilder.setAllowedCapturePolicy(AudioAttributes.ALLOW_CAPTURE_BY_ALL);
 		}
 
-		audioAttribBuilder.setFlags(AudioAttributes.FLAG_LOW_LATENCY);
+		if (Build.VERSION.SDK_INT >= 24) {
+			audioAttribBuilder.setFlags(AudioAttributes.FLAG_LOW_LATENCY);
+		}
 
 		SoundPool.Builder soundPoolBuilder = new SoundPool.Builder();
 		soundPoolBuilder.setAudioAttributes(audioAttribBuilder.build());
@@ -133,8 +134,8 @@ public class HostPlatform extends Platform {
     }
 	
 	@Override
-	public void draw(short[] memoryVram) {
-		display.draw(memoryVram);
+	public void draw(short[] memoryVideoRam) {
+		display.draw(memoryVideoRam);
 	}
 
     @Override
@@ -161,16 +162,16 @@ public class HostPlatform extends Platform {
     }
 	
 	@Override
-	public int fetchHighscoreOnPlatform() {
-        return getIntOnSharedPreferences(HostUtils.ITEM_HISCORE);
+	public int fetchHighScoreOnPlatform() {
+        return getIntOnSharedPreferences(HostUtils.ITEM_HIGH_SCORE);
     }
 	
 	@Override
-    public void saveHighscoreOnPlatform(int data) {
-        int storedHiscore = getIntOnSharedPreferences(HostUtils.ITEM_HISCORE);
+    public void saveHighScoreOnPlatform(int data) {
+        int storedHighScore = getIntOnSharedPreferences(HostUtils.ITEM_HIGH_SCORE);
 
-        if (data > storedHiscore) {
-            putIntOnSharedPreferences(HostUtils.ITEM_HISCORE, data);
+        if (data > storedHighScore) {
+            putIntOnSharedPreferences(HostUtils.ITEM_HIGH_SCORE, data);
         }
     }
 
@@ -202,8 +203,7 @@ public class HostPlatform extends Platform {
 	@Override
 	public void log(Exception e, String message) {
 		Log.e(HostUtils.TAG, message);
-		if (e == null) return;
-		Log.e(HostUtils.TAG, e.getMessage());
+		Log.e(HostUtils.TAG, Objects.requireNonNull(e.getMessage()));
 	}
 
     @Override
