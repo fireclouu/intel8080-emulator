@@ -29,6 +29,7 @@ public class Emulator {
     private long cyclePerSecond = 0;
     private long cycleGuestTotal = 0;
 	
+	private final long programTimeEpoch;
 	private long currentTime;
 	private long cpuLastTime;
 	private long cpuElapsedTime;
@@ -40,7 +41,8 @@ public class Emulator {
 		this.platform = guest.getPlatform();
         this.cpu = guest.getCpu();
         this.mmu = guest.getMmu();
-
+		this.programTimeEpoch = System.nanoTime();
+		
         cyclePerSecond = 0;
     }
 
@@ -125,10 +127,10 @@ public class Emulator {
         }
     }
 
-    public void ioHandler(Cpu cpu, int opcode) {
+    public void ioHandler() {
         readPort = 0;
-        short dataPort = mmu.readMemory(opcode + 1);
-        int data = mmu.readMemory(opcode);
+        short dataPort = mmu.readMemory(cpu.getPC() + 1);
+        int data = mmu.readMemory(cpu.getPC());
         switch (data) {
             case 0xdb: // in
                 readPort = dataPort;
@@ -142,9 +144,11 @@ public class Emulator {
     }
 
     public void tick() {
-		currentTime = System.nanoTime();
+		currentTime = getRelativeTimeEpoch();
 		frameElapsedTime = currentTime - frameLastTime;
 		cpuElapsedTime = currentTime - cpuLastTime;
+		
+		// frame timings
 		if (cpu.hasInterrupt()) {
 			if (frameElapsedTime >= FRAME_INTERVAL_VBLANK && !isVblankServiced) {
 				cpu.sendInterrupt(0x08);
@@ -158,12 +162,12 @@ public class Emulator {
 		}
 
         // cycle catch-up
-		while (cpuElapsedTime > ONE_SECOND_IN_NANO && cyclePerSecond < MAX_CYCLE_PER_SECOND) {
+		while (cpuElapsedTime >= ONE_SECOND_IN_NANO && cyclePerSecond < MAX_CYCLE_PER_SECOND) {
 			if (platform.isLogging()) {
 				writeLog(getLogCurrentPc());
 			}
 
-			ioHandler(cpu, cpu.getPC());
+			ioHandler();
 			int cycle = cpu.step();
 			cyclePerSecond += cycle;
 			cycleGuestTotal += cycle;
@@ -175,7 +179,7 @@ public class Emulator {
 				writeLog(getLogCurrentPc());
 			}
 
-			ioHandler(cpu, cpu.getPC());
+			ioHandler();
 			int cycle = cpu.step();
 			cyclePerSecond += cycle;
 			cycleGuestTotal += cycle;
@@ -275,5 +279,9 @@ public class Emulator {
 	
 	public void setPortAnd(int index, byte key) {
 		port[index] &= key;
+	}
+	
+	private long getRelativeTimeEpoch() {
+		return System.nanoTime() - programTimeEpoch;
 	}
 }
