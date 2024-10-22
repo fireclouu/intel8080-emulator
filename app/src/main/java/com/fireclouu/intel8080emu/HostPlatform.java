@@ -186,7 +186,9 @@ public class HostPlatform extends Platform {
 
     @Override
     public void writeLog(final String message) {
-        handler.post(new Runnable() {
+        if (!isLogging) return;
+
+		handler.post(new Runnable() {
             @Override
             public void run() {
                 tvLog.append(message);
@@ -205,12 +207,6 @@ public class HostPlatform extends Platform {
 		Log.e(HostUtils.TAG, message);
 		Log.e(HostUtils.TAG, Objects.requireNonNull(e.getMessage()));
 	}
-
-    @Override
-    public void toggleLog(boolean value) {
-        super.toggleLog(value);
-        tvLog.setText("");
-    }
 
     @Override
     public void togglePause() {

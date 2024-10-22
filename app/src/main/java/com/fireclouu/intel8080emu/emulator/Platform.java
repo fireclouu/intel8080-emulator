@@ -14,7 +14,7 @@ public abstract class Platform {
 	private final int[] mediaIds = new int[9];
     private final Emulator emulator;
     private final Inputs keyInterrupts;
-    private boolean isLogging;
+    protected boolean isLogging;
     private String fileName;
     private final boolean isFileTestSuite;
 	private int idMediaPlayed;
@@ -153,20 +153,10 @@ public abstract class Platform {
         executor.shutdown();
     }
 
-    public boolean isLogging() {
-        return isLogging;
-    }
-
-    public void toggleLog(boolean value) {
-        this.isLogging = value;
-    }
-
     public void togglePause() {
         boolean pause = !emulator.isPaused();
         emulator.setPause(pause);
     }
-
-    
 
     public boolean fileIsTestSuite() {
         return this.isFileTestSuite;

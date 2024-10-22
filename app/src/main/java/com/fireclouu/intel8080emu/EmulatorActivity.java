@@ -133,7 +133,6 @@ public class EmulatorActivity extends Activity implements Button.OnTouchListener
             int toggledVisibility = isVisible ? View.GONE : View.VISIBLE;
             llLogs.setVisibility(toggledVisibility);
             isVisible = llLogs.getVisibility() == View.VISIBLE;
-            platform.toggleLog(isVisible);	
         }
     }
 

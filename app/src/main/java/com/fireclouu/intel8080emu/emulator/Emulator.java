@@ -154,9 +154,7 @@ public class Emulator {
 
 		// normal cycle
 		if (cpuElapsedTime < ONE_SECOND_IN_NANO) {
-			if (platform.isLogging()) {
-				writeLog(getLogCurrentPc());
-			}
+			platform.writeLog(getLogCurrentPc());
 
 			ioHandler();
 			int cycle = cpu.getCurrentOpcodeCycle();
@@ -192,10 +190,10 @@ public class Emulator {
         if (operation == 2) {
             char data = (char) cpu.getRegE();
             String dataString = Character.valueOf(data).toString();
-            writeLog(dataString);
+            platform.writeLog(dataString);
 
             if (cpu.getRegE() == 10) {
-                writeLog("\n");
+                platform.writeLog("\n");
             }
         } else if (operation == 9) {
             int address = (cpu.getRegD() << 8) | cpu.getRegE();
@@ -203,10 +201,10 @@ public class Emulator {
 
             while ((data = (char) mmu.readMemory(address)) != '$') {
                 String dataString = Character.valueOf(data).toString();
-                writeLog(dataString);
+                platform.writeLog(dataString);
 
                 if (cpu.getRegE() == 10) {
-                    writeLog("\n");
+                    platform.writeLog("\n");
                 }
                 address++;
             }
@@ -233,10 +231,6 @@ public class Emulator {
 
     public boolean isPaused() {
         return this.isPaused;
-    }
-
-    private void writeLog(String message) {
-        // platform.writeLog(message);
     }
 
     private String getLogCurrentPc() {
