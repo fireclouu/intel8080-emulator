@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.Build;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -91,7 +92,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
         enableOffset = hasWidthSpace(scaleValue);
         return scaleValue;
     }
-	
+
     public float[] convertVramToFloatPoints(int drawOrientation, short[] memory) {
         float centerOffset = enableOffset ? getCenterOffset(orientationWidth * pixelHostSize) : 0;
         final float spacing = pixelHostSize;
@@ -127,7 +128,6 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
 
                 mapX = bit + (8 * (map % guestLinearDataLength));
 
-                // translate pixel
                 if (drawOrientation == Orientation.PORTRAIT) {
                     translateX = mapY;
                     translateY = Math.abs(mapX - orientationHeight);
@@ -161,10 +161,15 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
         paintWhite.setStrokeWidth(pixelHostSize + 0.5f);
 
         // canvas
-        canvas = holder.getSurface().lockHardwareCanvas();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            canvas = holder.lockHardwareCanvas();
+        } else {
+            canvas = holder.getSurface().lockHardwareCanvas();
+        }
+
         canvas.drawColor(Color.BLACK);
         canvas.drawPoints(convertVramToFloatPoints(DRAW_ORIENTATION, memory), paintWhite);
-		
+
         // release
         holder.getSurface().unlockCanvasAndPost(canvas);
     }

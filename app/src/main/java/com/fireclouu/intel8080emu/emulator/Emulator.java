@@ -1,43 +1,47 @@
 package com.fireclouu.intel8080emu.emulator;
 
 public class Emulator {
-	private final Platform platform;
+    private final Platform platform;
     // Timer and interrupts
-	private final long FRAME_INTERVAL_VBLANK = 8_330_000L;
-	private final long FRAME_INTERVAL_END = 16_670_000L;
-	private final long NANO_ONE_SECOND = 1_000_000_000L;
-	private final long MILLI_ONE_SECOND = 1_000_000L;
+    private final long FRAME_INTERVAL_VBLANK = 8_330_000L;
+    private final long FRAME_INTERVAL_END = 16_670_000L;
+    private final long NANO_ONE_SECOND = 1_000_000_000L;
+    private final long MILLI_ONE_SECOND = 1_000_000L;
     private final long MAX_CYCLE_PER_SECOND = 2_000_000L;
-    
-	private boolean isVBlankServiced = false;
+
+    private boolean isVBlankServiced = false;
     private final short[] port = new short[8];
     private final short[] lastPortValue = new short[8];
     // states
-    private boolean isLooping = true;
+    private boolean running = true;
     private boolean isPaused = false;
     private final Cpu cpu;
-	private final Guest guest;
+    private final Guest guest;
     private final Mmu mmu;
-    
+
     // I/O
     private short shiftLsb;
     private short shiftMsb;
     private byte shiftOffset = 0;
 
     private long cyclePerSecond;
-    private long cycleGuestTotal;
-	
-	private final long programTimeEpoch;
+
+    private final long programTimeEpoch;
     private long cpuLastTime;
     private long frameLastTime;
 
+    // system
+    private long systemCurrentTime;
+    private long systemLastTime;
+    private long systemGuestCycleTotal;
+
     public Emulator(Guest guest) {
-		this.guest = guest;
-		this.platform = guest.getPlatform();
+        this.guest = guest;
+        this.platform = guest.getPlatform();
         this.cpu = guest.getCpu();
         this.mmu = guest.getMmu();
-		this.programTimeEpoch = System.nanoTime();
-		
+        this.programTimeEpoch = System.nanoTime();
+
         cyclePerSecond = 0;
     }
 
@@ -67,9 +71,9 @@ public class Emulator {
                 if (value != lastPortValue[3]) {
                     if ((value & 0x1) > 0 && (lastPortValue[3] & 0x1) == 0) {
                         int id = platform.playMedia(Guest.Media.Audio.SHIP_INCOMING, -1);
-						platform.setIdMediaPlayed(id);
+                        platform.setIdMediaPlayed(id);
                     } else if ((value & 0x1) == 0 && (lastPortValue[3] & 0x1) > 0) {
-						platform.stopSound(platform.getIdMediaPlayed());
+                        platform.stopSound(platform.getIdMediaPlayed());
                     }
 
                     if ((value & 0x2) > 0 && (lastPortValue[3] & 0x2) == 0) {
@@ -83,7 +87,7 @@ public class Emulator {
 
                     if ((value & 0x8) > 0 && (lastPortValue[3] & 0x8) == 0) {
                         platform.playMedia(Guest.Media.Audio.ALIEN_KILLED, 0);
-						platform.vibrate(20);
+                        platform.vibrate(20);
                     }
 
                     lastPortValue[3] = value;
@@ -114,7 +118,7 @@ public class Emulator {
 
                     if ((value & 0x10) > 0 && (lastPortValue[5] & 0x10) == 0) {
                         platform.playMedia(Guest.Media.Audio.SHIP_HIT, 0);
-						platform.vibrate(800);
+                        platform.vibrate(800);
                     }
 
                     lastPortValue[5] = value;
@@ -134,69 +138,58 @@ public class Emulator {
                 break;
         }
     }
-	
+
     public void tick() {
         long currentTime = getRelativeTimeEpoch();
         long frameElapsedTime = currentTime - frameLastTime;
         long cpuElapsedTime = currentTime - cpuLastTime;
-		
-		// frame timings
-		if (cpu.hasInterrupt()) {
-			if (frameElapsedTime >= FRAME_INTERVAL_VBLANK && !isVBlankServiced) {
-				cpu.sendInterrupt(0x08);
-				isVBlankServiced = true;
-			} else if (frameElapsedTime >= FRAME_INTERVAL_END) {
-				cpu.sendInterrupt(0x10);
-				platform.draw(guest.getMemoryVram());
-				frameLastTime = currentTime;
-				isVBlankServiced = false;
-			}
-		}
-		
-		// cycle with timings
-		boolean needsToCatchup = cyclePerSecond < MAX_CYCLE_PER_SECOND && cpuElapsedTime > NANO_ONE_SECOND;
-		
-		while (needsToCatchup) {
-			int cycle = cpu.getCurrentOpcodeCycle();
-			ioHandler();
-			cpu.step();
-			cyclePerSecond += cycle;
-			cycleGuestTotal += cycle;
-			needsToCatchup = cyclePerSecond < MAX_CYCLE_PER_SECOND && cpuElapsedTime > NANO_ONE_SECOND;
-		}
-		
-		if (!needsToCatchup) {
-			long remainingTime = NANO_ONE_SECOND - cpuElapsedTime;
-			long remainingCycle = MAX_CYCLE_PER_SECOND - cyclePerSecond;
-			long nextExecutionInMills = 0;
-			int cycle = cpu.getCurrentOpcodeCycle();
-			
-			try {
-				if (remainingCycle > cycle) {
-					nextExecutionInMills = (remainingTime / (remainingCycle / cycle)) / MILLI_ONE_SECOND;
-				}
-			} catch (Exception e) {
-				platform.writeLog(e.getMessage());
-			}
+        systemCurrentTime = getRelativeTimeEpoch();
+        // frame timings
+        if (cpu.hasInterrupt()) {
+            if (frameElapsedTime >= FRAME_INTERVAL_VBLANK && !isVBlankServiced) {
+                cpu.sendInterrupt(0x08);
+                isVBlankServiced = true;
+            } else if (frameElapsedTime >= FRAME_INTERVAL_END) {
+                cpu.sendInterrupt(0x10);
+                platform.draw(guest.getMemoryVram());
+                frameLastTime = currentTime;
+                isVBlankServiced = false;
+            }
+        }
 
-			try {
-				Thread.sleep(nextExecutionInMills);
-			} catch (Exception e) {
-				platform.writeLog(e.getMessage());
-			}
+        // cycle with timings
+        boolean isCatchUpNeeded = false;
+        while (cyclePerSecond < MAX_CYCLE_PER_SECOND && cpuElapsedTime > NANO_ONE_SECOND) {
+            platform.log(null, "Catching up");
+            int cycle = cpu.getCurrentOpcodeCycle();
+            ioHandler();
+            cpu.step();
+            cyclePerSecond += cycle;
+            systemGuestCycleTotal += cycle;
+            isCatchUpNeeded = true;
+        }
 
-			platform.writeLog(getLogCurrentPc());
-			ioHandler();
-			cpu.step();
-			cyclePerSecond += cycle;
-			cycleGuestTotal += cycle;
-		}
+        if (!isCatchUpNeeded && cyclePerSecond < MAX_CYCLE_PER_SECOND) {
+            int cycle = cpu.getCurrentOpcodeCycle();
+            ioHandler();
+            cpu.step();
+            cyclePerSecond += cycle;
+            systemGuestCycleTotal += cycle;
+        } else {
+            platform.log(null, "Cycle throttling...");
+        }
 
-		// cycle reset
-		if (cyclePerSecond >= MAX_CYCLE_PER_SECOND) {
-			cyclePerSecond -= MAX_CYCLE_PER_SECOND;
-			cpuLastTime = currentTime;
-		}
+        // cycle reset
+        if (cyclePerSecond >= MAX_CYCLE_PER_SECOND) {
+            cyclePerSecond -= MAX_CYCLE_PER_SECOND;
+            cpuLastTime = currentTime;
+        }
+
+        if (systemCurrentTime > systemLastTime + 1_000_000_000) {
+            systemLastTime = systemCurrentTime;
+            platform.log(null, "Cycle accumulated: " + systemGuestCycleTotal);
+            systemGuestCycleTotal = 0;
+        }
     }
 
     public void tickCpuOnly() {
@@ -209,7 +202,6 @@ public class Emulator {
                 testSuiteOut();
                 break;
         }
-		cycleGuestTotal += cpu.getCurrentOpcodeCycle();
         cpu.step();
     }
 
@@ -247,11 +239,11 @@ public class Emulator {
     }
 
     public void stop() {
-        isLooping = false;
+        running = false;
     }
 
-    public boolean isLooping() {
-        return this.isLooping;
+    public boolean isRunning() {
+        return this.running;
     }
 
     public void setPause(boolean isPaused) {
@@ -266,15 +258,15 @@ public class Emulator {
         return Disassembler.disassemble(mmu, cpu.getPC(), mmu.readMemory(cpu.getPC()));
     }
 
-	public void setPortXor(int index, byte key) {
-		port[index] |= key;
-	}
-	
-	public void setPortAnd(int index, byte key) {
-		port[index] &= key;
-	}
-	
-	private long getRelativeTimeEpoch() {
-		return System.nanoTime() - programTimeEpoch;
-	}
+    public void setPortXor(int index, byte key) {
+        port[index] |= key;
+    }
+
+    public void setPortAnd(int index, byte key) {
+        port[index] &= key;
+    }
+
+    private long getRelativeTimeEpoch() {
+        return System.nanoTime() - programTimeEpoch;
+    }
 }

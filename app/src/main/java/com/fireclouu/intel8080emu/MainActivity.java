@@ -17,7 +17,7 @@ import android.widget.TextView;
 import java.io.IOException;
 
 public class MainActivity extends Activity implements View.OnClickListener, CheckBox.OnCheckedChangeListener, AdapterView.OnItemSelectedListener {
-	private static final int REQUEST_PICK_DOC_MULTI = 1;
+    private static final int REQUEST_PICK_DOC_MULTI = 1;
     private Button buttonLoadEmulator;
     private Button buttonChooseFile;
     private TextView tvChooseFile;
@@ -112,7 +112,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Chec
 
             String test = data.getClipData().getItemAt(0).getUri().toString();
             tvChooseFile.setText(test);
-
         }
     }
 

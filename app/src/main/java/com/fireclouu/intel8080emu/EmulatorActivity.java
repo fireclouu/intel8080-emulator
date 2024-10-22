@@ -6,19 +6,28 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout; 
+import android.widget.RelativeLayout;
+
 import com.fireclouu.intel8080emu.emulator.Inputs;
+
+import java.util.Arrays;
 
 public class EmulatorActivity extends Activity implements Button.OnTouchListener, Button.OnClickListener {
     Display display;
     HostPlatform platform;
 
     // Buttons
-    private Button mButtonCoin, mButtonP1Start, mButtonP1Left, mButtonP1Right, mButtonP1Fire, mButtonSetPlayer, mButtonLogs;
+    private Button mButtonCoin;
+    private Button mButtonP1Start;
+    private Button mButtonP1Left;
+    private Button mButtonP1Right;
+    private Button mButtonP1Fire;
+    private Button mButtonSetPlayer;
+    private Button mButtonLogs;
 
     private LinearLayout llLogs;
-	private LinearLayout llLogs2;
-	
+    private LinearLayout llLogs2;
+
     private RelativeLayout rlEmulator;
 
     private boolean isTestSuite;
@@ -41,13 +50,13 @@ public class EmulatorActivity extends Activity implements Button.OnTouchListener
 
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
         if (isTestSuite) llLogs.setLayoutParams(params);
-		
+
         init();
         startEmulation();
     }
-	
-	private void init() {
-		requestFullscreen();
+
+    private void init() {
+        requestFullscreen();
         display = findViewById(R.id.mainDisplay);
 
         mButtonCoin = findViewById(R.id.btn_p1_coin);
@@ -58,41 +67,37 @@ public class EmulatorActivity extends Activity implements Button.OnTouchListener
         mButtonSetPlayer = findViewById(R.id.btn_change_player);
         mButtonLogs = findViewById(R.id.btn_logs);
 
-        mButtonCoin.setOnTouchListener(this);
-        mButtonP1Start.setOnTouchListener(this);
-        mButtonP1Left.setOnTouchListener(this);
-        mButtonP1Fire.setOnTouchListener(this);
-        mButtonP1Right.setOnTouchListener(this);
-        mButtonSetPlayer.setOnClickListener(this);
-        mButtonLogs.setOnClickListener(this);
+        for (Button button : Arrays.asList(mButtonCoin, mButtonP1Start, mButtonP1Left, mButtonP1Fire, mButtonP1Right)) {
+            button.setOnTouchListener(this);
+        }
+        for (Button button : Arrays.asList(mButtonSetPlayer, mButtonLogs)) {
+            button.setOnClickListener(this);
+        }
     }
-	
-	private void startEmulation() {
+
+    private void startEmulation() {
         if (platform == null) {
             platform = new HostPlatform(this, this, display, isTestSuite);
             platform.setRomFileName(romFileName);
         }
-
         platform.start();
     }
 
     @Override
     protected void onResume() {
-        // platform.setPause(false);
+        platform.emulationResume();
         super.onResume();
     }
 
     @Override
     protected void onPause() {
-        // platform.setPause(true);
+        platform.emulationPause();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
-        platform.stop();
-        platform.releaseResource();
-        platform = null;
+        platform.emulationTerminate();
         super.onDestroy();
     }
 
