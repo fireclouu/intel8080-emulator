@@ -99,7 +99,7 @@ public class Cpu {
 	}
 
     public void step() {
-        int opcode = pc;
+        int currentPc = pc;
 
         // HL (M)
         int address = ((h << 8) | l);
@@ -108,12 +108,12 @@ public class Cpu {
         pc++;
 
         // cycles
-        int opMemory = mmu.readMemory(opcode);
+        int opcode = mmu.readMemory(currentPc);
 
-        switch (opMemory) {
+        switch (opcode) {
             case 0x01:
-                b = mmu.readMemory(opcode + 2);
-                c = mmu.readMemory(opcode + 1);
+                b = mmu.readMemory(currentPc + 2);
+                c = mmu.readMemory(currentPc + 1);
                 pc += 2;
                 break; // LXI B, D16
             case 0x02:
@@ -126,8 +126,8 @@ public class Cpu {
                 instr_lda(b, c);
                 break; // LDAX B
             case 0x11:
-                d = mmu.readMemory(opcode + 2);
-                e = mmu.readMemory(opcode + 1);
+                d = mmu.readMemory(currentPc + 2);
+                e = mmu.readMemory(currentPc + 1);
                 pc += 2;
                 break; // LXI D, D16
             case 0x12:
@@ -140,12 +140,12 @@ public class Cpu {
                 instr_lda(d, e);
                 break; // LDAX D
             case 0x21:
-                h = mmu.readMemory(opcode + 2);
-                l = mmu.readMemory(opcode + 1);
+                h = mmu.readMemory(currentPc + 2);
+                l = mmu.readMemory(currentPc + 1);
                 pc += 2;
                 break; // LXI H, D16
             case 0x22:
-                instr_shld(opcode);
+                instr_shld(currentPc);
                 pc += 2;
                 break; // SHLD adr
             case 0x27:
@@ -170,25 +170,25 @@ public class Cpu {
                 instr_dad(h, l);
                 break; //DAD H
             case 0x2a:
-                instr_lhld(opcode);
+                instr_lhld(currentPc);
                 pc += 2;
                 break; // LHLD adr
             case 0x2f:
                 a = (short) ((~a & 0xff));
                 break; // CMA
             case 0x31:
-                sp = ((mmu.readMemory(opcode + 2) << 8) | mmu.readMemory(opcode + 1));
+                sp = ((mmu.readMemory(currentPc + 2) << 8) | mmu.readMemory(currentPc + 1));
                 pc += 2;
                 break; // LXI SP, D16
             case 0x32:
-                instr_sta(mmu.readMemory(opcode + 2), mmu.readMemory(opcode + 1));
+                instr_sta(mmu.readMemory(currentPc + 2), mmu.readMemory(currentPc + 1));
                 pc += 2;
                 break; // STA adr
             case 0x39:
                 instr_dad(sp);
                 break; //DAD SP
             case 0x3a:
-                instr_lda(mmu.readMemory(opcode + 2), mmu.readMemory(opcode + 1));
+                instr_lda(mmu.readMemory(currentPc + 2), mmu.readMemory(currentPc + 1));
                 pc += 2;
                 break; // LDA adr
             case 0xeb:
@@ -197,35 +197,35 @@ public class Cpu {
 
             // IMMEDIATE
             case 0x06:
-                b = mmu.readMemory(opcode + 1);
+                b = mmu.readMemory(currentPc + 1);
                 pc++;
                 break; // MVI B, D8
             case 0x0e:
-                c = mmu.readMemory(opcode + 1);
+                c = mmu.readMemory(currentPc + 1);
                 pc++;
                 break; // MVI C, D8
             case 0x16:
-                d = mmu.readMemory(opcode + 1);
+                d = mmu.readMemory(currentPc + 1);
                 pc++;
                 break; // MVI D, D8
             case 0x1e:
-                e = mmu.readMemory(opcode + 1);
+                e = mmu.readMemory(currentPc + 1);
                 pc++;
                 break; // MVI E, D8
             case 0x26:
-                h = mmu.readMemory(opcode + 1);
+                h = mmu.readMemory(currentPc + 1);
                 pc++;
                 break; // MVI H, D8
             case 0x2e:
-                l = mmu.readMemory(opcode + 1);
+                l = mmu.readMemory(currentPc + 1);
                 pc++;
                 break; // MVI L, D8
             case 0x36:
-                mmu.writeMemory(address, mmu.readMemory(opcode + 1));
+                mmu.writeMemory(address, mmu.readMemory(currentPc + 1));
                 pc++;
                 break; // MVI M, D8
             case 0x3e:
-                a = mmu.readMemory(opcode + 1);
+                a = mmu.readMemory(currentPc + 1);
                 pc++;
                 break; // MVI A, D8
 
@@ -739,47 +739,47 @@ public class Cpu {
 
             // ALU (IMMEDIATE)
             case 0xc6:
-                instr_add(mmu.readMemory(opcode + 1), 0);
+                instr_add(mmu.readMemory(currentPc + 1), 0);
                 pc++;
                 break; // ADI D8
             case 0xce:
-                instr_add(mmu.readMemory(opcode + 1), cc.cy);
+                instr_add(mmu.readMemory(currentPc + 1), cc.cy);
                 pc++;
                 break; // ACI D8
             case 0xd6:
-                instr_sub(mmu.readMemory(opcode + 1), 0);
+                instr_sub(mmu.readMemory(currentPc + 1), 0);
                 pc++;
                 break; // SUI D8
             case 0xde:
-                instr_sub(mmu.readMemory(opcode + 1), cc.cy);
+                instr_sub(mmu.readMemory(currentPc + 1), cc.cy);
                 pc++;
                 break; // SBI D8
             case 0xe6:
-                instr_ana(mmu.readMemory(opcode + 1));
+                instr_ana(mmu.readMemory(currentPc + 1));
                 pc++;
                 break; // ANI D8
             case 0xee:
-                instr_xra(mmu.readMemory(opcode + 1));
+                instr_xra(mmu.readMemory(currentPc + 1));
                 pc++;
                 break; // XRI D8
             case 0xf6:
-                instr_ora(mmu.readMemory(opcode + 1));
+                instr_ora(mmu.readMemory(currentPc + 1));
                 pc++;
                 break; // ORI D8
             case 0xfe:
-                instr_cmp(mmu.readMemory(opcode + 1));
+                instr_cmp(mmu.readMemory(currentPc + 1));
                 pc++;
                 break; // CPI D8
 
             // JUMPS
             case 0xc3:
-                instr_jmp(opcode);
+                instr_jmp(currentPc);
                 break; // JMP adr
             case 0xc9:
                 instr_ret();
                 break; // RET
             case 0xcd:
-                instr_call(opcode);
+                instr_call(currentPc);
                 break; // CALL adr
             case 0xe9:
                 pc = address;
@@ -813,54 +813,54 @@ public class Cpu {
 
             // JMP (conditional)
             case 0xc2:
-                conditional_jmp(opcode, cc.z == 0);
+                conditional_jmp(currentPc, cc.z == 0);
                 break; // JNZ adr
             case 0xca:
-                conditional_jmp(opcode, cc.z == 1);
+                conditional_jmp(currentPc, cc.z == 1);
                 break; // JZ adr
             case 0xd2:
-                conditional_jmp(opcode, cc.cy == 0);
+                conditional_jmp(currentPc, cc.cy == 0);
                 break; // JNC adr
             case 0xda:
-                conditional_jmp(opcode, cc.cy == 1);
+                conditional_jmp(currentPc, cc.cy == 1);
                 break; // JC adr
             case 0xe2:
-                conditional_jmp(opcode, cc.p == 0);
+                conditional_jmp(currentPc, cc.p == 0);
                 break; // JPO adr
             case 0xea:
-                conditional_jmp(opcode, cc.p == 1);
+                conditional_jmp(currentPc, cc.p == 1);
                 break; // JPE adr
             case 0xf2:
-                conditional_jmp(opcode, cc.s == 0);
+                conditional_jmp(currentPc, cc.s == 0);
                 break; // JP adr
             case 0xfa:
-                conditional_jmp(opcode, cc.s == 1);
+                conditional_jmp(currentPc, cc.s == 1);
                 break; // JM adr
 
             // CALL (conditional)
             case 0xc4:
-                conditional_call(opcode, cc.z == 0);
+                conditional_call(currentPc, cc.z == 0);
                 break; // CNZ adr
             case 0xcc:
-                conditional_call(opcode, cc.z == 1);
+                conditional_call(currentPc, cc.z == 1);
                 break; // CZ adr
             case 0xd4:
-                conditional_call(opcode, cc.cy == 0);
+                conditional_call(currentPc, cc.cy == 0);
                 break; // CNC adr
             case 0xdc:
-                conditional_call(opcode, cc.cy == 1);
+                conditional_call(currentPc, cc.cy == 1);
                 break; // CC adr
             case 0xe4:
-                conditional_call(opcode, cc.p == 0);
+                conditional_call(currentPc, cc.p == 0);
                 break; // CPO adr
             case 0xec:
-                conditional_call(opcode, cc.p == 1);
+                conditional_call(currentPc, cc.p == 1);
                 break; // CPE adr
             case 0xf4:
-                conditional_call(opcode, cc.s == 0);
+                conditional_call(currentPc, cc.s == 0);
                 break; // CP adr
             case 0xfc:
-                conditional_call(opcode, cc.s == 1);
+                conditional_call(currentPc, cc.s == 1);
                 break; // CM adr
 
             // POP
