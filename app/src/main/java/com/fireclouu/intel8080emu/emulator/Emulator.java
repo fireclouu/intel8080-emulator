@@ -5,7 +5,8 @@ public class Emulator {
     // Timer and interrupts
 	private final long FRAME_INTERVAL_VBLANK = 8_330_000L;
 	private final long FRAME_INTERVAL_END = 16_670_000L;
-	private final long ONE_SECOND_IN_NANO = 1_000_000_000L;
+	private final long NANO_ONE_SECOND = 1_000_000_000L;
+	private final long MILLI_ONE_SECOND = 1_000_000L;
     private final long MAX_CYCLE_PER_SECOND = 2_000_000L;
     
 	private boolean isVBlankServiced = false;
@@ -133,7 +134,7 @@ public class Emulator {
                 break;
         }
     }
-
+	
     public void tick() {
         long currentTime = getRelativeTimeEpoch();
         long frameElapsedTime = currentTime - frameLastTime;
@@ -151,21 +152,49 @@ public class Emulator {
 				isVBlankServiced = false;
 			}
 		}
-
-		// normal cycle
-		if (cpuElapsedTime < ONE_SECOND_IN_NANO) {
-			platform.writeLog(getLogCurrentPc());
-
-			ioHandler();
+		
+		// cycle with timings
+		boolean needsToCatchup = cyclePerSecond < MAX_CYCLE_PER_SECOND && cpuElapsedTime > NANO_ONE_SECOND;
+		
+		while (needsToCatchup) {
 			int cycle = cpu.getCurrentOpcodeCycle();
+			ioHandler();
+			cpu.step();
+			cyclePerSecond += cycle;
+			cycleGuestTotal += cycle;
+			needsToCatchup = cyclePerSecond < MAX_CYCLE_PER_SECOND && cpuElapsedTime > NANO_ONE_SECOND;
+		}
+		
+		if (!needsToCatchup) {
+			long remainingTime = NANO_ONE_SECOND - cpuElapsedTime;
+			long remainingCycle = MAX_CYCLE_PER_SECOND - cyclePerSecond;
+			long nextExecutionInMills = 0;
+			int cycle = cpu.getCurrentOpcodeCycle();
+			
+			try {
+				if (remainingCycle > cycle) {
+					nextExecutionInMills = (remainingTime / (remainingCycle / cycle)) / MILLI_ONE_SECOND;
+				}
+			} catch (Exception e) {
+				platform.writeLog(e.getMessage());
+			}
+
+			try {
+				Thread.sleep(nextExecutionInMills);
+			} catch (Exception e) {
+				platform.writeLog(e.getMessage());
+			}
+
+			platform.writeLog(getLogCurrentPc());
+			ioHandler();
 			cpu.step();
 			cyclePerSecond += cycle;
 			cycleGuestTotal += cycle;
 		}
 
 		// cycle reset
-		if (cpuElapsedTime > ONE_SECOND_IN_NANO) {
-			cyclePerSecond = 0;
+		if (cyclePerSecond >= MAX_CYCLE_PER_SECOND) {
+			cyclePerSecond -= MAX_CYCLE_PER_SECOND;
 			cpuLastTime = currentTime;
 		}
     }
