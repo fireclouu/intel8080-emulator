@@ -1,5 +1,6 @@
 /.androidide
 /.gradle
+/.idea/caches
 /app/build
 /app/release
 /build
