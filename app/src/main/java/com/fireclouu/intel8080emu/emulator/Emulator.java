@@ -159,7 +159,8 @@ public class Emulator {
 			}
 
 			ioHandler();
-			int cycle = cpu.step();
+			int cycle = cpu.getCurrentOpcodeCycle();
+			cpu.step();
 			cyclePerSecond += cycle;
 			cycleGuestTotal += cycle;
 		}
@@ -181,8 +182,8 @@ public class Emulator {
                 testSuiteOut();
                 break;
         }
-
-        cycleGuestTotal += cpu.step();
+		cycleGuestTotal += cpu.getCurrentOpcodeCycle();
+        cpu.step();
     }
 
     private void testSuiteIn() {

@@ -4,7 +4,7 @@ public class Cpu {
 	private final Mmu mmu;
 	
     // SOURCES: superzazu
-    private final static short[] OPCODES_CYCLES = {    //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
+    private final static byte[] OPCODES_CYCLES = {    //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
             4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4,  // 0
             4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4,  // 1
             4, 10, 16, 5, 5, 5, 7, 4, 4, 10, 16, 5, 5, 5, 7, 4,  // 2
@@ -22,7 +22,7 @@ public class Cpu {
             5, 10, 10, 18, 11, 11, 7, 11, 5, 5, 10, 4, 11, 17, 7, 11, // E
             5, 10, 10, 4, 11, 11, 7, 11, 5, 5, 10, 4, 11, 17, 7, 11  // F
     };
-    private short opcodeCycle = 0;
+    private short opodeCycle = 0;
     private final Flags cc;
     ///  REGISTERS  ///
     private short b, c, d, e, h, l, a;
@@ -53,7 +53,52 @@ public class Cpu {
         cc.init();
     }
 
-    public short step() {
+	public byte getCurrentOpcodeCycle() {
+		byte cycle;
+		int opcode = mmu.readMemory(pc);
+		cycle = OPCODES_CYCLES[opcode];
+		boolean hasExtraCycle = false;
+		switch (opcode) {
+			case 0xc0:
+			case 0xc4:
+				hasExtraCycle = cc.z == 0;
+                break;
+			case 0xc8:
+            case 0xcc:
+				hasExtraCycle = cc.z == 1;
+                break;
+			case 0xd0:
+            case 0xd4:
+                hasExtraCycle = cc.cy == 0;
+                break;
+			case 0xd8:
+            case 0xdc:
+				hasExtraCycle = cc.cy == 1;
+                break;
+			case 0xe0:
+            case 0xe4:
+				hasExtraCycle = cc.p == 0;
+                break;
+			case 0xe8:
+            case 0xec:
+				hasExtraCycle = cc.p == 1;
+                break;
+			case 0xf0:
+            case 0xf4:
+				hasExtraCycle = cc.s == 0;
+                break;
+			case 0xf8:
+            case 0xfc:
+				hasExtraCycle = cc.s == 1;
+                break;
+		}
+
+		if (hasExtraCycle) cycle += 6;
+
+		return cycle;
+	}
+
+    public void step() {
         int opcode = pc;
 
         // HL (M)
@@ -64,7 +109,6 @@ public class Cpu {
 
         // cycles
         int opMemory = mmu.readMemory(opcode);
-        opcodeCycle = OPCODES_CYCLES[opMemory];
 
         switch (opMemory) {
             case 0x01:
@@ -916,12 +960,10 @@ public class Cpu {
             case 0xfd:
                 break;
         }
-        return opcodeCycle;
     }
 
     /// INTERRUPT
     public void sendInterrupt(int vectorAddress) {
-        // PUSH PC
         mmu.writeMemory(sp - 1, (short) ((pc & 0xff00) >> 8));
         mmu.writeMemory(sp - 2, (short) (pc & 0xff));
         sp = (sp - 2) & 0xffff;
@@ -929,13 +971,10 @@ public class Cpu {
         hasInterrupt = false;
     }
 
-    /// SUBROUTINES
-
     // CONDITIONAL
     private void conditional_call(int opcode, boolean cond) {
         if (cond) {
             instr_call(opcode);
-            opcodeCycle += 6;
         } else {
             pc += 2;
         }
@@ -952,7 +991,6 @@ public class Cpu {
     private void conditional_ret(boolean cond) {
         if (cond) {
             instr_ret();
-            opcodeCycle += 6;
         }
     }
 
@@ -1037,7 +1075,6 @@ public class Cpu {
     private short instr_inr(int var) {
         cc.ac = checkCarry(4, var, 1, 0);
         short res = (short) ((var + 1) & 0xff);
-        //cc.AC = (res & 0xf) == 0 ? (byte) 1 : 0;
         flagsZSP(res);
         return res;
     }
@@ -1045,7 +1082,6 @@ public class Cpu {
     private short instr_dcr(int var) {
         cc.ac = checkCarry(4, var, -1, 0);
         short res = (short) ((var - 1) & 0xff);
-        //cc.AC = (res & 0xf) == 0 ? (byte) 0 : 1;
         flagsZSP(res);
         return res;
     }
@@ -1118,7 +1154,7 @@ public class Cpu {
     }
 
     private void push_psw() {
-        // A and PSW (formed binary value via flags , plus its filler value)
+        
         mmu.writeMemory(sp - 1, a);
         // prepare variable higher than 0xff, but with 0's in bit 0-7
         // this way, it serves as flags' default state waiting to be flipped, like a template
