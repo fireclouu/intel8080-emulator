@@ -70,23 +70,23 @@ public class Emulator {
             case 3: // sound
                 if (value != lastPortValue[3]) {
                     if ((value & 0x1) > 0 && (lastPortValue[3] & 0x1) == 0) {
-                        int id = platform.playMedia(Guest.Media.Audio.SHIP_INCOMING, -1);
+                        int id = platform.playMedia(Guest.Media.Audio.SHIP_INCOMING, -1, 1);
                         platform.setIdMediaPlayed(id);
                     } else if ((value & 0x1) == 0 && (lastPortValue[3] & 0x1) > 0) {
                         platform.stopSound(platform.getIdMediaPlayed());
                     }
 
                     if ((value & 0x2) > 0 && (lastPortValue[3] & 0x2) == 0) {
-                        platform.playMedia(Guest.Media.Audio.FIRE, 0);
+                        platform.playMedia(Guest.Media.Audio.FIRE, 0, 0);
                     }
 
                     if ((value & 0x4) > 0 && (lastPortValue[3] & 0x4) == 0) {
-                        platform.playMedia(Guest.Media.Audio.PLAYER_EXPLODED, 0);
+                        platform.playMedia(Guest.Media.Audio.PLAYER_EXPLODED, 0, 0);
                         platform.vibrate(300);
                     }
 
                     if ((value & 0x8) > 0 && (lastPortValue[3] & 0x8) == 0) {
-                        platform.playMedia(Guest.Media.Audio.ALIEN_KILLED, 0);
+                        platform.playMedia(Guest.Media.Audio.ALIEN_KILLED, 0, 0);
                         platform.vibrate(20);
                     }
 
@@ -101,23 +101,23 @@ public class Emulator {
                 // alien moving sound
                 if (value != lastPortValue[5]) {
                     if ((value & 0x1) > 0 && (lastPortValue[5] & 0x1) == 0) {
-                        platform.playMedia(Guest.Media.Audio.ALIEN_MOVE_1, 0);
+                        platform.playMedia(Guest.Media.Audio.ALIEN_MOVE_1, 0, 0);
                     }
 
                     if ((value & 0x2) > 0 && (lastPortValue[5] & 0x2) == 0) {
-                        platform.playMedia(Guest.Media.Audio.ALIEN_MOVE_2, 0);
+                        platform.playMedia(Guest.Media.Audio.ALIEN_MOVE_2, 0, 0);
                     }
 
                     if ((value & 0x4) > 0 && (lastPortValue[5] & 0x4) == 0) {
-                        platform.playMedia(Guest.Media.Audio.ALIEN_MOVE_3, 0);
+                        platform.playMedia(Guest.Media.Audio.ALIEN_MOVE_3, 0, 0);
                     }
 
                     if ((value & 0x8) > 0 && (lastPortValue[5] & 0x8) == 0) {
-                        platform.playMedia(Guest.Media.Audio.ALIEN_MOVE_4, 0);
+                        platform.playMedia(Guest.Media.Audio.ALIEN_MOVE_4, 0, 0);
                     }
 
                     if ((value & 0x10) > 0 && (lastPortValue[5] & 0x10) == 0) {
-                        platform.playMedia(Guest.Media.Audio.SHIP_HIT, 0);
+                        platform.playMedia(Guest.Media.Audio.SHIP_HIT, 0, 0);
                         platform.vibrate(800);
                     }
 

@@ -31,7 +31,7 @@ public abstract class Platform {
 
     public abstract void saveHighScoreOnPlatform(int data);
 
-    public abstract int playMedia(int id, int loop);
+    public abstract int playMedia(int id, int loop, int priority);
 
     public abstract int fetchHighScoreOnPlatform();
 
