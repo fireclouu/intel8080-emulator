@@ -62,7 +62,6 @@ public abstract class Platform {
     public abstract void initMediaHandler();
 
     public abstract void releaseResources();
-    // public abstract float[] convertVideoRamToFloatPoints(Orientation drawOrientation, short[] memory);
 
     public Platform(boolean isTestSuite) {
         this.guest = new Guest(this);

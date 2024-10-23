@@ -1,10 +1,10 @@
 package com.fireclouu.intel8080emu;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.os.Build;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -15,12 +15,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Display extends SurfaceView implements SurfaceHolder.Callback {
+    private Bitmap bitmap;
     public static final int DIMENSION_WIDTH = 0;
     public static final int DIMENSION_HEIGHT = 1;
-    public static final int GUEST_WIDTH = 256;
-    public static final int GUEST_HEIGHT = 224;
+
+    // this is intended as space invaders original scan is 90deg rotated to right
+    public static final int GUEST_WIDTH = 224;
+    public static final int GUEST_HEIGHT = 256;
+
     private Canvas canvas;
-    private float pixelHostSize = 3.18f;
+    private final float pixelHostSize = 3.18f;
     private final int DRAW_ORIENTATION = Orientation.PORTRAIT;
     private int orientationWidth, orientationHeight;
     private Paint paintRed, paintWhite, paintGreen, paintText;
@@ -60,6 +64,9 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
 
         paintText = initPaintProperty(Color.WHITE);
         paintText.setTextSize(12);
+
+        // this is intended, due to original game is rotated 90deg to right
+        bitmap = Bitmap.createBitmap(GUEST_WIDTH, GUEST_HEIGHT, Bitmap.Config.ARGB_8888);
     }
 
     public int getHostMaxDimension() {
@@ -93,6 +100,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
         return scaleValue;
     }
 
+    // legacy
     public float[] convertVramToFloatPoints(int drawOrientation, short[] memory) {
         float centerOffset = enableOffset ? getCenterOffset(orientationWidth * pixelHostSize) : 0;
         final float spacing = pixelHostSize;
@@ -146,6 +154,44 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
         return returnValue;
     }
 
+    private void createGraphicsBitmapRaw(short[] memoryVideoRam) {
+        int x = 0;
+        int y = 0;
+        for (int indexVram = 0; indexVram < memoryVideoRam.length; indexVram++) {
+            int data = memoryVideoRam[indexVram];
+            if (x == 32) {
+                x = 0;
+                y++;
+            }
+
+            for (int bit = 0; bit < 8; bit++) {
+                boolean isPixelOn = ((data >> bit) & 1) == 1;
+                if (!isPixelOn) continue;
+                bitmap.setPixel((x * 8) + bit, y, Color.WHITE);
+            }
+            x++;
+        }
+    }
+
+    private void createGraphicsBitmapRotated(short[] memoryVideoRam) {
+        int x = 0;
+        int y = 31;
+        for (int indexVram = 0; indexVram < memoryVideoRam.length; indexVram++) {
+            int data = memoryVideoRam[indexVram];
+
+            for (int bit = 0; bit < 8; bit++) {
+                boolean isPixelOn = ((data >> bit) & 1) == 1;
+                if (!isPixelOn) continue;
+                bitmap.setPixel(x, (y * 8) - bit, Color.WHITE);
+            }
+            y--;
+            if (y < 0) {
+                y = 31;
+                x++;
+            }
+        }
+    }
+
     private Paint initPaintProperty(int color) {
         Paint mPaint;
         mPaint = new Paint();
@@ -154,18 +200,23 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
         return mPaint;
     }
 
-    public void draw(short[] memory) {
+    public void draw(short[] memoryVideoRam) {
         if (holder == null) return;
-		if (!holder.getSurface().isValid()) return;
-
-        pixelHostSize = getScaleValueLogical();
-        paintWhite.setStrokeWidth(pixelHostSize + 0.5f);
+        if (!holder.getSurface().isValid()) return;
 
         canvas = holder.getSurface().lockHardwareCanvas();
+        orientationWidth = GUEST_WIDTH;
+        orientationHeight = GUEST_HEIGHT;
 
+        if (getHostMaxDimension() == DIMENSION_WIDTH) {
+            canvas.translate((canvas.getWidth() / 2.0f) - ((GUEST_WIDTH / 2.0f) * getScaleValueLogical()), 0);
+        }
+
+        canvas.scale(getScaleValueLogical(), getScaleValueLogical());
         canvas.drawColor(Color.BLACK);
-        canvas.drawPoints(convertVramToFloatPoints(DRAW_ORIENTATION, memory), paintWhite);
-
+        bitmap.eraseColor(Color.BLACK);
+        createGraphicsBitmapRotated(memoryVideoRam);
+        canvas.drawBitmap(bitmap, 0, 0, null);
         holder.getSurface().unlockCanvasAndPost(canvas);
     }
 }
