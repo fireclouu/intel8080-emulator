@@ -76,7 +76,7 @@ public abstract class Platform {
     private void init() {
         initRunnable();
         initMediaHandler();
-        // audio assets
+
         setMediaId(Guest.Media.Audio.ALIEN_KILLED, getMediaAudioIdAlienKilled());
         setMediaId(Guest.Media.Audio.ALIEN_MOVE_1, getMediaAudioIdAlienMove1());
         setMediaId(Guest.Media.Audio.ALIEN_MOVE_2, getMediaAudioIdAlienMove2());

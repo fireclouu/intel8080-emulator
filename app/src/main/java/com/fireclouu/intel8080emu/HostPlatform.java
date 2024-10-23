@@ -29,7 +29,6 @@ public class HostPlatform extends Platform {
     private SoundPool soundPool;
     private final TextView tvLog;
     private final Button buttonPause;
-    private Handler handler;
     private final Vibrator vibrator;
 
     public HostPlatform(Activity activity, Context context, Display display, boolean isTestSuite) {

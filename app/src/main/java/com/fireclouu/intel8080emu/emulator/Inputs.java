@@ -8,8 +8,8 @@ public class Inputs {
     public static final byte KEY_LEFT = 0b00100000;
     public static final byte KEY_RIGHT = 0b01000000;
 
-    public static final byte INPUT_PORT_1 = 0x1;
-    public static final byte INPUT_PORT_2 = 0x2;
+    public static final byte INPUT_PORT_1 = 0;
+    public static final byte INPUT_PORT_2 = 1;
 
     private final Emulator emulator;
     private byte playerPort = INPUT_PORT_1;

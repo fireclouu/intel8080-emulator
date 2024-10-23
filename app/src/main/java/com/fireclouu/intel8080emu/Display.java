@@ -156,21 +156,16 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
 
     public void draw(short[] memory) {
         if (holder == null) return;
+		if (!holder.getSurface().isValid()) return;
 
         pixelHostSize = getScaleValueLogical();
         paintWhite.setStrokeWidth(pixelHostSize + 0.5f);
 
-        // canvas
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            canvas = holder.lockHardwareCanvas();
-        } else {
-            canvas = holder.getSurface().lockHardwareCanvas();
-        }
+        canvas = holder.getSurface().lockHardwareCanvas();
 
         canvas.drawColor(Color.BLACK);
         canvas.drawPoints(convertVramToFloatPoints(DRAW_ORIENTATION, memory), paintWhite);
 
-        // release
         holder.getSurface().unlockCanvasAndPost(canvas);
     }
 }

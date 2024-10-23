@@ -10,8 +10,8 @@ public class Emulator {
     private final long MAX_CYCLE_PER_SECOND = 2_000_000L;
 
     private boolean isVBlankServiced = false;
-    private final short[] port = new short[8];
-    private final short[] lastPortValue = new short[8];
+    private final short[] keyPort = new short[2];
+    private final short[] lastPortValue = new short[6];
     // states
     private boolean running = true;
     private boolean isPaused = false;
@@ -29,9 +29,9 @@ public class Emulator {
     private final long programTimeEpoch;
     private long cpuLastTime;
     private long frameLastTime;
-
+	private long nextTimeExecution = 0;
+	
     // system
-    private long systemCurrentTime;
     private long systemLastTime;
     private long systemGuestCycleTotal;
 
@@ -45,21 +45,23 @@ public class Emulator {
         cyclePerSecond = 0;
     }
 
-    public short handleIn(short port) {
-        short a = 0;
-        switch (port) {
+    public short handleIn(short mode) {
+        short value = 0;
+        switch (mode) {
             case 0: // ?
-                return 0;
+				value = 0;
+				break;
             case 1: // input
-                return this.port[Inputs.INPUT_PORT_1];
+                value = keyPort[Inputs.INPUT_PORT_1];
+				break;
             case 2: // input
-                return this.port[Inputs.INPUT_PORT_2];
+                value = keyPort[Inputs.INPUT_PORT_2];
+				break;
             case 3: // rotate shift register
-                int v = (shiftMsb << 8) | shiftLsb;
-                a = (short) ((v >> (8 - shiftOffset)) & 0xff);
+                value = (short) ((((shiftMsb << 8) | shiftLsb) >> (8 - shiftOffset)) & 0xff);
                 break;
         }
-        return a;
+        return value;
     }
 
     public void handleOut(short port, short value) {
@@ -130,11 +132,11 @@ public class Emulator {
         short portNumber = mmu.readMemory(cpu.getPC() + 1);
         int opcode = mmu.readMemory(cpu.getPC());
         switch (opcode) {
+			case 0xd3: // out
+                handleOut(portNumber, cpu.getRegA());
+                break;
             case 0xdb: // in
                 cpu.setRegA(handleIn(portNumber));
-                break;
-            case 0xd3: // out
-                handleOut(portNumber, cpu.getRegA());
                 break;
         }
     }
@@ -143,7 +145,8 @@ public class Emulator {
         long currentTime = getRelativeTimeEpoch();
         long frameElapsedTime = currentTime - frameLastTime;
         long cpuElapsedTime = currentTime - cpuLastTime;
-        systemCurrentTime = getRelativeTimeEpoch();
+        long systemCurrentTime = getRelativeTimeEpoch();
+
         // frame timings
         if (cpu.hasInterrupt()) {
             if (frameElapsedTime >= FRAME_INTERVAL_VBLANK && !isVBlankServiced) {
@@ -156,28 +159,21 @@ public class Emulator {
                 isVBlankServiced = false;
             }
         }
-
+		
+		if (currentTime < nextTimeExecution) return;
+		
         // cycle with timings
-        boolean isCatchUpNeeded = false;
-        while (cyclePerSecond < MAX_CYCLE_PER_SECOND && cpuElapsedTime > NANO_ONE_SECOND) {
-            platform.log(null, "Catching up");
+        do {
             int cycle = cpu.getCurrentOpcodeCycle();
             ioHandler();
             cpu.step();
-            cyclePerSecond += cycle;
+			
+			// get next exec
+			nextTimeExecution = (NANO_ONE_SECOND - (getRelativeTimeEpoch() - cpuLastTime)) * cpu.getCurrentOpcodeCycle() / (MAX_CYCLE_PER_SECOND - cyclePerSecond);
+            nextTimeExecution += getRelativeTimeEpoch();
+			cyclePerSecond += cycle;
             systemGuestCycleTotal += cycle;
-            isCatchUpNeeded = true;
-        }
-
-        if (!isCatchUpNeeded && cyclePerSecond < MAX_CYCLE_PER_SECOND) {
-            int cycle = cpu.getCurrentOpcodeCycle();
-            ioHandler();
-            cpu.step();
-            cyclePerSecond += cycle;
-            systemGuestCycleTotal += cycle;
-        } else {
-            platform.log(null, "Cycle throttling...");
-        }
+        } while (cyclePerSecond < MAX_CYCLE_PER_SECOND && cpuElapsedTime > NANO_ONE_SECOND);
 
         // cycle reset
         if (cyclePerSecond >= MAX_CYCLE_PER_SECOND) {
@@ -259,11 +255,11 @@ public class Emulator {
     }
 
     public void setPortXor(int index, byte key) {
-        port[index] |= key;
+        keyPort[index] |= key;
     }
 
     public void setPortAnd(int index, byte key) {
-        port[index] &= key;
+        keyPort[index] &= key;
     }
 
     private long getRelativeTimeEpoch() {
