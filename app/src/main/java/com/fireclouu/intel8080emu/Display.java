@@ -173,11 +173,22 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
     private void createGraphicsBitmapRotated(short[] memoryVideoRam) {
         int x = 0;
         int y = 31;
-        for (int data : memoryVideoRam) {
+        for (int index = 0; index < memoryVideoRam.length; index++) {
+            int data = memoryVideoRam[index];
             for (int bit = 0; bit < 8; bit++) {
                 boolean isPixelOn = ((data >> bit) & 1) == 1;
                 if (!isPixelOn) continue;
-                bitmap.setPixel(x, (y * 8) - bit, Color.WHITE);
+
+                // change color based on y region
+                int color = Color.WHITE;
+                if (y < 8) {
+                    color = Color.RED;
+                } else if (y < 24) {
+                    color = Color.WHITE;
+                } else {
+                    color = Color.GREEN;
+                }
+                bitmap.setPixel(x, (y * 8) - bit, color);
             }
             y--;
             if (y < 0) {
