@@ -9,7 +9,7 @@ public class Emulator {
     private final long MAX_CYCLE_PER_SECOND = 2_000_000L;
 
     private boolean isVBlankServiced = false;
-    private final short[] keyPort = new short[2];
+    private final short[] keyPort = new short[3];
     private final short[] lastPortValue = new short[6];
     // states
     private boolean running = true;
