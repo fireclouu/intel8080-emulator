@@ -13,7 +13,7 @@ public abstract class Platform {
 
     private final int[] mediaIds = new int[9];
     private final Emulator emulator;
-    private final Inputs keyInterrupts;
+    private final Inputs inputs;
     protected boolean isLogging;
     private String fileName;
     private final boolean isFileTestSuite;
@@ -69,7 +69,7 @@ public abstract class Platform {
         this.runnable = null;
         this.isFileTestSuite = isTestSuite;
         this.emulator = new Emulator(guest);
-        this.keyInterrupts = new Inputs(emulator);
+        this.inputs = new Inputs(emulator);
     }
 
     private void init() {
@@ -149,15 +149,15 @@ public abstract class Platform {
     }
 
     public void sendInput(int port, byte key, boolean isDown) {
-        keyInterrupts.sendInput(port, key, isDown);
+        inputs.sendInput(port, key, isDown);
     }
 
     public byte getPlayerPort() {
-        return keyInterrupts.getPlayerPort();
+        return inputs.getPlayerPort();
     }
 
     public void setPlayerPort(byte playerPort) {
-        keyInterrupts.setPlayerPort(playerPort);
+        inputs.setPlayerPort(playerPort);
     }
 
     public void emulationPause() {
