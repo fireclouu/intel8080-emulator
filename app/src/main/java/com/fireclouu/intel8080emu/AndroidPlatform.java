@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 
-public class HostPlatform extends Platform {
+public class AndroidPlatform extends Platform {
     private final Display display;
     private final Context context;
     private final SharedPreferences sharedPreferences;
@@ -31,7 +31,7 @@ public class HostPlatform extends Platform {
     private final Button buttonPause;
     private final Vibrator vibrator;
 
-    public HostPlatform(Activity activity, Context context, Display display, boolean isTestSuite) {
+    public AndroidPlatform(Activity activity, Context context, Display display, boolean isTestSuite) {
         super(isTestSuite);
         this.context = context;
         this.display = display;

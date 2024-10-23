@@ -14,7 +14,7 @@ import java.util.Arrays;
 
 public class EmulatorActivity extends Activity implements Button.OnTouchListener, Button.OnClickListener {
     Display display;
-    HostPlatform platform;
+    AndroidPlatform platform;
 
     // Buttons
     private Button mButtonCoin;
@@ -77,7 +77,7 @@ public class EmulatorActivity extends Activity implements Button.OnTouchListener
 
     private void startEmulation() {
         if (platform == null) {
-            platform = new HostPlatform(this, this, display, isTestSuite);
+            platform = new AndroidPlatform(this, this, display, isTestSuite);
             platform.setRomFileName(romFileName);
         }
         platform.start();
