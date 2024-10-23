@@ -23,9 +23,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
     public static final int GUEST_WIDTH = 224;
     public static final int GUEST_HEIGHT = 256;
 
-    private Canvas canvas;
     private final float pixelHostSize = 3.18f;
-    private final int DRAW_ORIENTATION = Orientation.PORTRAIT;
     private int orientationWidth, orientationHeight;
     private Paint paintRed, paintWhite, paintGreen, paintText;
     private SurfaceHolder holder;
@@ -157,8 +155,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
     private void createGraphicsBitmapRaw(short[] memoryVideoRam) {
         int x = 0;
         int y = 0;
-        for (int indexVram = 0; indexVram < memoryVideoRam.length; indexVram++) {
-            int data = memoryVideoRam[indexVram];
+        for (int data : memoryVideoRam) {
             if (x == 32) {
                 x = 0;
                 y++;
@@ -176,9 +173,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
     private void createGraphicsBitmapRotated(short[] memoryVideoRam) {
         int x = 0;
         int y = 31;
-        for (int indexVram = 0; indexVram < memoryVideoRam.length; indexVram++) {
-            int data = memoryVideoRam[indexVram];
-
+        for (int data : memoryVideoRam) {
             for (int bit = 0; bit < 8; bit++) {
                 boolean isPixelOn = ((data >> bit) & 1) == 1;
                 if (!isPixelOn) continue;
@@ -204,7 +199,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
         if (holder == null) return;
         if (!holder.getSurface().isValid()) return;
 
-        canvas = holder.getSurface().lockHardwareCanvas();
+        Canvas canvas = holder.getSurface().lockHardwareCanvas();
         orientationWidth = GUEST_WIDTH;
         orientationHeight = GUEST_HEIGHT;
 
