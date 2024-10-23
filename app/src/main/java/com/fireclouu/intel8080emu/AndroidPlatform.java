@@ -137,8 +137,8 @@ public class AndroidPlatform extends Platform {
     }
 
     @Override
-    public int playMedia(int index, int loop) {
-        return soundPool.play(getMediaId(index), 1, 1, 0, loop, 1);
+    public int playMedia(int index, int loop, int priority) {
+        return soundPool.play(getMediaId(index), 1, 1, priority, loop, 1);
     }
 
     @Override
