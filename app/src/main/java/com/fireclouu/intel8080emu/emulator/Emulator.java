@@ -6,7 +6,6 @@ public class Emulator {
     private final long FRAME_INTERVAL_VBLANK = 8_330_000L;
     private final long FRAME_INTERVAL_END = 16_670_000L;
     private final long NANO_ONE_SECOND = 1_000_000_000L;
-    private final long MILLI_ONE_SECOND = 1_000_000L;
     private final long MAX_CYCLE_PER_SECOND = 2_000_000L;
 
     private boolean isVBlankServiced = false;
@@ -29,8 +28,8 @@ public class Emulator {
     private final long programTimeEpoch;
     private long cpuLastTime;
     private long frameLastTime;
-	private long nextTimeExecution = 0;
-	
+    private long nextTimeExecution = 0;
+
     // system
     private long systemLastTime;
     private long systemGuestCycleTotal;
@@ -49,14 +48,13 @@ public class Emulator {
         short value = 0;
         switch (mode) {
             case 0: // ?
-				value = 0;
-				break;
+                break;
             case 1: // input
                 value = keyPort[Inputs.INPUT_PORT_1];
-				break;
+                break;
             case 2: // input
                 value = keyPort[Inputs.INPUT_PORT_2];
-				break;
+                break;
             case 3: // rotate shift register
                 value = (short) ((((shiftMsb << 8) | shiftLsb) >> (8 - shiftOffset)) & 0xff);
                 break;
@@ -132,7 +130,7 @@ public class Emulator {
         short portNumber = mmu.readMemory(cpu.getPC() + 1);
         int opcode = mmu.readMemory(cpu.getPC());
         switch (opcode) {
-			case 0xd3: // out
+            case 0xd3: // out
                 handleOut(portNumber, cpu.getRegA());
                 break;
             case 0xdb: // in
@@ -159,21 +157,27 @@ public class Emulator {
                 isVBlankServiced = false;
             }
         }
-		
-		if (currentTime < nextTimeExecution) return;
-		
+
+        if (currentTime < nextTimeExecution) return;
+
         // cycle with timings
+        int catchupCount = 0;
         do {
+            catchupCount++;
             int cycle = cpu.getCurrentOpcodeCycle();
-            ioHandler();
             cpu.step();
-			
-			// get next exec
-			nextTimeExecution = (NANO_ONE_SECOND - (getRelativeTimeEpoch() - cpuLastTime)) * cpu.getCurrentOpcodeCycle() / (MAX_CYCLE_PER_SECOND - cyclePerSecond);
+
+            // io
+            ioHandler();
+
+            // get next exec
+            nextTimeExecution = (NANO_ONE_SECOND - (getRelativeTimeEpoch() - cpuLastTime)) * cpu.getCurrentOpcodeCycle() / (MAX_CYCLE_PER_SECOND - cyclePerSecond);
             nextTimeExecution += getRelativeTimeEpoch();
-			cyclePerSecond += cycle;
+            cyclePerSecond += cycle;
             systemGuestCycleTotal += cycle;
         } while (cyclePerSecond < MAX_CYCLE_PER_SECOND && cpuElapsedTime > NANO_ONE_SECOND);
+
+        if (catchupCount > 1) platform.log(null, "CPU catch-up " + catchupCount + " times.");
 
         // cycle reset
         if (cyclePerSecond >= MAX_CYCLE_PER_SECOND) {
@@ -181,7 +185,7 @@ public class Emulator {
             cpuLastTime = currentTime;
         }
 
-        if (systemCurrentTime > systemLastTime + 1_000_000_000) {
+        if (systemCurrentTime > systemLastTime + 1_000_000_000L) {
             systemLastTime = systemCurrentTime;
             platform.log(null, "Cycle accumulated: " + systemGuestCycleTotal);
             systemGuestCycleTotal = 0;
