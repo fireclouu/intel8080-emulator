@@ -5,6 +5,6 @@
 /platform/android/app/release
 /platform/android/build
 /platform/android/app/build.gradle
-/platform/android/app/src/main/bin/
-/platform/android/app/src/main/gen/
+/platform/android/app/src/main/bin
+/platform/android/app/src/main/gen
 /platform/android/spaceinvaders/build
