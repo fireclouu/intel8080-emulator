@@ -108,7 +108,7 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
                 if (!isPixelOn) continue;
 
                 // change color based on y region
-                int color = Color.WHITE;
+                int color;
                 if (y < 8) {
                     color = Color.RED;
                 } else if (y < 24) {
