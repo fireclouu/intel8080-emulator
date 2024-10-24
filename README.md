@@ -7,8 +7,7 @@ Playable Space Invaders machine emulation with **Intel 8080 CPU interpreter**, w
 ---
 
 ### Screenshot
-
-<img alt="screenshot" src="https://i.ibb.co/w7NhRXJ/Screenshot-2024-06-08-11-14-13-913-com-fireclouu-spaceinvadersemu.jpg" width="200"/>
+<img alt="screenshot" src="https://github.com/user-attachments/assets/fd39c362-f21d-44af-b9af-5975c919885f" width="200"/>
 
 ### Platform
 
