@@ -45,7 +45,7 @@ public class Emulator {
         cyclePerSecond = 0;
     }
 
-    public short handleIn(short mode) {
+    private short handleIn(short mode) {
         short value = 0;
         switch (mode) {
             case 0: // ?
@@ -63,7 +63,7 @@ public class Emulator {
         return value;
     }
 
-    public void handleOut(short port, short value) {
+    private void handleOut(short port, short value) {
         switch (port) {
             case 2: // shift amount
                 shiftOffset = (byte) (value & 0x7);
@@ -127,7 +127,7 @@ public class Emulator {
         }
     }
 
-    public void ioHandler() {
+    private void handleInOut() {
         int pc = cpu.getPC();
         int opcode = mmu.readMemory(pc);
         short nextByte = mmu.readMemory(pc + 1);
@@ -172,8 +172,8 @@ public class Emulator {
             int cycle = cpu.getCurrentOpcodeCycle();
 
             // io
-            ioHandler();
-            
+            handleInOut();
+
             cpu.step();
 
             // get next exec
