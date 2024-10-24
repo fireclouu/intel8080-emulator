@@ -1,0 +1,10 @@
+/platform/android/.androidide
+/platform/android/.gradle
+/platform/android/.idea/caches
+/platform/android/app/build
+/platform/android/app/release
+/platform/android/build
+/platform/android/app/build.gradle
+/platform/android/app/src/main/bin/
+/platform/android/app/src/main/gen/
+/platform/android/spaceinvaders/build
