@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:layout_width="match_parent"
+	android:layout_height="match_parent"
+	android:orientation="vertical">
+	
+	<LinearLayout
+		android:layout_width="match_parent"
+		android:layout_height="150dp"
+		android:visibility="gone"
+		android:id="@+id/llLogs"
+		android:background="#303030"
+		android:orientation="vertical"
+		android:padding="10dp">
+		
+		<TextView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:fontFamily="monospace"
+			android:textColor="#d3d3d3"
+			android:textSize="12sp"
+			android:text="Log: (this window greatly affects emulation speed)" />
+		
+		<View
+			android:layout_width="match_parent"
+			android:layout_height="1dp"
+			android:layout_marginVertical="5dp"
+			android:background="#d3d3d3" />
+		
+		<ScrollView
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:id="@+id/svLogs"
+			android:orientation="vertical"
+			android:layout_weight="1">
+			
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="vertical"
+				android:id="@+id/llLogs2">
+				
+				<TextView
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:fontFamily="monospace"
+					android:textColor="#d3d3d3"
+					android:textSize="12sp"
+					android:id="@+id/tvLog"
+					android:text="Ready to connect..."
+					android:visibility="gone"/>
+				
+			</LinearLayout>
+
+		</ScrollView>
+		
+		<Button
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:id="@+id/buttonPause" 
+			android:text="Pause"/>
+		
+	</LinearLayout>
+	
+	<RelativeLayout
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:id="@+id/rlEmulator">
+
+		<com.fireclouu.intel8080emu.Display
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:id="@+id/mainDisplay"/>
+
+		<LinearLayout
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:orientation="vertical"
+			android:gravity="bottom">
+
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="horizontal"
+				android:padding="20dp">
+
+				<Button
+					android:layout_width="50dp"
+					android:layout_height="50dp"
+					android:text="Start"
+					android:id="@+id/btn_p1_start"
+					android:background="@drawable/arcade_button"
+					android:textSize="10sp"
+					android:textColor="#ffffff"
+					android:textStyle="bold"/>
+
+				<Button
+					android:layout_width="50dp"
+					android:layout_height="50dp"
+					android:text="P1"
+					android:id="@+id/btn_change_player"
+					android:background="@drawable/arcade_button"
+					android:textSize="10sp"
+					android:textColor="#ffffff"
+					android:textStyle="bold"
+					android:layout_marginLeft="10dp"/>
+
+
+				<LinearLayout
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:orientation="horizontal"
+					android:gravity="right">
+					
+					<Button
+						android:layout_width="50dp"
+						android:layout_height="50dp"
+						android:text="Logs"
+						android:id="@+id/btn_logs"
+						android:background="@drawable/arcade_button"
+						android:textSize="10sp"
+						android:textColor="#ffffff"
+						android:textStyle="bold"
+						android:layout_marginRight="10dp"/>
+					
+					<Button
+						android:layout_width="50dp"
+						android:layout_height="50dp"
+						android:text="Coin"
+						android:id="@+id/btn_p1_coin"
+						android:background="@drawable/arcade_button"
+						android:textSize="10sp"
+						android:textColor="#ffffff"
+						android:textStyle="bold"/>
+
+				</LinearLayout>
+
+			</LinearLayout>
+
+			<LinearLayout
+				android:layout_width="match_parent"
+				android:layout_height="wrap_content"
+				android:orientation="horizontal"
+				android:padding="20dp">
+
+				<Button
+					android:layout_width="100dp"
+					android:layout_height="100dp"
+					android:text="←"
+					android:textSize="16sp"
+					android:id="@+id/btn_p1_left"
+					android:background="@drawable/arcade_button"
+					android:textColor="#ffffff"
+					android:textStyle="bold" />
+
+				<Button
+					android:layout_width="100dp"
+					android:layout_height="100dp"
+					android:text="→"
+					android:textSize="16sp"
+					android:id="@+id/btn_p1_right"
+					android:background="@drawable/arcade_button"
+					android:textColor="#ffffff"
+					android:textStyle="bold"/>
+
+
+
+				<LinearLayout
+					android:layout_width="match_parent"
+					android:layout_height="wrap_content"
+					android:orientation="horizontal"
+					android:gravity="right">
+
+					<Button
+						android:layout_width="100dp"
+						android:layout_height="100dp"
+						android:text="↑"
+						android:textSize="16sp"
+						android:id="@+id/btn_p1_fire"
+						android:background="@drawable/arcade_button"
+						android:textColor="#ffffff"
+						android:textStyle="bold"/>
+
+				</LinearLayout>
+
+			</LinearLayout>
+
+		</LinearLayout>
+
+	</RelativeLayout>
+	
+</LinearLayout>
+
