@@ -29,11 +29,6 @@ jobs:
         distribution: 'temurin'
         cache: gradle
 
-    - name: Install Node.js 20
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-
     - name: Grant execute permission for gradlew
       run: chmod +x gradlew
 
