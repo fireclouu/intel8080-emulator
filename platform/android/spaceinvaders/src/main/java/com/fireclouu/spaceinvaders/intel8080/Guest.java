@@ -25,6 +25,10 @@ public class Guest {
 		}
 		public static final int WIDTH = (32 * 8); // 256 (32 = byte per line; 8 = bit per byte)
 		public static final int HEIGHT = (224);   // 224
+		public static final String COLOR_TOP = "#FF1E00"; // RED
+		public static final String COLOR_MIDDLE = "#E8F9FD"; // WHITE
+		public static final String COLOR_BELOW = "#59CE8F"; // GREEN
+		public static final String COLOR_BACKGROUND = "#000000"; // BLACK
 	}
 	
 	public static LinkedHashMap<String, Integer> mapFileData;

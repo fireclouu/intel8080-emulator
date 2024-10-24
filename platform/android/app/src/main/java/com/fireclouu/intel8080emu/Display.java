@@ -9,6 +9,7 @@ import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import com.fireclouu.spaceinvaders.intel8080.Guest;
 import com.fireclouu.spaceinvaders.intel8080.Guest.Display.Orientation;
 
 import java.util.ArrayList;
@@ -110,11 +111,11 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
                 // change color based on y region
                 int color;
                 if (y < 8) {
-                    color = Color.RED;
+                    color = Color.parseColor(Guest.Display.COLOR_TOP);
                 } else if (y < 24) {
-                    color = Color.WHITE;
+                    color = Color.parseColor(Guest.Display.COLOR_MIDDLE);
                 } else {
-                    color = Color.GREEN;
+                    color = Color.parseColor(Guest.Display.COLOR_BELOW);
                 }
                 bitmap.setPixel(x, (y * 8) - bit, color);
             }
@@ -147,8 +148,8 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
         }
 
         canvas.scale(getScaleValueLogical(), getScaleValueLogical());
-        canvas.drawColor(Color.BLACK);
-        bitmap.eraseColor(Color.BLACK);
+        canvas.drawColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
+        bitmap.eraseColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
         createGraphicsBitmapRotated(memoryVideoRam);
         canvas.drawBitmap(bitmap, 0, 0, null);
         holder.getSurface().unlockCanvasAndPost(canvas);
