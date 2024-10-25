@@ -148,6 +148,9 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
         bitmap.eraseColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
         createGraphicsBitmapRotated(memoryVideoRam);
         canvas.drawBitmap(bitmap, 0, 0, null);
+
+        if (holder == null) return;
+        if (!holder.getSurface().isValid()) return;
         holder.getSurface().unlockCanvasAndPost(canvas);
     }
 }

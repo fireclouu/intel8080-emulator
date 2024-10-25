@@ -20,11 +20,12 @@ import com.fireclouu.spaceinvaders.intel8080.Platform;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Objects;
 
-public class AndroidPlatform extends Platform {
-    private final Display display;
-    private final Context context;
+public class AndroidPlatform extends Platform implements Serializable {
+    private Display display;
+    private Context context;
     private final SharedPreferences sharedPreferences;
     private SoundPool soundPool;
     private final TextView tvLog;
@@ -213,4 +214,21 @@ public class AndroidPlatform extends Platform {
     private int getSoundPoolLoadId(int id, int priority) {
         return soundPool.load(context, id, priority);
     }
+
+    public Display getDisplay() {
+        return display;
+    }
+
+    public void setDisplay(Display display) {
+        this.display = display;
+    }
+
+    public Context getContext() {
+        return context;
+    }
+
+    public void setContext(Context context) {
+        this.context = context;
+    }
+
 }

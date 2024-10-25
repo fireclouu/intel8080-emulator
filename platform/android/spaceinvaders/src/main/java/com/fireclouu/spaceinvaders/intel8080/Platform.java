@@ -7,14 +7,14 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public abstract class Platform {
-    private final ExecutorService executor;
+    private boolean isInstantiated = false;
+    private ExecutorService executor;
     private Runnable runnable;
     private final Guest guest;
 
     private final int[] mediaIds = new int[9];
     private final Emulator emulator;
     private final Inputs inputs;
-    protected boolean isLogging;
     private String fileName;
     private final boolean isFileTestSuite;
     private int idMediaPlayed;
@@ -64,15 +64,20 @@ public abstract class Platform {
     public abstract void releaseResources();
 
     public Platform(boolean isTestSuite) {
-        this.guest = new Guest(this);
-        this.executor = Executors.newSingleThreadExecutor();
-        this.runnable = null;
         this.isFileTestSuite = isTestSuite;
+        this.guest = new Guest(this);
         this.emulator = new Emulator(guest);
         this.inputs = new Inputs(emulator);
     }
 
+    public boolean isInstantiated() {
+        return this.isInstantiated;
+    }
+
     private void init() {
+        executor = Executors.newSingleThreadExecutor();
+        runnable = null;
+
         initRunnable();
         initMediaHandler();
 
@@ -96,29 +101,29 @@ public abstract class Platform {
             guest.getCpu().setPC(0x0100);
         }
 
-        if (!isExpectedFilesLoaded()) return;
+        if (!isInstantiated) {
+            isInstantiated = true;
+            if (!isExpectedFilesLoaded()) return;
+        }
+
+        emulator.setPause(false);
+        emulator.setRunningState(true);
         executor.execute(runnable);
     }
 
     private void initRunnable() {
         if (fileIsTestSuite()) {
-            runnable = new Runnable() {
-                @Override
-                public void run() {
-                    while (emulator.isRunning()) {
-                        if (emulator.isPaused()) continue;
-                        emulator.tickCpuOnly();
-                    }
+            runnable = () -> {
+                while (emulator.isRunning()) {
+                    if (emulator.isPaused()) continue;
+                    emulator.tickCpuOnly();
                 }
             };
         } else {
-            runnable = new Runnable() {
-                @Override
-                public void run() {
-                    while (emulator.isRunning()) {
-                        if (emulator.isPaused()) continue;
-                        emulator.tick();
-                    }
+            runnable = () -> {
+                while (emulator.isRunning()) {
+                    if (emulator.isPaused()) continue;
+                    emulator.tick();
                 }
             };
         }
@@ -169,7 +174,7 @@ public abstract class Platform {
     }
 
     public void emulationTerminate() {
-        emulator.stop();
+        emulator.setRunningState(false);
         executor.shutdown();
         releaseResources();
     }

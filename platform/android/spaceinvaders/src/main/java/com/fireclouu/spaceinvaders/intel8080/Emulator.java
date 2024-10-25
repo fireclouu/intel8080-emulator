@@ -3,17 +3,12 @@ package com.fireclouu.spaceinvaders.intel8080;
 
 public class Emulator {
     private final Platform platform;
-    // Timer and interrupts
-    private final long FRAME_INTERVAL_VBLANK = 8_330_000L;
-    private final long FRAME_INTERVAL_END = 16_670_000L;
-    private final long NANO_ONE_SECOND = 1_000_000_000L;
-    private final long MAX_CYCLE_PER_SECOND = 2_000_000L;
 
     private boolean isVBlankServiced = false;
     private final short[] keyPort = new short[7];
     private final short[] lastPortValue = new short[6];
     // states
-    private boolean running = true;
+    private boolean isRunning = true;
     private boolean isPaused = false;
     private final Cpu cpu;
     private final Guest guest;
@@ -152,6 +147,9 @@ public class Emulator {
 
         // frame timings
         if (cpu.hasInterrupt()) {
+            // Timer and interrupts
+            long FRAME_INTERVAL_VBLANK = 8_330_000L;
+            long FRAME_INTERVAL_END = 16_670_000L;
             if (frameElapsedTime >= FRAME_INTERVAL_VBLANK && !isVBlankServiced) {
                 cpu.sendInterrupt(0x08);
                 isVBlankServiced = true;
@@ -167,6 +165,8 @@ public class Emulator {
 
         // cycle with timings
         int catchupCount = 0;
+        long NANO_ONE_SECOND = 1_000_000_000L;
+        long MAX_CYCLE_PER_SECOND = 2_000_000L;
         do {
             catchupCount++;
             int cycle = cpu.getCurrentOpcodeCycle();
@@ -241,15 +241,15 @@ public class Emulator {
     }
 
     private void testSuiteOut() {
-        stop();
+        isRunning = false;
     }
 
-    public void stop() {
-        running = false;
+    public void setRunningState(boolean isRunning) {
+        this.isRunning = isRunning;
     }
 
     public boolean isRunning() {
-        return this.running;
+        return this.isRunning;
     }
 
     public void setPause(boolean isPaused) {

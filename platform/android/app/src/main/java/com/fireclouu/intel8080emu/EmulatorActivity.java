@@ -2,7 +2,6 @@ package com.fireclouu.intel8080emu;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -12,18 +11,10 @@ import com.fireclouu.spaceinvaders.intel8080.Inputs;
 
 import java.util.Arrays;
 
-public class EmulatorActivity extends Activity implements Button.OnTouchListener, Button.OnClickListener {
+public class EmulatorActivity extends Activity implements Button.OnClickListener {
+    private final static String KEY_PLATFORM = "Platform";
     Display display;
     AndroidPlatform platform;
-
-    // Buttons
-    private Button mButtonCoin;
-    private Button mButtonP1Start;
-    private Button mButtonP1Left;
-    private Button mButtonP1Right;
-    private Button mButtonP1Fire;
-    private Button mButtonSetPlayer;
-    private Button mButtonLogs;
 
     private LinearLayout llLogs;
     private LinearLayout llLogs2;
@@ -51,36 +42,53 @@ public class EmulatorActivity extends Activity implements Button.OnTouchListener
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.MATCH_PARENT);
         if (isTestSuite) llLogs.setLayoutParams(params);
 
-        init();
-        startEmulation();
-    }
-
-    private void init() {
         requestFullscreen();
         display = findViewById(R.id.mainDisplay);
 
-        mButtonCoin = findViewById(R.id.btn_p1_coin);
-        mButtonP1Start = findViewById(R.id.btn_p1_start);
-        mButtonP1Left = findViewById(R.id.btn_p1_left);
-        mButtonP1Fire = findViewById(R.id.btn_p1_fire);
-        mButtonP1Right = findViewById(R.id.btn_p1_right);
-        mButtonSetPlayer = findViewById(R.id.btn_change_player);
-        mButtonLogs = findViewById(R.id.btn_logs);
+        GameButton mButtonCoin = findViewById(R.id.btn_p1_coin);
+        GameButton mButtonStart = findViewById(R.id.btn_p1_start);
+        GameButton mButtonLeft = findViewById(R.id.btn_p1_left);
+        GameButton mButtonFire = findViewById(R.id.btn_p1_fire);
+        GameButton mButtonRight = findViewById(R.id.btn_p1_right);
 
-        for (Button button : Arrays.asList(mButtonCoin, mButtonP1Start, mButtonP1Left, mButtonP1Fire, mButtonP1Right)) {
-            button.setOnTouchListener(this);
+        Button mButtonChangePlayer = findViewById(R.id.btn_change_player);
+        Button mButtonLogs = findViewById(R.id.btn_logs);
+
+        mButtonCoin.setKeyCode(Inputs.KEY_COIN);
+        mButtonStart.setKeyCode(Inputs.KEY_P1_START);
+        mButtonLeft.setKeyCode(Inputs.KEY_LEFT);
+        mButtonFire.setKeyCode(Inputs.KEY_FIRE);
+        mButtonRight.setKeyCode(Inputs.KEY_RIGHT);
+
+        if (savedInstanceState != null) {
+            platform = (AndroidPlatform) savedInstanceState.getSerializable(KEY_PLATFORM);
+            if (platform != null) {
+                platform.setContext(this);
+                platform.setDisplay(display);
+            }
         }
-        for (Button button : Arrays.asList(mButtonSetPlayer, mButtonLogs)) {
+
+        if (platform == null)
+            platform = new AndroidPlatform(this, this, display, isTestSuite);
+
+        // TODO: implement user defined file fetch, this is useless for now
+        platform.setRomFileName(romFileName);
+
+        for (GameButton button : Arrays.asList(mButtonCoin, mButtonStart, mButtonLeft, mButtonFire, mButtonRight)) {
+            button.setPlatform(platform);
+        }
+
+        for (Button button : Arrays.asList(mButtonChangePlayer, mButtonLogs)) {
             button.setOnClickListener(this);
         }
+
+        platform.start();
     }
 
-    private void startEmulation() {
-        if (platform == null) {
-            platform = new AndroidPlatform(this, this, display, isTestSuite);
-            platform.setRomFileName(romFileName);
-        }
-        platform.start();
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putSerializable(KEY_PLATFORM, platform);
     }
 
     @Override
@@ -101,28 +109,6 @@ public class EmulatorActivity extends Activity implements Button.OnTouchListener
         super.onDestroy();
     }
 
-    // separate interrupt from platform-specific data
-    // move in implementation
-    @Override
-    public boolean onTouch(View view, MotionEvent motionEvent) {
-        view.performClick();
-        byte playerPort = platform.getPlayerPort();
-        int action = motionEvent.getAction() & MotionEvent.ACTION_MASK;
-        boolean hasAction = action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_UP;
-        boolean isDown = action == MotionEvent.ACTION_DOWN;
-        int buttonId = view.getId();
-        byte key = 0;
-
-        if (buttonId == R.id.btn_p1_coin) key = Inputs.KEY_COIN;
-        if (buttonId == R.id.btn_p1_start) key = Inputs.KEY_P1_START;
-        if (buttonId == R.id.btn_p1_fire) key = Inputs.KEY_FIRE;
-        if (buttonId == R.id.btn_p1_left) key = Inputs.KEY_LEFT;
-        if (buttonId == R.id.btn_p1_right) key = Inputs.KEY_RIGHT;
-
-        if (hasAction) platform.sendInput(playerPort, key, isDown);
-        return false;
-    }
-
     @Override
     public void onClick(View view) {
         byte playerPort = platform.getPlayerPort();
@@ -130,7 +116,7 @@ public class EmulatorActivity extends Activity implements Button.OnTouchListener
         if (buttonId == R.id.btn_change_player) {
             playerPort = playerPort == Inputs.INPUT_PORT_1 ? Inputs.INPUT_PORT_2 : Inputs.INPUT_PORT_1;
             platform.setPlayerPort(playerPort);
-            mButtonSetPlayer.setText("P" + playerPort);
+            ((Button) view).setText("P" + playerPort);
         }
 
         if (buttonId == R.id.btn_logs) {
