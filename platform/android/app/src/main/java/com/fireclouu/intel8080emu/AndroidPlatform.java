@@ -23,11 +23,11 @@ import java.io.Serializable;
 import java.util.Objects;
 
 public class AndroidPlatform extends Platform implements Serializable {
+    private final SharedPreferences sharedPreferences;
+    private final Vibrator vibrator;
     private Display display;
     private Context context;
-    private final SharedPreferences sharedPreferences;
     private SoundPool soundPool;
-    private final Vibrator vibrator;
 
     public AndroidPlatform(Activity activity, Context context, Display display, boolean isTestSuite) {
         super(isTestSuite);
