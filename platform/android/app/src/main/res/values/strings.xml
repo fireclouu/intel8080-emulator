@@ -3,5 +3,15 @@
 
     <string name="app_name">Space Invaders</string>
     <string name="warn_file_error">File Error!</string>
+    <string name="ready_to_connect">Ready to connect…</string>
+    <string name="pause">Pause</string>
+    <string name="start">Start</string>
+    <string name="p1">P1</string>
+    <string name="logs">Logs</string>
+    <string name="coin">Coin</string>
+    <string name="utf8_left">←</string>
+    <string name="utf8_right">→</string>
+    <string name="utf8_up">↑</string>
+    <string name="log_this_window_greatly_affects_emulation_speed">Log: (this window greatly affects emulation speed)</string>
 
 </resources>

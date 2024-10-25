@@ -11,7 +11,6 @@ import android.os.Looper;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -28,22 +27,15 @@ public class AndroidPlatform extends Platform implements Serializable {
     private Context context;
     private final SharedPreferences sharedPreferences;
     private SoundPool soundPool;
-    private final TextView tvLog;
-    private final Button buttonPause;
     private final Vibrator vibrator;
 
     public AndroidPlatform(Activity activity, Context context, Display display, boolean isTestSuite) {
         super(isTestSuite);
         this.context = context;
         this.display = display;
-        tvLog = activity.findViewById(R.id.tvLog);
-        buttonPause = activity.findViewById(R.id.buttonPause);
-        buttonPause.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View p1) {
-                togglePause();
-            }
-        });
+        TextView tvLog = activity.findViewById(R.id.tvLog);
+        Button buttonPause = activity.findViewById(R.id.buttonPause);
+        buttonPause.setOnClickListener(p1 -> togglePause());
 
         tvLog.setText("");
 
@@ -203,28 +195,15 @@ public class AndroidPlatform extends Platform implements Serializable {
     @Override
     public void sendNotification(final String message) {
         Handler handler = new Handler(Looper.getMainLooper());
-        handler.post(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-            }
-        });
+        handler.post(() -> Toast.makeText(context, message, Toast.LENGTH_LONG).show());
     }
 
     private int getSoundPoolLoadId(int id, int priority) {
         return soundPool.load(context, id, priority);
     }
 
-    public Display getDisplay() {
-        return display;
-    }
-
     public void setDisplay(Display display) {
         this.display = display;
-    }
-
-    public Context getContext() {
-        return context;
     }
 
     public void setContext(Context context) {

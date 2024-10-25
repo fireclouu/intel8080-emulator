@@ -4,10 +4,11 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+
+import androidx.annotation.NonNull;
 
 import com.fireclouu.spaceinvaders.intel8080.Guest;
 
@@ -20,11 +21,8 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
     public static final int GUEST_WIDTH = 224;
     public static final int GUEST_HEIGHT = 256;
 
-    private final float pixelHostSize = 3.18f;
     private int orientationWidth, orientationHeight;
-    private Paint paintRed, paintWhite, paintGreen, paintText;
     private SurfaceHolder holder;
-    private boolean enableOffset = false;
 
     public Display(Context context) {
         super(context);
@@ -37,28 +35,22 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     @Override
-    public void surfaceCreated(SurfaceHolder p1) {
-        holder = p1;
+    public void surfaceCreated(@NonNull SurfaceHolder holder) {
+        this.holder = holder;
     }
 
     @Override
-    public void surfaceChanged(SurfaceHolder p1, int p2, int p3, int p4) {
-        holder = p1;
+    public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+        this.holder = holder;
     }
 
     @Override
-    public void surfaceDestroyed(SurfaceHolder p1) {
-        holder = p1;
+    public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+        this.holder = holder;
     }
 
     private void init() {
         holder = getHolder();
-        paintRed = initPaintProperty(Color.RED);
-        paintWhite = initPaintProperty(Color.WHITE);
-        paintGreen = initPaintProperty(Color.GREEN);
-
-        paintText = initPaintProperty(Color.WHITE);
-        paintText.setTextSize(12);
 
         // this is intended, due to original game is rotated 90deg to right
         bitmap = Bitmap.createBitmap(GUEST_WIDTH, GUEST_HEIGHT, Bitmap.Config.ARGB_8888);
@@ -72,34 +64,15 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
         return orientation == DIMENSION_WIDTH ? ((float) getWidth() / (float) orientationWidth) : ((float) getHeight() / (float) orientationHeight);
     }
 
-    public boolean hasWidthSpace(float scale) {
-        boolean returnValue;
-        float newWidth = scale * GUEST_WIDTH;
-        returnValue = (newWidth <= getWidth());
-        return returnValue;
-    }
-
-    private float getCenterOffset(float maxValue) {
-        float offset;
-        int hostWidth = getWidth();
-        float centerPointHost = (float) hostWidth / 2;
-        float centerPointGuest = maxValue / 2;
-        offset = Math.abs(centerPointHost - centerPointGuest);
-        return offset;
-    }
-
     public float getScaleValueLogical() {
         int maxDimension = getHostMaxDimension() == DIMENSION_WIDTH ? DIMENSION_HEIGHT : DIMENSION_WIDTH;
-        float scaleValue = getHostScalingValue(maxDimension);
-        enableOffset = hasWidthSpace(scaleValue);
-        return scaleValue;
+        return getHostScalingValue(maxDimension);
     }
 
     private void createGraphicsBitmapRotated(short[] memoryVideoRam) {
         int x = 0;
         int y = 31;
-        for (int index = 0; index < memoryVideoRam.length; index++) {
-            int data = memoryVideoRam[index];
+        for (int data : memoryVideoRam) {
             for (int bit = 0; bit < 8; bit++) {
                 boolean isPixelOn = ((data >> bit) & 1) == 1;
                 if (!isPixelOn) continue;
@@ -121,14 +94,6 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
                 x++;
             }
         }
-    }
-
-    private Paint initPaintProperty(int color) {
-        Paint mPaint;
-        mPaint = new Paint();
-        mPaint.setStyle(Paint.Style.FILL);
-        mPaint.setColor(color);
-        return mPaint;
     }
 
     public void draw(short[] memoryVideoRam) {

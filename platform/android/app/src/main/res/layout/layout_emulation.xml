@@ -20,7 +20,7 @@
 			android:fontFamily="monospace"
 			android:textColor="#d3d3d3"
 			android:textSize="12sp"
-			android:text="Log: (this window greatly affects emulation speed)" />
+			android:text="@string/log_this_window_greatly_affects_emulation_speed" />
 		
 		<View
 			android:layout_width="match_parent"
@@ -30,7 +30,7 @@
 		
 		<ScrollView
 			android:layout_width="match_parent"
-			android:layout_height="wrap_content"
+			android:layout_height="0dp"
 			android:id="@+id/svLogs"
 			android:orientation="vertical"
 			android:layout_weight="1">
@@ -48,7 +48,7 @@
 					android:textColor="#d3d3d3"
 					android:textSize="12sp"
 					android:id="@+id/tvLog"
-					android:text="Ready to connect..."
+					android:text="@string/ready_to_connect"
 					android:visibility="gone"/>
 				
 			</LinearLayout>
@@ -59,7 +59,7 @@
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
 			android:id="@+id/buttonPause" 
-			android:text="Pause"/>
+			android:text="@string/pause"/>
 		
 	</LinearLayout>
 	
@@ -88,49 +88,49 @@
 				<com.fireclouu.intel8080emu.GameButton
 					android:layout_width="50dp"
 					android:layout_height="50dp"
-					android:text="Start"
+					android:text="@string/start"
 					android:id="@+id/btn_p1_start"
 					android:background="@drawable/arcade_button"
-					android:textSize="10sp"
+					android:textSize="12sp"
 					android:textColor="#ffffff"
 					android:textStyle="bold"/>
 
 				<Button
 					android:layout_width="50dp"
 					android:layout_height="50dp"
-					android:text="P1"
+					android:text="@string/p1"
 					android:id="@+id/btn_change_player"
 					android:background="@drawable/arcade_button"
-					android:textSize="10sp"
+					android:textSize="12sp"
 					android:textColor="#ffffff"
 					android:textStyle="bold"
-					android:layout_marginLeft="10dp"/>
+					android:layout_marginStart="10dp"/>
 
 
 				<LinearLayout
 					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
 					android:orientation="horizontal"
-					android:gravity="right">
+					android:gravity="end">
 
 					<Button
 						android:layout_width="50dp"
 						android:layout_height="50dp"
-						android:text="Logs"
+						android:text="@string/logs"
 						android:id="@+id/btn_logs"
 						android:background="@drawable/arcade_button"
-						android:textSize="10sp"
+						android:textSize="12sp"
 						android:textColor="#ffffff"
 						android:textStyle="bold"
-						android:layout_marginRight="10dp"/>
+						android:layout_marginEnd="10dp"/>
 
 					<com.fireclouu.intel8080emu.GameButton
 						android:layout_width="50dp"
 						android:layout_height="50dp"
-						android:text="Coin"
+						android:text="@string/coin"
 						android:id="@+id/btn_p1_coin"
 						android:background="@drawable/arcade_button"
-						android:textSize="10sp"
+						android:textSize="12sp"
 						android:textColor="#ffffff"
 						android:textStyle="bold"/>
 
@@ -147,7 +147,7 @@
 				<com.fireclouu.intel8080emu.GameButton
 					android:layout_width="100dp"
 					android:layout_height="100dp"
-					android:text="←"
+					android:text="@string/utf8_left"
 					android:textSize="16sp"
 					android:id="@+id/btn_p1_left"
 					android:background="@drawable/arcade_button"
@@ -157,7 +157,7 @@
 				<com.fireclouu.intel8080emu.GameButton
 					android:layout_width="100dp"
 					android:layout_height="100dp"
-					android:text="→"
+					android:text="@string/utf8_right"
 					android:textSize="16sp"
 					android:id="@+id/btn_p1_right"
 					android:background="@drawable/arcade_button"
@@ -168,12 +168,12 @@
 					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
 					android:orientation="horizontal"
-					android:gravity="right">
+					android:gravity="end">
 
 					<com.fireclouu.intel8080emu.GameButton
 						android:layout_width="100dp"
 						android:layout_height="100dp"
-						android:text="↑"
+						android:text="@string/utf8_up"
 						android:textSize="16sp"
 						android:id="@+id/btn_p1_fire"
 						android:background="@drawable/arcade_button"
