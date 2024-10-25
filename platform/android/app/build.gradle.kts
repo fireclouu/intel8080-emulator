@@ -6,31 +6,20 @@ android {
     namespace = "com.fireclouu.intel8080emu"
     compileSdk = 34
     defaultConfig {
-
-        // Uniquely identifies the package for publishing.
         applicationId = "com.fireclouu.intel8080emu"
-
-        // Defines the minimum API level required to run the app.
         minSdk = 23
-
-        // Specifies the API level used to test the app.
-        targetSdk = 33
-
-        // Defines the version number of your app.
+        targetSdk = 34
         versionCode = 4
-
-        // Defines a user-friendly version name for your app.
-        versionName = "2.0"
+        versionName = "alpha-0.4"
     }
 
     buildTypes {
-        getByName("release") {
-            isMinifyEnabled = true // Enables code shrinking for the release build type.
+        release {
+            isMinifyEnabled = true
             proguardFiles(
-                getDefaultProguardFile("proguard-android.txt"),
+                getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }
@@ -46,16 +35,6 @@ dependencies {
     implementation("androidx.annotation:annotation:1.9.0")
 }
 
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
-java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
-}
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(17)
