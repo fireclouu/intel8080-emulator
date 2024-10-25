@@ -9,19 +9,28 @@ Playable **Space Invaders** machine emulation with **Intel 8080 CPU interpreter*
 ### Screenshot
 <img alt="screenshot" src="https://github.com/user-attachments/assets/fd39c362-f21d-44af-b9af-5975c919885f" width="200"/>
 
-### Platform
+---
+### Building
+> [!NOTE]
+> Update Building
+---
+### Supported Platforms
 
 [![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/fireclouu/space_invaders_intel_8080_emu/releases/download/alpha-0.5/app-release-unsigned.apk)
+
 ---
+
 > [!NOTE]
 > You can also get latest builds
 > via [Actions](https://github.com/fireclouu/space_invaders_android/actions) tab.
+
+---
 
 ### Assets
 
 - [Sound assets](https://samples.mameworld.info/)
 - [Button face Graphics assets](https://ya-webdesign.com)
-
+---
 ### Resources
 
 - [emulator101](http://emulator101.com/)
