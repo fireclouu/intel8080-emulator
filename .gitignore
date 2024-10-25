@@ -1,8 +1,8 @@
 /platform/android/.androidide
 /platform/android/.gradle
 /platform/android/.idea/caches
+/platform/android/spaceinvaders/bin
 /platform/android/app/build
-/platform/android/
 /platform/android/app/release
 /platform/android/build
 /platform/android/app/build.gradle
