@@ -22,7 +22,7 @@ public class Cpu {
             5, 10, 10, 18, 11, 11, 7, 11, 5, 5, 10, 4, 11, 17, 7, 11, // E
             5, 10, 10, 4, 11, 11, 7, 11, 5, 5, 10, 4, 11, 17, 7, 11  // F
     };
-    private short opodeCycle = 0;
+    private final short opodeCycle = 0;
     private final Flags cc;
     ///  REGISTERS  ///
     private short b, c, d, e, h, l, a;

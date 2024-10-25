@@ -10,10 +10,6 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import com.fireclouu.spaceinvaders.intel8080.Guest;
-import com.fireclouu.spaceinvaders.intel8080.Guest.Display.Orientation;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class Display extends SurfaceView implements SurfaceHolder.Callback {
     private Bitmap bitmap;
