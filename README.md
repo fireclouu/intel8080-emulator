@@ -5,8 +5,9 @@ Playable **Space Invaders** machine emulation with **Intel 8080 CPU interpreter*
 
 ---
 
-### Screenshot
-<img alt="screenshot" src="https://github.com/user-attachments/assets/fd39c362-f21d-44af-b9af-5975c919885f" width="200"/>
+### Screenshots
+![1000163825](https://github.com/user-attachments/assets/378938e9-5218-4a1d-9294-a65c119eddb6)
+<img alt="screenshot" src="https://github.com/user-attachments/assets/fd39c362-f21d-44af-b9af-5975c919885f" width="100"/>
 
 ### Building
 Clone this repository:
