@@ -2,7 +2,7 @@
 
 Playable **Space Invaders** machine emulation with **Intel 8080 CPU interpreter**, written in **Java**.\
 \
-[![Android CI](https://github.com/fireclouu/space_invaders_android/actions/workflows/android.yml/badge.svg?branch=master)](https://github.com/fireclouu/space_invaders_android/actions/workflows/android.yml)
+[![Android CI](https://github.com/fireclouu/space_invaders_android/actions/workflows/android.yml/badge.svg?branch=master)](https://github.com/fireclouu/space_invaders_intel_8080_emu/actions/workflows/android.yml)
 
 ---
 
@@ -11,8 +11,12 @@ Playable **Space Invaders** machine emulation with **Intel 8080 CPU interpreter*
 
 ---
 ### Building
-> [!NOTE]
-> Update Building
+First, clone this repository:
+`git clone https://github.com/fireclouu/space_invaders_intel_8080_emu`
+
+#### Android
+Open Android Studio and navigate to `platforms/android` directory. Gradle files are configured to look for module it needed.
+
 ---
 ### Supported Platforms
 
@@ -22,7 +26,7 @@ Playable **Space Invaders** machine emulation with **Intel 8080 CPU interpreter*
 
 > [!NOTE]
 > You can also get latest builds
-> via [Actions](https://github.com/fireclouu/space_invaders_android/actions) tab.
+> via [Actions](https://github.com/fireclouu/space_invaders_intel_8080_emu/actions) tab.
 
 ---
 
@@ -37,3 +41,4 @@ Playable **Space Invaders** machine emulation with **Intel 8080 CPU interpreter*
 - [superzazu](https://github.com/superzazu/8080)
 - <a href="https://www.flaticon.com/free-icons/space-invaders" title="space invaders icons">Space
   invaders icons created by IconMark - Flaticon</a>
+
