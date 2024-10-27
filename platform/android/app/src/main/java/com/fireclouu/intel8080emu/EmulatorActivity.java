@@ -2,16 +2,22 @@ package com.fireclouu.intel8080emu;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.Surface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
+import android.widget.Toast;
 
 import com.fireclouu.spaceinvaders.intel8080.Inputs;
 
 import java.util.Arrays;
 
 public class EmulatorActivity extends Activity implements Button.OnClickListener {
+//    static {
+//        System.loadLibrary("ImGui");
+//    }
+
     private final static String KEY_PLATFORM = "Platform";
     Display display;
     AndroidPlatform platform;
@@ -59,6 +65,8 @@ public class EmulatorActivity extends Activity implements Button.OnClickListener
         mButtonLeft.setKeyCode(Inputs.KEY_LEFT);
         mButtonFire.setKeyCode(Inputs.KEY_FIRE);
         mButtonRight.setKeyCode(Inputs.KEY_RIGHT);
+
+//        Toast.makeText(getApplicationContext(), "Loading... " + nativeInit(this, display.getSurface()), Toast.LENGTH_SHORT).show();
 
         if (savedInstanceState != null) {
             platform = (AndroidPlatform) savedInstanceState.getSerializable(KEY_PLATFORM);
@@ -130,4 +138,5 @@ public class EmulatorActivity extends Activity implements Button.OnClickListener
     private void requestFullscreen() {
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
+
 }

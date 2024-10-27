@@ -22,14 +22,16 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 
-//    externalNativeBuild {
-//        cmake {
-//            path "../../CMakeLists.txt"
-//        }
-//    }
+    externalNativeBuild {
+        cmake {
+            path = file("../native/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
 }
 
 repositories {

@@ -2,9 +2,10 @@ package com.fireclouu.intel8080emu;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -13,7 +14,10 @@ import androidx.annotation.NonNull;
 import com.fireclouu.spaceinvaders.intel8080.Guest;
 
 public class Display extends SurfaceView implements SurfaceHolder.Callback {
-    private Bitmap bitmap;
+    static {
+        System.loadLibrary("ImGui");
+    }
+
     public static final int DIMENSION_WIDTH = 0;
     public static final int DIMENSION_HEIGHT = 1;
 
@@ -23,25 +27,32 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
 
     private int orientationWidth, orientationHeight;
     private SurfaceHolder holder;
+    private Bitmap bitmap;
+    private Paint paint;
+    private int jniResult = -1;
 
     public Display(Context context) {
         super(context);
         init();
+        getHolder().addCallback(this);
     }
 
     public Display(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
+        getHolder().addCallback(this);
     }
 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
         this.holder = holder;
+        jniResult = nativeInit(holder.getSurface());
     }
 
     @Override
     public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
         this.holder = holder;
+        jniResult = nativeInit(holder.getSurface());
     }
 
     @Override
@@ -54,6 +65,10 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
 
         // this is intended, due to original game is rotated 90deg to right
         bitmap = Bitmap.createBitmap(GUEST_WIDTH, GUEST_HEIGHT, Bitmap.Config.ARGB_8888);
+
+        paint = new Paint();
+        paint.setColor(Color.WHITE);
+        paint.setTextSize(5.0f);
     }
 
     public int getHostMaxDimension() {
@@ -97,25 +112,31 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     public void draw(short[] memoryVideoRam) {
-        if (holder == null) return;
-        if (!holder.getSurface().isValid()) return;
-
-        Canvas canvas = holder.getSurface().lockHardwareCanvas();
-        orientationWidth = GUEST_WIDTH;
-        orientationHeight = GUEST_HEIGHT;
-
-        if (getHostMaxDimension() == DIMENSION_WIDTH) {
-            canvas.translate((canvas.getWidth() / 2.0f) - ((GUEST_WIDTH / 2.0f) * getScaleValueLogical()), 0);
-        }
-
-        canvas.scale(getScaleValueLogical(), getScaleValueLogical());
-        canvas.drawColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
-        bitmap.eraseColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
-        createGraphicsBitmapRotated(memoryVideoRam);
-        canvas.drawBitmap(bitmap, 0, 0, null);
-
-        if (holder == null) return;
-        if (!holder.getSurface().isValid()) return;
-        holder.getSurface().unlockCanvasAndPost(canvas);
+//        if (holder == null) return;
+//        if (!holder.getSurface().isValid()) return;
+//
+//        Canvas canvas = holder.getSurface().lockHardwareCanvas();
+//        orientationWidth = GUEST_WIDTH;
+//        orientationHeight = GUEST_HEIGHT;
+//
+//        if (getHostMaxDimension() == DIMENSION_WIDTH) {
+//            canvas.translate((canvas.getWidth() / 2.0f) - ((GUEST_WIDTH / 2.0f) * getScaleValueLogical()), 0);
+//        }
+//
+//        canvas.scale(getScaleValueLogical(), getScaleValueLogical());
+//        canvas.drawColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
+//        bitmap.eraseColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
+//        createGraphicsBitmapRotated(memoryVideoRam);
+//        canvas.drawBitmap(bitmap, 0, 0, null);
+//
+//        canvas.drawText("Space Invaders " + jniResult, 10, 50, paint);
+//
+//
+//        if (holder == null) return;
+//        if (!holder.getSurface().isValid()) return;
+//        holder.getSurface().unlockCanvasAndPost(canvas);
+        nativeMainLoopStep();
     }
+    public native int nativeInit(Surface surface);
+    public native void nativeMainLoopStep();
 }
