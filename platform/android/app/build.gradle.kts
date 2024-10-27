@@ -5,12 +5,14 @@ plugins {
 android {
     namespace = "com.fireclouu.intel8080emu"
     compileSdk = 34
+    ndkVersion = "25.2.9519653"
+
     defaultConfig {
         applicationId = "com.fireclouu.intel8080emu"
         minSdk = 23
         targetSdk = 34
-        versionCode = 4
-        versionName = "alpha-0.4"
+        versionCode = 6
+        versionName = "alpha-0.6"
     }
 
     buildTypes {
@@ -22,6 +24,12 @@ android {
             )
         }
     }
+
+//    externalNativeBuild {
+//        cmake {
+//            path "../../CMakeLists.txt"
+//        }
+//    }
 }
 
 repositories {
