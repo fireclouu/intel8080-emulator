@@ -27,6 +27,8 @@ jobs:
       with:
         java-version: '21'
         distribution: 'temurin'
+        submodules: true
+        fetch-depth: 0
         cache: gradle
 
     - name: Grant execute permission for gradlew
