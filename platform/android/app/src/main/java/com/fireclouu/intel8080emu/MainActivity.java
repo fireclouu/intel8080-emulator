@@ -18,10 +18,6 @@ import android.widget.Toast;
 import java.io.IOException;
 
 public class MainActivity extends Activity implements View.OnClickListener, CheckBox.OnCheckedChangeListener, AdapterView.OnItemSelectedListener {
-    static {
-        System.loadLibrary("ImGui");
-    }
-
     private static final int REQUEST_PICK_DOC_MULTI = 1;
     private Button buttonLoadEmulator;
     private Button buttonChooseFile;
@@ -35,9 +31,6 @@ public class MainActivity extends Activity implements View.OnClickListener, Chec
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_file_picker);
-
-        // JNI test
-        Toast.makeText(getApplicationContext(), "JNI test: " + (testJni() == 12489 ? "Success" : "Failed"), Toast.LENGTH_SHORT).show();
 
         buttonChooseFile = findViewById(R.id.buttonChooseFile);
         buttonLoadEmulator = findViewById(R.id.buttonLoadEmulator);
@@ -124,6 +117,4 @@ public class MainActivity extends Activity implements View.OnClickListener, Chec
             tvChooseFile.setText(test);
         }
     }
-
-    public native int testJni();
 }
