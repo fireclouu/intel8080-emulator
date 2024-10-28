@@ -21,14 +21,14 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
+      with:
+        submodules: true
+        fetch-depth: 0
     - name: Set up JDK 17
       uses: actions/setup-java@v4
       with:
         java-version: '21'
         distribution: 'temurin'
-        submodules: true
-        fetch-depth: 0
         cache: gradle
 
     - name: Grant execute permission for gradlew
