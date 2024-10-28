@@ -25,14 +25,14 @@ import java.util.Objects;
 public class AndroidPlatform extends Platform implements Serializable {
     private final SharedPreferences sharedPreferences;
     private final Vibrator vibrator;
-    private Display display;
+    private DisplaySurface DisplaySurface;
     private Context context;
     private SoundPool soundPool;
 
-    public AndroidPlatform(Activity activity, Context context, Display display, boolean isTestSuite) {
+    public AndroidPlatform(Activity activity, Context context, DisplaySurface DisplaySurface, boolean isTestSuite) {
         super(isTestSuite);
         this.context = context;
-        this.display = display;
+        this.DisplaySurface = DisplaySurface;
         TextView tvLog = activity.findViewById(R.id.tvLog);
         Button buttonPause = activity.findViewById(R.id.buttonPause);
         buttonPause.setOnClickListener(p1 -> togglePause());
@@ -126,7 +126,7 @@ public class AndroidPlatform extends Platform implements Serializable {
 
     @Override
     public void draw(short[] memoryVideoRam) {
-        display.draw(memoryVideoRam);
+        DisplaySurface.draw(memoryVideoRam);
     }
 
     @Override
@@ -202,8 +202,8 @@ public class AndroidPlatform extends Platform implements Serializable {
         return soundPool.load(context, id, priority);
     }
 
-    public void setDisplay(Display display) {
-        this.display = display;
+    public void setDisplay(DisplaySurface DisplaySurface) {
+        this.DisplaySurface = DisplaySurface;
     }
 
     public void setContext(Context context) {

@@ -2,24 +2,18 @@ package com.fireclouu.intel8080emu;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.Surface;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-import android.widget.Toast;
 
 import com.fireclouu.spaceinvaders.intel8080.Inputs;
 
 import java.util.Arrays;
 
 public class EmulatorActivity extends Activity implements Button.OnClickListener {
-//    static {
-//        System.loadLibrary("ImGui");
-//    }
-
     private final static String KEY_PLATFORM = "Platform";
-    Display display;
+    DisplaySurface DisplaySurface;
     AndroidPlatform platform;
 
     private LinearLayout llLogs;
@@ -49,7 +43,7 @@ public class EmulatorActivity extends Activity implements Button.OnClickListener
         if (isTestSuite) llLogs.setLayoutParams(params);
 
         requestFullscreen();
-        display = findViewById(R.id.mainDisplay);
+        DisplaySurface = findViewById(R.id.mainDisplay);
 
         GameButton mButtonCoin = findViewById(R.id.btn_p1_coin);
         GameButton mButtonStart = findViewById(R.id.btn_p1_start);
@@ -72,12 +66,12 @@ public class EmulatorActivity extends Activity implements Button.OnClickListener
             platform = (AndroidPlatform) savedInstanceState.getSerializable(KEY_PLATFORM);
             if (platform != null) {
                 platform.setContext(this);
-                platform.setDisplay(display);
+                platform.setDisplay(DisplaySurface);
             }
         }
 
         if (platform == null)
-            platform = new AndroidPlatform(this, this, display, isTestSuite);
+            platform = new AndroidPlatform(this, this, DisplaySurface, isTestSuite);
 
         // TODO: implement user defined file fetch, this is useless for now
         platform.setRomFileName(romFileName);

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.Surface;
 import android.view.SurfaceHolder;
@@ -13,7 +14,7 @@ import androidx.annotation.NonNull;
 
 import com.fireclouu.spaceinvaders.intel8080.Guest;
 
-public class Display extends SurfaceView implements SurfaceHolder.Callback {
+public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callback {
     static {
         System.loadLibrary("ImGui");
     }
@@ -26,42 +27,57 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
     public static final int GUEST_HEIGHT = 256;
 
     private int orientationWidth, orientationHeight;
-    private SurfaceHolder holder;
+    //    private SurfaceHolder holder;
+    private Surface surface;
     private Bitmap bitmap;
     private Paint paint;
-    private int jniResult = -1;
 
-    public Display(Context context) {
+    private Handler handler;
+    private Runnable renderRunnable;
+
+    public DisplaySurface(Context context) {
         super(context);
         init();
-        getHolder().addCallback(this);
     }
 
-    public Display(Context context, AttributeSet attrs) {
+    public DisplaySurface(Context context, AttributeSet attrs) {
         super(context, attrs);
         init();
-        getHolder().addCallback(this);
     }
 
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
-        this.holder = holder;
-        jniResult = nativeInit(holder.getSurface());
+        nativeShutdown();
+        surface = holder.getSurface();
+        nativeInit(surface);
+        renderRunnable = () -> {
+            nativeMainLoopStep();
+            handler.postDelayed(renderRunnable, 16);
+        };
+        handler.post(renderRunnable);
     }
 
     @Override
     public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
-        this.holder = holder;
-        jniResult = nativeInit(holder.getSurface());
+        nativeShutdown();
+        surface = holder.getSurface();
+        nativeInit(surface);
+        renderRunnable = () -> {
+            nativeMainLoopStep();
+            handler.postDelayed(renderRunnable, 16);
+        };
+        handler.post(renderRunnable);
     }
 
     @Override
     public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
-        this.holder = holder;
+        handler.removeCallbacks(renderRunnable);
+        nativeShutdown();
     }
 
     private void init() {
-        holder = getHolder();
+        handler = new Handler();
+        getHolder().addCallback(this);
 
         // this is intended, due to original game is rotated 90deg to right
         bitmap = Bitmap.createBitmap(GUEST_WIDTH, GUEST_HEIGHT, Bitmap.Config.ARGB_8888);
@@ -112,10 +128,9 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
     }
 
     public void draw(short[] memoryVideoRam) {
-//        if (holder == null) return;
-//        if (!holder.getSurface().isValid()) return;
+//        if (!surface.isValid()) return;
 //
-//        Canvas canvas = holder.getSurface().lockHardwareCanvas();
+//        Canvas canvas = surface.lockHardwareCanvas();
 //        orientationWidth = GUEST_WIDTH;
 //        orientationHeight = GUEST_HEIGHT;
 //
@@ -129,14 +144,12 @@ public class Display extends SurfaceView implements SurfaceHolder.Callback {
 //        createGraphicsBitmapRotated(memoryVideoRam);
 //        canvas.drawBitmap(bitmap, 0, 0, null);
 //
-//        canvas.drawText("Space Invaders " + jniResult, 10, 50, paint);
-//
-//
-//        if (holder == null) return;
-//        if (!holder.getSurface().isValid()) return;
-//        holder.getSurface().unlockCanvasAndPost(canvas);
-        nativeMainLoopStep();
+//        if (!surface.isValid()) return;
+//        surface.unlockCanvasAndPost(canvas);
     }
+
     public native int nativeInit(Surface surface);
     public native void nativeMainLoopStep();
+    public native void nativeShutdown();
+
 }
