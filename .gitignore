@@ -12,6 +12,7 @@
 /platform/android/spaceinvaders/build
 /spaceinvaders/.gradle
 /spaceinvaders/bin
+/spaceinvaders/build
 
 # Created by https://www.gitignore.io/api/intellij
 
