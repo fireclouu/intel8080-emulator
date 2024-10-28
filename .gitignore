@@ -3,6 +3,7 @@
 /platform/android/.idea/caches
 /platform/android/spaceinvaders/bin
 /platform/android/app/.cxx
+/platform/android/app/.gradle
 /platform/android/app/build
 /platform/android/app/release
 /platform/android/build
