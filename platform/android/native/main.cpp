@@ -104,8 +104,6 @@ void Init()
     if (g_Initialized)
         return;
 
-    ANativeWindow_acquire(window);
-
     // Initialize EGL
     // This is mostly boilerplate code for EGL...
     {
