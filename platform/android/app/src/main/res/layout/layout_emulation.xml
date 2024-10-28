@@ -68,7 +68,7 @@
 		android:layout_height="match_parent"
 		android:id="@+id/rlEmulator">
 
-		<com.fireclouu.intel8080emu.Display
+		<com.fireclouu.intel8080emu.DisplaySurface
 			android:layout_width="match_parent"
 			android:layout_height="match_parent"
 			android:id="@+id/mainDisplay"/>
