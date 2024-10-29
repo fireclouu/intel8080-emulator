@@ -2,6 +2,7 @@ package com.fireclouu.intel8080emu;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.os.Handler;
@@ -28,7 +29,7 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
 
     private int orientationWidth, orientationHeight;
     //    private SurfaceHolder holder;
-    private Surface surface;
+    private Surface mSurface;
     private Bitmap bitmap;
     private Paint paint;
 
@@ -48,25 +49,15 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
     @Override
     public void surfaceCreated(@NonNull SurfaceHolder holder) {
         nativeShutdown();
-        surface = holder.getSurface();
-        nativeInit(surface);
-        renderRunnable = () -> {
-            nativeMainLoopStep();
-            handler.postDelayed(renderRunnable, 16);
-        };
-        handler.post(renderRunnable);
+        mSurface = holder.getSurface();
+        nativeInit(mSurface);
     }
 
     @Override
     public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
         nativeShutdown();
-        surface = holder.getSurface();
-        nativeInit(surface);
-        renderRunnable = () -> {
-            nativeMainLoopStep();
-            handler.postDelayed(renderRunnable, 16);
-        };
-        handler.post(renderRunnable);
+        mSurface = holder.getSurface();
+        nativeInit(mSurface);
     }
 
     @Override
@@ -128,9 +119,9 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     public void draw(short[] memoryVideoRam) {
-//        if (!surface.isValid()) return;
+//        if (!mSurface.isValid()) return;
 //
-//        Canvas canvas = surface.lockHardwareCanvas();
+//        Canvas canvas = mSurface.lockHardwareCanvas();
 //        orientationWidth = GUEST_WIDTH;
 //        orientationHeight = GUEST_HEIGHT;
 //
@@ -142,10 +133,15 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
 //        canvas.drawColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
 //        bitmap.eraseColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
 //        createGraphicsBitmapRotated(memoryVideoRam);
+        renderRunnable = () -> {
+            if (mSurface != null && mSurface.isValid()) nativeMainLoopStep();
+//            handler.postDelayed(renderRunnable, 16);
+        };
+        handler.post(renderRunnable);
 //        canvas.drawBitmap(bitmap, 0, 0, null);
 //
-//        if (!surface.isValid()) return;
-//        surface.unlockCanvasAndPost(canvas);
+//        if (!mSurface.isValid()) return;
+//        mSurface.unlockCanvasAndPost(canvas);
     }
 
     public native int nativeInit(Surface surface);
