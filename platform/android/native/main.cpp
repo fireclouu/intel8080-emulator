@@ -94,65 +94,6 @@ void android_main(struct android_app* app)
     }
 }
 
-void customEglInit(struct android_app* app) {
-    g_App = app;
-    ANativeWindow_acquire(g_App->window);
-
-    // Initialize EGL
-    // This is mostly boilerplate code for EGL...
-    {
-        g_EglDisplay = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-        if (g_EglDisplay == EGL_NO_DISPLAY)
-            __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "%s", "eglGetDisplay(EGL_DEFAULT_DISPLAY) returned EGL_NO_DISPLAY");
-
-        if (eglInitialize(g_EglDisplay, 0, 0) != EGL_TRUE)
-            __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "%s", "eglInitialize() returned with an error");
-
-        const EGLint egl_attributes[] = { EGL_BLUE_SIZE, 8, EGL_GREEN_SIZE, 8, EGL_RED_SIZE, 8, EGL_DEPTH_SIZE, 24, EGL_SURFACE_TYPE, EGL_WINDOW_BIT, EGL_NONE };
-        EGLint num_configs = 0;
-        if (eglChooseConfig(g_EglDisplay, egl_attributes, nullptr, 0, &num_configs) != EGL_TRUE)
-            __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "%s", "eglChooseConfig() returned with an error");
-        if (num_configs == 0)
-            __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "%s", "eglChooseConfig() returned 0 matching config");
-
-        // Get the first matching config
-        EGLConfig egl_config;
-        eglChooseConfig(g_EglDisplay, egl_attributes, &egl_config, 1, &num_configs);
-        EGLint egl_format;
-        eglGetConfigAttrib(g_EglDisplay, egl_config, EGL_NATIVE_VISUAL_ID, &egl_format);
-        ANativeWindow_setBuffersGeometry(g_App->window, 0, 0, egl_format);
-
-        const EGLint egl_context_attributes[] = { EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE };
-        g_EglContext = eglCreateContext(g_EglDisplay, egl_config, EGL_NO_CONTEXT, egl_context_attributes);
-
-        if (g_EglContext == EGL_NO_CONTEXT)
-            __android_log_print(ANDROID_LOG_ERROR, g_LogTag, "%s", "eglCreateContext() returned EGL_NO_CONTEXT");
-
-        g_EglSurface = eglCreateWindowSurface(g_EglDisplay, egl_config, g_App->window, nullptr);
-        eglMakeCurrent(g_EglDisplay, g_EglSurface, g_EglSurface, g_EglContext);
-    }
-}
-
-void customEglShutdown() {
-    if (g_EglDisplay != EGL_NO_DISPLAY)
-    {
-        eglMakeCurrent(g_EglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-
-        if (g_EglContext != EGL_NO_CONTEXT)
-            eglDestroyContext(g_EglDisplay, g_EglContext);
-
-        if (g_EglSurface != EGL_NO_SURFACE)
-            eglDestroySurface(g_EglDisplay, g_EglSurface);
-
-        eglTerminate(g_EglDisplay);
-    }
-
-    g_EglDisplay = EGL_NO_DISPLAY;
-    g_EglContext = EGL_NO_CONTEXT;
-    g_EglSurface = EGL_NO_SURFACE;
-    ANativeWindow_release(g_App->window);
-}
-
 void Init(struct android_app* app)
 {
     if (g_Initialized)
@@ -260,12 +201,11 @@ void MainLoopStep()
     ImGui_ImplAndroid_NewFrame();
     ImGui::NewFrame();
 
-    // 2. Show a simple window that we create ourselves. We use a Begin/End pair to create a named window.
     {
         static float f = 0.0f;
         static int counter = 0;
 
-        ImGui::Begin("Space Invaders | Logs"); // Create a window called "Hello, world!" and append into it.
+        ImGui::Begin("Space Invaders | Logs");
 
         ImGui::Spacing();
 
@@ -431,6 +371,7 @@ JNIEXPORT void JNICALL
 Java_com_fireclouu_intel8080emu_DisplaySurface_nativeMainLoopStep(JNIEnv *env, jobject thiz) {
     MainLoopStep();
 }
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_fireclouu_intel8080emu_DisplaySurface_nativeShutdown(JNIEnv *env, jobject thiz) {
