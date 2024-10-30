@@ -10,6 +10,7 @@
 /platform/android/app/src/main/bin
 /platform/android/app/src/main/gen
 /platform/android/spaceinvaders/build
+/platform/android/local.properties
 /spaceinvaders/.gradle
 /spaceinvaders/bin
 /spaceinvaders/build
