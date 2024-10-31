@@ -1,5 +1,6 @@
 /platform/android/.androidide
 /platform/android/.gradle
+/platform/android/.idea
 /platform/android/.idea/caches
 /platform/android/spaceinvaders/bin
 /platform/android/app/.cxx
