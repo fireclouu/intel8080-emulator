@@ -93,6 +93,8 @@ public abstract class Platform {
     }
 
     public void start() {
+        if (isInstantiated) return;
+
         init();
 
         if (fileIsTestSuite()) {
@@ -101,32 +103,27 @@ public abstract class Platform {
             guest.getCpu().setPC(0x0100);
         }
 
-        if (!isInstantiated) {
-            isInstantiated = true;
-            if (!isExpectedFilesLoaded()) return;
-        }
+        if (!isExpectedFilesLoaded()) return;
 
         emulator.setPause(false);
         emulator.setRunningState(true);
         executor.execute(runnable);
+
+        isInstantiated = true;
     }
 
     private void initRunnable() {
-        if (fileIsTestSuite()) {
-            runnable = () -> {
-                while (emulator.isRunning()) {
-                    if (emulator.isPaused()) continue;
-                    emulator.tickCpuOnly();
-                }
-            };
-        } else {
-            runnable = () -> {
-                while (emulator.isRunning()) {
-                    if (emulator.isPaused()) continue;
-                    emulator.tick();
-                }
-            };
-        }
+        runnable = fileIsTestSuite() ? () -> {
+            while (emulator.isRunning()) {
+                if (emulator.isPaused()) continue;
+                emulator.tickCpuOnly();
+            }
+        } : () -> {
+            while (emulator.isRunning()) {
+                if (emulator.isPaused()) continue;
+                emulator.tick();
+            }
+        };
     }
 
     private boolean isFileLoadedToRom(String fileName, int startAddress) {
