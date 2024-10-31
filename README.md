@@ -3,9 +3,6 @@ Playable **Space Invaders** machine emulation with **Intel 8080 CPU interpreter*
 
 [![Android CI](https://github.com/fireclouu/space_invaders_android/actions/workflows/android.yml/badge.svg?branch=master)](https://github.com/fireclouu/space_invaders_intel_8080_emu/actions/workflows/android.yml)
 
-## Content
-![1000163825](https://github.com/user-attachments/assets/378938e9-5218-4a1d-9294-a65c119eddb6)
-
 ## Building
 
 Clone this repository:
