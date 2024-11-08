@@ -43,7 +43,7 @@ repositories {
 
 dependencies {
     implementation(project(":spaceinvaders"))
-    implementation("androidx.annotation:annotation:1.9.0")
+    // implementation("androidx.annotation:annotation:1.9.0")
 }
 
 java {
