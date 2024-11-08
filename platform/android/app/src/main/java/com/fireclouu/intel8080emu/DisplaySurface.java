@@ -11,8 +11,6 @@ import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import androidx.annotation.NonNull;
-
 import com.fireclouu.spaceinvaders.intel8080.Guest;
 
 public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callback {
@@ -47,21 +45,21 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     @Override
-    public void surfaceCreated(@NonNull SurfaceHolder holder) {
+    public void surfaceCreated(SurfaceHolder holder) {
         nativeShutdown();
         mSurface = holder.getSurface();
         nativeInit(mSurface);
     }
 
     @Override
-    public void surfaceChanged(@NonNull SurfaceHolder holder, int format, int width, int height) {
+    public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
         nativeShutdown();
         mSurface = holder.getSurface();
         nativeInit(mSurface);
     }
 
     @Override
-    public void surfaceDestroyed(@NonNull SurfaceHolder holder) {
+    public void surfaceDestroyed(SurfaceHolder holder) {
         handler.removeCallbacks(renderRunnable);
         nativeShutdown();
     }
