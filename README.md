@@ -14,11 +14,8 @@ git clone https://github.com/fireclouu/intel_8080_java
 
 Use Android Studio and navigate to `./platforms/android` directory. It will automate the initial build process for you, follow additional instructions related to fetching of required libraries in order to build the project.
 
-## Compiled Binaries
-
-[![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/fireclouu/space_invaders_intel_8080_emu/releases/download/alpha-0.5/app-release-unsigned.apk)
-
-You can also get latest builds via [Actions](https://github.com/fireclouu/space_invaders_intel_8080_emu/actions) tab.
+## Download
+Binaries are available in [Releases](https://github.com/fireclouu/intel_8080_java/releases) tab. You can also get latest builds via [Actions](https://github.com/fireclouu/space_invaders_intel_8080_emu/actions) tab.
 
 ## Resources
 
