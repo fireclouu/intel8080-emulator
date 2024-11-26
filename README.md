@@ -5,10 +5,7 @@ Functional **Intel 8080** emulation, written in **Java**, with built-in graphica
 
 ## Building
 
-Clone this repository:
-```
-git clone https://github.com/fireclouu/intel_8080_java
-```
+Clone this repository, and follow instructions below for specific platform.
 
 ### Android
 
