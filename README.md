@@ -20,13 +20,10 @@ Use Android Studio and navigate to `./platforms/android` directory. It will auto
 
 You can also get latest builds via [Actions](https://github.com/fireclouu/space_invaders_intel_8080_emu/actions) tab.
 
-## Assets
-
-- [Sound assets](https://samples.mameworld.info/)
-- [Button face Graphics assets](https://ya-webdesign.com)
-
 ## Resources
 
+- [Sound assets](https://samples.mameworld.info/)
+- [Button assets](https://ya-webdesign.com)
 - [emulator101](http://emulator101.com/)
 - [superzazu](https://github.com/superzazu/8080)
 - <a href="https://www.flaticon.com/free-icons/space-invaders" title="space invaders icons">Space
