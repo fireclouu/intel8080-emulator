@@ -7,7 +7,7 @@ A work-in-progress functional **Intel 8080** emulation, written in **Java**, wit
 
 Clone this repository:
 ```
-git clone https://github.com/fireclouu/space_invaders_intel_8080_emu
+git clone https://github.com/fireclouu/intel_8080_java
 ```
 
 ### Android
@@ -17,7 +17,8 @@ Use Android Studio and navigate to `./platforms/android` directory. It will auto
 ## Download
 
 [![Android](https://img.shields.io/badge/Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://github.com/fireclouu/space_invaders_intel_8080_emu/releases/download/alpha-0.5/app-release-unsigned.apk)
-> You can also get latest builds via [Actions](https://github.com/fireclouu/space_invaders_intel_8080_emu/actions) tab.
+
+You can also get latest builds via [Actions](https://github.com/fireclouu/space_invaders_intel_8080_emu/actions) tab.
 
 ## Assets
 
