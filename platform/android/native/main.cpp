@@ -20,6 +20,8 @@
 #include <android/native_window_jni.h>
 
 // Data
+GLuint textureId = 0;
+
 static EGLDisplay           g_EglDisplay = EGL_NO_DISPLAY;
 static EGLSurface           g_EglSurface = EGL_NO_SURFACE;
 static EGLContext           g_EglContext = EGL_NO_CONTEXT;
@@ -90,7 +92,7 @@ void android_main(struct android_app* app)
         }
 
         // Initiate a new frame
-        MainLoopStep();
+//        MainLoopStep(0, 0);
     }
 }
 
@@ -176,7 +178,7 @@ void Init(struct android_app* app)
     g_Initialized = true;
 }
 
-void MainLoopStep()
+void MainLoopStep(uint8_t* pixels, int width, int height)
 {
     ImGuiIO& io = ImGui::GetIO();
     if (g_EglDisplay == EGL_NO_DISPLAY)
@@ -200,6 +202,13 @@ void MainLoopStep()
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplAndroid_NewFrame();
     ImGui::NewFrame();
+
+    ImGui::SetNextWindowPos(ImVec2(0, 0));
+    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
+    ImGui::Begin("MainWindow", nullptr, ImGuiWindowFlags_NoTitleBar);
+
+    ImGui::Image((ImTextureID)(intptr_t)textureId, ImVec2(width * 5, height * 5));
+    ImGui::End();
 
     {
         static float f = 0.0f;
@@ -236,6 +245,8 @@ void MainLoopStep()
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     eglSwapBuffers(g_EglDisplay, g_EglSurface);
+
+    // clear
 }
 
 void Shutdown()
@@ -368,8 +379,21 @@ Java_com_fireclouu_intel8080emu_DisplaySurface_nativeInit(JNIEnv *env, jobject t
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_fireclouu_intel8080emu_DisplaySurface_nativeMainLoopStep(JNIEnv *env, jobject thiz) {
-    MainLoopStep();
+Java_com_fireclouu_intel8080emu_DisplaySurface_nativeMainLoopStep(JNIEnv *env, jobject thiz, jobject byteBuffer, jint width, jint height) {
+    auto* pixels = (uint8_t*) env->GetDirectBufferAddress(byteBuffer);
+    if (pixels) {
+        glGenTextures(1, &textureId);
+        glBindTexture(GL_TEXTURE_2D, textureId);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    MainLoopStep(pixels, width, height);
 }
 
 extern "C"

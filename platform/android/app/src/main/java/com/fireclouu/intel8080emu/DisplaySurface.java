@@ -13,6 +13,8 @@ import android.view.SurfaceView;
 
 import com.fireclouu.spaceinvaders.intel8080.Guest;
 
+import java.nio.ByteBuffer;
+
 public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callback {
     static {
         System.loadLibrary("ImGui");
@@ -117,22 +119,28 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     public void draw(short[] memoryVideoRam) {
-//        if (!mSurface.isValid()) return;
-//
+        if (!mSurface.isValid()) return;
+
 //        Canvas canvas = mSurface.lockHardwareCanvas();
-//        orientationWidth = GUEST_WIDTH;
-//        orientationHeight = GUEST_HEIGHT;
-//
+        orientationWidth = GUEST_WIDTH;
+        orientationHeight = GUEST_HEIGHT;
+
 //        if (getHostMaxDimension() == DIMENSION_WIDTH) {
 //            canvas.translate((canvas.getWidth() / 2.0f) - ((GUEST_WIDTH / 2.0f) * getScaleValueLogical()), 0);
 //        }
 //
 //        canvas.scale(getScaleValueLogical(), getScaleValueLogical());
 //        canvas.drawColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
-//        bitmap.eraseColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
-//        createGraphicsBitmapRotated(memoryVideoRam);
+        bitmap.eraseColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
+        createGraphicsBitmapRotated(memoryVideoRam);
+
+        // 22-07-2025
+        ByteBuffer buffer = ByteBuffer.allocateDirect(bitmap.getByteCount());
+        bitmap.copyPixelsToBuffer(buffer);
+        buffer.rewind();
+
         renderRunnable = () -> {
-            if (mSurface != null && mSurface.isValid()) nativeMainLoopStep();
+            if (mSurface != null && mSurface.isValid()) nativeMainLoopStep(buffer, bitmap.getWidth(), bitmap.getHeight());
 //            handler.postDelayed(renderRunnable, 16);
         };
         handler.post(renderRunnable);
@@ -143,7 +151,7 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     public native int nativeInit(Surface surface);
-    public native void nativeMainLoopStep();
+    public native void nativeMainLoopStep(ByteBuffer buffer, int width, int height);
     public native void nativeShutdown();
 
 }
