@@ -4,13 +4,13 @@ plugins {
 
 android {
     namespace = "com.fireclouu.intel8080emu"
-    compileSdk = 34
+    compileSdk = 36
     ndkVersion = "25.2.9519653"
 
     defaultConfig {
         applicationId = "com.fireclouu.intel8080emu"
         minSdk = 23
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 6
         versionName = "alpha-0.6"
     }
@@ -43,7 +43,6 @@ repositories {
 
 dependencies {
     implementation(project(":spaceinvaders"))
-    // implementation("androidx.annotation:annotation:1.9.0")
 }
 
 java {
