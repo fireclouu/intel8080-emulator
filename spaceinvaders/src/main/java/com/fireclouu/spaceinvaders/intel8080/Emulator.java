@@ -1,18 +1,16 @@
-package com.fireclouu.intel8080emu.emulator;
+package com.fireclouu.spaceinvaders.intel8080;
+
+
+import java.time.LocalDateTime;
 
 public class Emulator {
     private final Platform platform;
-    // Timer and interrupts
-    private final long FRAME_INTERVAL_VBLANK = 8_330_000L;
-    private final long FRAME_INTERVAL_END = 16_670_000L;
-    private final long NANO_ONE_SECOND = 1_000_000_000L;
-    private final long MAX_CYCLE_PER_SECOND = 2_000_000L;
 
     private boolean isVBlankServiced = false;
     private final short[] keyPort = new short[7];
     private final short[] lastPortValue = new short[6];
     // states
-    private boolean running = true;
+    private boolean isRunning = true;
     private boolean isPaused = false;
     private final Cpu cpu;
     private final Guest guest;
@@ -44,7 +42,7 @@ public class Emulator {
         cyclePerSecond = 0;
     }
 
-    public short handleIn(short mode) {
+    private short handleIn(short mode) {
         short value = 0;
         switch (mode) {
             case 0: // ?
@@ -62,7 +60,7 @@ public class Emulator {
         return value;
     }
 
-    public void handleOut(short port, short value) {
+    private void handleOut(short port, short value) {
         switch (port) {
             case 2: // shift amount
                 shiftOffset = (byte) (value & 0x7);
@@ -126,15 +124,19 @@ public class Emulator {
         }
     }
 
-    public void ioHandler() {
-        short portNumber = mmu.readMemory(cpu.getPC() + 1);
-        int opcode = mmu.readMemory(cpu.getPC());
+    private void handleInOut() {
+        int pc = cpu.getPC();
+        int opcode = mmu.readMemory(pc);
+        short nextByte = mmu.readMemory(pc + 1);
+
         switch (opcode) {
             case 0xd3: // out
-                handleOut(portNumber, cpu.getRegA());
+                handleOut(nextByte, cpu.getRegA());
+                cpu.setPC(pc + 2);
                 break;
             case 0xdb: // in
-                cpu.setRegA(handleIn(portNumber));
+                cpu.setRegA(handleIn(nextByte));
+                cpu.setPC(pc + 2);
                 break;
         }
     }
@@ -147,6 +149,9 @@ public class Emulator {
 
         // frame timings
         if (cpu.hasInterrupt()) {
+            // Timer and interrupts
+            long FRAME_INTERVAL_VBLANK = 8_330_000L;
+            long FRAME_INTERVAL_END = 16_670_000L;
             if (frameElapsedTime >= FRAME_INTERVAL_VBLANK && !isVBlankServiced) {
                 cpu.sendInterrupt(0x08);
                 isVBlankServiced = true;
@@ -162,13 +167,16 @@ public class Emulator {
 
         // cycle with timings
         int catchupCount = 0;
+        long NANO_ONE_SECOND = 1_000_000_000L;
+        long MAX_CYCLE_PER_SECOND = 2_000_000L;
         do {
             catchupCount++;
             int cycle = cpu.getCurrentOpcodeCycle();
-            cpu.step();
 
             // io
-            ioHandler();
+            handleInOut();
+
+            cpu.step();
 
             // get next exec
             nextTimeExecution = (NANO_ONE_SECOND - (getRelativeTimeEpoch() - cpuLastTime)) * cpu.getCurrentOpcodeCycle() / (MAX_CYCLE_PER_SECOND - cyclePerSecond);
@@ -195,11 +203,12 @@ public class Emulator {
     public void tickCpuOnly() {
         int op = mmu.readMemory(cpu.getPC());
         switch (op) {
-            case 0xdb:
-                testSuiteIn();
-                break;
             case 0xd3:
                 testSuiteOut();
+                platform.writeLog("\n\n\nTEST ENDED: " + LocalDateTime.now().toString());
+                break;
+            case 0xdb:
+                testSuiteIn();
                 break;
         }
         cpu.step();
@@ -235,15 +244,15 @@ public class Emulator {
     }
 
     private void testSuiteOut() {
-        stop();
+        isRunning = false;
     }
 
-    public void stop() {
-        running = false;
+    public void setRunningState(boolean isRunning) {
+        this.isRunning = isRunning;
     }
 
     public boolean isRunning() {
-        return this.running;
+        return this.isRunning;
     }
 
     public void setPause(boolean isPaused) {
@@ -269,4 +278,6 @@ public class Emulator {
     private long getRelativeTimeEpoch() {
         return System.nanoTime() - programTimeEpoch;
     }
+
+    public Cpu getCpu() { return cpu; }
 }
