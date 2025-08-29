@@ -1,4 +1,4 @@
-package com.fireclouu.intel8080emu.emulator;
+package com.fireclouu.spaceinvaders.intel8080;
 
 public class Inputs {
     public static final byte KEY_COIN = 0b00000001;
