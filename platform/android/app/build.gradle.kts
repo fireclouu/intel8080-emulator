@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.fireclouu.intel8080emu"
-        minSdk = 23
+        minSdk = 26
         targetSdk = 36
         versionCode = 6
         versionName = "alpha-0.6"
@@ -23,6 +23,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
+        }
+        create("debuggable") {
+            isDebuggable = true
             signingConfig = signingConfigs.getByName("debug")
         }
     }
