@@ -1,4 +1,4 @@
-# Space Invaders Arcade Emulation
+# Space Invaders
 [![Android CI](https://github.com/fireclouu/space_invaders_android/actions/workflows/android.yml/badge.svg?branch=master)](https://github.com/fireclouu/space_invaders_intel_8080_emu/actions/workflows/android.yml)
 
 Functional **Intel 8080 CPU** emulation running **Space Invaders** arcade game system, written in **Java**, with built-in graphical debug features intended for multiplatform systems support in future.
