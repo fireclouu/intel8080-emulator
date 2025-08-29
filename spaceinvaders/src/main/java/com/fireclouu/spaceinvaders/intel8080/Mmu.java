@@ -1,75 +1,81 @@
-package com.fireclouu.intel8080emu.emulator;
+package com.fireclouu.spaceinvaders.intel8080;
 
 public class Mmu {
-    private static final int SP_MEM_ADDRESS_HI_SCORE_MSB = 0x20f5;
-    private static final int SP_MEM_ADDRESS_HI_SCORE_LSB = 0x20f4;
-	
+	private static final int SP_MEM_ADDRESS_HI_SCORE_MSB = 0x20f5;
+	private static final int SP_MEM_ADDRESS_HI_SCORE_LSB = 0x20f4;
+
 	private final Guest guest;
 	private final Platform platform;
-    private boolean isInitialHighScoreInjected;
-    private boolean readHighScoreMsb;
-    private boolean readHighScoreLsb;
+	private boolean isInitialHighScoreInjected;
+	private boolean readHighScoreMsb;
+	private boolean readHighScoreLsb;
 
-    private boolean isTestSuite;
+	private boolean isTestSuite;
 
-    public Mmu(Guest guest, Platform platform) {
+	public Mmu(Guest guest, Platform platform) {
 		this.guest = guest;
 		this.platform = platform;
-        init();
-    }
-	
+		init();
+	}
+
 	public void init() {
-        isInitialHighScoreInjected = false;
-        readHighScoreMsb = false;
-        readHighScoreLsb = false;
-        isTestSuite = platform.fileIsTestSuite();
-    }
+		isInitialHighScoreInjected = false;
+		readHighScoreMsb = false;
+		readHighScoreLsb = false;
+		isTestSuite = platform.fileIsTestSuite();
+	}
 
-    private short interceptValue(int address, short value) {
-        if ((address == SP_MEM_ADDRESS_HI_SCORE_MSB || address == SP_MEM_ADDRESS_HI_SCORE_LSB)) {
-            readHighScoreMsb = address == SP_MEM_ADDRESS_HI_SCORE_MSB || readHighScoreMsb;
-            readHighScoreLsb = address == SP_MEM_ADDRESS_HI_SCORE_LSB || readHighScoreLsb;
-            if (!isInitialHighScoreInjected) {
-                Object data = platform.fetchHighScoreOnPlatform();
-                int storedHighScore = (int) data;
-                short highScoreNibble = 0;
-                if (address == SP_MEM_ADDRESS_HI_SCORE_MSB) {
-                    highScoreNibble = (short) (storedHighScore >> 8);
-                }
-                if (address == SP_MEM_ADDRESS_HI_SCORE_LSB) {
-                    highScoreNibble = (short) (storedHighScore & 0xff);
-                }
-                value = highScoreNibble;
-                isInitialHighScoreInjected = readHighScoreMsb && readHighScoreLsb;
-            }
-            if (readHighScoreLsb && readHighScoreMsb) {
-                short hiScoreDataMsb = address == SP_MEM_ADDRESS_HI_SCORE_MSB ? value : readMemory(SP_MEM_ADDRESS_HI_SCORE_MSB);
-                short hiScoreDataLsb = address == SP_MEM_ADDRESS_HI_SCORE_LSB ? value : readMemory(SP_MEM_ADDRESS_HI_SCORE_LSB);
-                int hiScore = hiScoreDataMsb << 8 | hiScoreDataLsb;
-                platform.saveHighScoreOnPlatform(hiScore);
-                readHighScoreMsb = false;
-                readHighScoreLsb = false;
-            }
-        }
-		
-        return value;
-    }
+	private short interceptValue(int address, short value) {
+		if ((address == SP_MEM_ADDRESS_HI_SCORE_MSB || address == SP_MEM_ADDRESS_HI_SCORE_LSB)) {
+			readHighScoreMsb = address == SP_MEM_ADDRESS_HI_SCORE_MSB || readHighScoreMsb;
+			readHighScoreLsb = address == SP_MEM_ADDRESS_HI_SCORE_LSB || readHighScoreLsb;
+			if (!isInitialHighScoreInjected) {
+				Object data = platform.fetchHighScoreOnPlatform();
+				int storedHighScore = (int) data;
+				short highScoreNibble = 0;
+				if (address == SP_MEM_ADDRESS_HI_SCORE_MSB) {
+					highScoreNibble = (short) (storedHighScore >> 8);
+				}
+				if (address == SP_MEM_ADDRESS_HI_SCORE_LSB) {
+					highScoreNibble = (short) (storedHighScore & 0xff);
+				}
+				value = highScoreNibble;
+				isInitialHighScoreInjected = readHighScoreMsb && readHighScoreLsb;
+			}
+			if (readHighScoreLsb && readHighScoreMsb) {
+				short hiScoreDataMsb = address == SP_MEM_ADDRESS_HI_SCORE_MSB ? value : readMemory(SP_MEM_ADDRESS_HI_SCORE_MSB);
+				short hiScoreDataLsb = address == SP_MEM_ADDRESS_HI_SCORE_LSB ? value : readMemory(SP_MEM_ADDRESS_HI_SCORE_LSB);
+				int hiScore = hiScoreDataMsb << 8 | hiScoreDataLsb;
+				platform.saveHighScoreOnPlatform(hiScore);
+				readHighScoreMsb = false;
+				readHighScoreLsb = false;
+			}
+		}
 
-    // tests suite patches
-    public void writeTestSuitePatch() {
-        writeMemory(0x0000, (short) 0xD3);
-        writeMemory(0x0001, (short) 0x00);
-        writeMemory(0x0005, (short) 0xDB);
-        writeMemory(0x0006, (short) 0x00);
-        writeMemory(0x0007, (short) 0xC9);
-    }
+		return value;
+	}
+
+	// tests suite patches
+	public void writeTestSuitePatch() {
+		guest.writeMemory(0x0000, (short) 0xD3);
+		guest.writeMemory(0x0001, (short) 0x00);
+		guest.writeMemory(0x0005, (short) 0xDB);
+		guest.writeMemory(0x0006, (short) 0x00);
+		guest.writeMemory(0x0007, (short) 0xC9);
+	}
 
 	public void writeMemory(int address, short value) {
-		// TODO: separate
+		// TODO: separate value interceptor
 		if (!isTestSuite) {
 			value = interceptValue(address, value);
 		}
-		
+
+		// for test suites
+		if (isTestSuite) {
+			guest.writeMemory(address & 0xFFFF, value);
+			return;
+		}
+
 		int map = address & 0xF000;
 		switch (map) {
 			case 0x0000:
@@ -100,8 +106,13 @@ public class Mmu {
 				break;
 		}
 	}
-	
-    public short readMemory(int address) {
+
+	public short readMemory(int address) {
+		// for test suites
+		if (isTestSuite) {
+			return guest.getDataOnMemory(address & 0xFFFF);
+		}
+
 		int map = address & 0xF000;
 		short data = 0;
 		switch (map) {
@@ -134,7 +145,7 @@ public class Mmu {
 				data = readMemory(address - Guest.MEMORY_MAP_RAM_MIN);
 				break;
 		}
-		
+
 		return data;
-    }
+	}
 }
