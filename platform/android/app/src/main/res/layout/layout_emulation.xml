@@ -4,63 +4,63 @@
 	android:layout_width="match_parent"
 	android:layout_height="match_parent"
 	android:orientation="vertical">
-	
+
 	<LinearLayout
+		android:id="@+id/llLogs"
 		android:layout_width="match_parent"
 		android:layout_height="150dp"
-		android:visibility="gone"
-		android:id="@+id/llLogs"
 		android:background="#303030"
 		android:orientation="vertical"
-		android:padding="10dp">
-		
+		android:padding="10dp"
+		android:visibility="visible">
+
 		<TextView
 			android:layout_width="match_parent"
 			android:layout_height="wrap_content"
 			android:fontFamily="monospace"
+			android:text="@string/log_this_window_greatly_affects_emulation_speed"
 			android:textColor="#d3d3d3"
-			android:textSize="12sp"
-			android:text="@string/log_this_window_greatly_affects_emulation_speed" />
-		
+			android:textSize="12sp" />
+
 		<View
 			android:layout_width="match_parent"
 			android:layout_height="1dp"
 			android:layout_marginVertical="5dp"
 			android:background="#d3d3d3" />
-		
+
 		<ScrollView
+			android:id="@+id/svLogs"
 			android:layout_width="match_parent"
 			android:layout_height="0dp"
-			android:id="@+id/svLogs"
-			android:orientation="vertical"
-			android:layout_weight="1">
-			
+			android:layout_weight="1"
+			android:orientation="vertical">
+
 			<LinearLayout
+				android:id="@+id/llLogs2"
 				android:layout_width="match_parent"
 				android:layout_height="wrap_content"
-				android:orientation="vertical"
-				android:id="@+id/llLogs2">
-				
+				android:orientation="vertical">
+
 				<TextView
+					android:id="@+id/tvLog"
 					android:layout_width="match_parent"
 					android:layout_height="wrap_content"
 					android:fontFamily="monospace"
+					android:text="@string/ready_to_connect"
 					android:textColor="#d3d3d3"
 					android:textSize="12sp"
-					android:id="@+id/tvLog"
-					android:text="@string/ready_to_connect"
-					android:visibility="gone"/>
-				
+					android:visibility="visible" />
+
 			</LinearLayout>
 
 		</ScrollView>
-		
+
 		<Button
+			android:id="@+id/buttonPause"
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:id="@+id/buttonPause" 
-			android:text="@string/pause"/>
-		
+			android:text="@string/pause" />
+
 	</LinearLayout>
 	
 	<RelativeLayout
