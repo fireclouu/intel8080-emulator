@@ -1,4 +1,4 @@
-package com.fireclouu.intel8080emu.emulator;
+package com.fireclouu.spaceinvaders.intel8080;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -7,17 +7,19 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public abstract class Platform {
-    private final ExecutorService executor;
+    private boolean isInstantiated = false;
+    private ExecutorService executor;
     private Runnable runnable;
     private final Guest guest;
 
     private final int[] mediaIds = new int[9];
     private final Emulator emulator;
     private final Inputs inputs;
-    protected boolean isLogging;
     private String fileName;
     private final boolean isFileTestSuite;
     private int idMediaPlayed;
+
+    private boolean isDebugging = false;
 
     public abstract void draw(short[] memoryVideoRam);
 
@@ -63,16 +65,23 @@ public abstract class Platform {
 
     public abstract void releaseResources();
 
+    public abstract void showDebug();
+
     public Platform(boolean isTestSuite) {
-        this.guest = new Guest(this);
-        this.executor = Executors.newSingleThreadExecutor();
-        this.runnable = null;
         this.isFileTestSuite = isTestSuite;
+        this.guest = new Guest(this);
         this.emulator = new Emulator(guest);
         this.inputs = new Inputs(emulator);
     }
 
+    public boolean isInstantiated() {
+        return this.isInstantiated;
+    }
+
     private void init() {
+        executor = Executors.newSingleThreadExecutor();
+        runnable = null;
+
         initRunnable();
         initMediaHandler();
 
@@ -88,40 +97,40 @@ public abstract class Platform {
     }
 
     public void start() {
+        if (isInstantiated) return;
+
         init();
 
+        // load test suite, else load space invaders
         if (fileIsTestSuite()) {
             if (!isFileLoadedToRom(getTestAssetPath() + fileName, 0x0100)) return;
             guest.getMmu().writeTestSuitePatch();
             guest.getCpu().setPC(0x0100);
+        } else {
+            if (!isSpaceInvadersLoaded()) return;
         }
 
-        if (!isExpectedFilesLoaded()) return;
+        emulator.setPause(false);
+        emulator.setRunningState(true);
         executor.execute(runnable);
+
+        isInstantiated = true;
     }
 
     private void initRunnable() {
-        if (fileIsTestSuite()) {
-            runnable = new Runnable() {
-                @Override
-                public void run() {
-                    while (emulator.isRunning()) {
-                        if (emulator.isPaused()) continue;
-                        emulator.tickCpuOnly();
-                    }
-                }
-            };
-        } else {
-            runnable = new Runnable() {
-                @Override
-                public void run() {
-                    while (emulator.isRunning()) {
-                        if (emulator.isPaused()) continue;
-                        emulator.tick();
-                    }
-                }
-            };
-        }
+        runnable = fileIsTestSuite() ? () -> {
+            while (emulator.isRunning()) {
+                if (emulator.isPaused()) continue;
+                if (isDebugging) showDebug();
+                emulator.tickCpuOnly();
+            }
+        } : () -> {
+            while (emulator.isRunning()) {
+                if (emulator.isPaused()) continue;
+                if (isDebugging) showDebug();
+                emulator.tick();
+            }
+        };
     }
 
     private boolean isFileLoadedToRom(String fileName, int startAddress) {
@@ -131,7 +140,12 @@ public abstract class Platform {
 
         try {
             while ((read = (short) file.read()) != -1) {
-                guest.writeMemoryRom(startAddress++, read);
+                if (fileIsTestSuite()) {
+                    guest.writeMemory(startAddress++, read);
+                }
+                else {
+                    guest.writeMemoryRom(startAddress++, read);
+                }
             }
             file.close();
         } catch (IOException e) {
@@ -141,7 +155,7 @@ public abstract class Platform {
         return result;
     }
 
-    private boolean isExpectedFilesLoaded() {
+    private boolean isSpaceInvadersLoaded() {
         for (Map.Entry<String, Integer> item : Guest.mapFileData.entrySet()) {
             if (!isFileLoadedToRom(item.getKey(), item.getValue())) return false;
         }
@@ -169,7 +183,7 @@ public abstract class Platform {
     }
 
     public void emulationTerminate() {
-        emulator.stop();
+        emulator.setRunningState(false);
         executor.shutdown();
         releaseResources();
     }
@@ -201,5 +215,21 @@ public abstract class Platform {
 
     public int getIdMediaPlayed() {
         return this.idMediaPlayed;
+    }
+
+    public boolean isDebugging() {
+        return isDebugging;
+    }
+
+    public void setDebugging(boolean debugging) {
+        isDebugging = debugging;
+    }
+
+    public Cpu getCpu() {
+        return emulator.getCpu();
+    }
+
+    public String getFileName() {
+        return fileName;
     }
 }
