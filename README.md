@@ -24,6 +24,7 @@ Binaries are available in [Releases](https://github.com/fireclouu/intel_8080_jav
 - [Button assets](https://ya-webdesign.com)
 - [emulator101](http://emulator101.com/)
 - [superzazu](https://github.com/superzazu/8080)
+- [imgui](https://github.com/ocornut/imgui)
 - <a href="https://www.flaticon.com/free-icons/space-invaders" title="space invaders icons">Space
   invaders icons created by IconMark - Flaticon</a>
 
