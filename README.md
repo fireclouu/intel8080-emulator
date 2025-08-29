@@ -3,8 +3,10 @@
 
 Functional **Intel 8080 CPU** emulation running **Space Invaders** arcade game system, written in **Java**, with built-in graphical debug features intended for multiplatform systems support in future.
 
-## Building
+<img src="https://github.com/user-attachments/assets/7d8c1c05-9644-4210-8b8e-bdd2a4ab809f" width="300"/>
+<img src="https://github.com/user-attachments/assets/8b35ddc7-0ba2-422f-997b-cce66c0d35ff" width="300"/>
 
+## Building
 Clone this repository, and follow instructions below for specific platform.
 
 ### Android
