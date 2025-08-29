@@ -29,16 +29,24 @@ static struct android_app*  g_App = nullptr;
 static bool                 g_Initialized = false;
 static char                 g_LogTag[] = "ImGuiExample";
 static std::string          g_IniFilename = "";
+static bool                 g_Debugging = false;
+static uint16_t              int_pc = 0;
+static uint16_t              int_sp = 0;
+static uint16_t              int_bc = 0;
+static uint16_t              int_de = 0;
+static uint16_t              int_hl = 0;
+static uint8_t               int_a = 0;
+ImVec2 displaySize;
 
 // Forward declarations of helper functions
 static void Init(struct android_app* app);
 static void Shutdown();
+static void RenderLogsViaImGui();
 static void MainLoopStep();
 static int ShowSoftKeyboardInput();
 static int PollUnicodeChars();
 static int GetAssetData(const char* filename, void** out_data);
 
-// Main code
 static void handleAppCmd(struct android_app* app, int32_t appCmd)
 {
     switch (appCmd)
@@ -90,9 +98,6 @@ void android_main(struct android_app* app)
                 return;
             }
         }
-
-        // Initiate a new frame
-//        MainLoopStep(0, 0);
     }
 }
 
@@ -175,10 +180,12 @@ void Init(struct android_app* app)
     // Arbitrary scale-up
     // FIXME: Put some effort into DPI awareness
     ImGui::GetStyle().ScaleAllSizes(3.0f);
+
+    displaySize = ImGui::GetIO().DisplaySize;
     g_Initialized = true;
 }
 
-void MainLoopStep(uint8_t* pixels, int width, int height)
+void MainLoopStep(int width, int height, float scale)
 {
     ImGuiIO& io = ImGui::GetIO();
     if (g_EglDisplay == EGL_NO_DISPLAY)
@@ -204,49 +211,20 @@ void MainLoopStep(uint8_t* pixels, int width, int height)
     ImGui::NewFrame();
 
     ImGui::SetNextWindowPos(ImVec2(0, 0));
-    ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize);
-    ImGui::Begin("MainWindow", nullptr, ImGuiWindowFlags_NoTitleBar);
-
-    ImGui::Image((ImTextureID)(intptr_t)textureId, ImVec2(width * 5, height * 5));
+    ImGui::SetNextWindowSize(displaySize);
+    ImGui::Begin("MainWindow", nullptr, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoScrollbar);
+    ImGui::Image((ImTextureID)(intptr_t)textureId, ImVec2(width * scale, height * scale));
     ImGui::End();
 
-    {
-        static float f = 0.0f;
-        static int counter = 0;
-
-        ImGui::Begin("Space Invaders | Logs");
-
-        ImGui::Spacing();
-
-        ImGui::Text("PC: 0000  SP: FFFF");
-        ImGui::Text("BC: 0000  DE: 0000  HL: 0000");
-        ImGui::Text("A: 00");
-        ImGui::Button("Edit");
-
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        ImGui::Text("Disassembler");
-        ImGui::Text("0000  00  NOP");
-        ImGui::Text("0001  C3  JMP  $0DFE");
-        ImGui::Text("0004  00  NOP");
-
-        ImGui::Spacing();
-        ImGui::Spacing();
-
-        ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-        ImGui::End();
-    }
+    // Logs
+    RenderLogsViaImGui();
 
     // Rendering
     ImGui::Render();
     glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-//    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
     glClear(GL_COLOR_BUFFER_BIT);
     ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
     eglSwapBuffers(g_EglDisplay, g_EglSurface);
-
-    // clear
 }
 
 void Shutdown()
@@ -280,6 +258,44 @@ void Shutdown()
     g_Initialized = false;
 }
 
+void RenderLogsViaImGui() {
+    if (!g_Debugging) return;
+    static float f = 0.0f;
+    static int counter = 0;
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_Always);
+    ImGui::Begin("Memory View | intel 8080 CPU", &g_Debugging);
+
+    ImGui::Spacing();
+
+    ImGui::Text("PC: %04X  SP: %04X", int_pc, int_sp);
+    ImGui::Text("BC: %04X  DE: %04X  HL: %04X", int_bc, int_de, int_hl);
+    ImGui::Text("A: %02X", int_a);
+//    ImGui::Button("Edit");
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+//        ImGui::Text("Disassembler");
+//        ImGui::Text("0000  00  NOP");
+//        ImGui::Text("0001  C3  JMP  $0DFE");
+//        ImGui::Text("0004  00  NOP");
+
+    ImGui::Spacing();
+
+    ImGui::Text("%.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
+    ImGui::Spacing();
+    ImGui::Spacing();
+
+    ImGui::Text("written in Java, NDK for ImGUI");
+    ImGui::Text("Display:\nSurfaceView -> nativeWindow / OpenGL");
+
+    ImGui::Spacing();
+    ImGui::Text("- fireclouu");
+
+    ImGui::End();
+}
 // Helper functions
 
 // Unfortunately, there is no way to show the on-screen input from native code.
@@ -379,7 +395,7 @@ Java_com_fireclouu_intel8080emu_DisplaySurface_nativeInit(JNIEnv *env, jobject t
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_com_fireclouu_intel8080emu_DisplaySurface_nativeMainLoopStep(JNIEnv *env, jobject thiz, jobject byteBuffer, jint width, jint height) {
+Java_com_fireclouu_intel8080emu_DisplaySurface_nativeMainLoopStep(JNIEnv *env, jobject thiz, jobject byteBuffer, jint width, jint height, jfloat scale) {
     auto* pixels = (uint8_t*) env->GetDirectBufferAddress(byteBuffer);
     if (pixels) {
         glGenTextures(1, &textureId);
@@ -393,11 +409,28 @@ Java_com_fireclouu_intel8080emu_DisplaySurface_nativeMainLoopStep(JNIEnv *env, j
 
         glBindTexture(GL_TEXTURE_2D, 0);
     }
-    MainLoopStep(pixels, width, height);
+    MainLoopStep(width, height, scale);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_com_fireclouu_intel8080emu_DisplaySurface_nativeShutdown(JNIEnv *env, jobject thiz) {
     Shutdown();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_fireclouu_intel8080emu_AndroidPlatform_nativeSetMemory(JNIEnv *env, jobject thiz, jint pc, jint sp, jint bc, jint de, jint hl, jint a) {
+    int_pc = pc;
+    int_sp = sp;
+    int_bc = bc;
+    int_de = de;
+    int_hl = hl;
+    int_a = a;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_fireclouu_intel8080emu_AndroidPlatform_nativeSetDebugging(JNIEnv *env, jobject thiz, jboolean debugging) {
+    g_Debugging = debugging;
 }

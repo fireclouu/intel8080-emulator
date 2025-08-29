@@ -15,11 +15,13 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.fireclouu.spaceinvaders.intel8080.Cpu;
 import com.fireclouu.spaceinvaders.intel8080.Platform;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 public class AndroidPlatform extends Platform implements Serializable {
@@ -28,12 +30,18 @@ public class AndroidPlatform extends Platform implements Serializable {
     private DisplaySurface DisplaySurface;
     private Context context;
     private SoundPool soundPool;
+    private TextView tvLog;
+    private Handler handler;
 
+    static {
+        System.loadLibrary("ImGui");
+    }
     public AndroidPlatform(Activity activity, Context context, DisplaySurface DisplaySurface, boolean isTestSuite) {
         super(isTestSuite);
         this.context = context;
         this.DisplaySurface = DisplaySurface;
-        TextView tvLog = activity.findViewById(R.id.tvLog);
+        this.handler = new Handler(Looper.getMainLooper());
+        tvLog = activity.findViewById(R.id.tvLog);
         Button buttonPause = activity.findViewById(R.id.buttonPause);
         buttonPause.setOnClickListener(p1 -> togglePause());
 
@@ -172,7 +180,7 @@ public class AndroidPlatform extends Platform implements Serializable {
 
     @Override
     public void writeLog(final String message) {
-        // TODO: implement
+        handler.post(() -> tvLog.append(message));
     }
 
     @Override
@@ -202,6 +210,18 @@ public class AndroidPlatform extends Platform implements Serializable {
         return soundPool.load(context, id, priority);
     }
 
+    @Override
+    public void showDebug() {
+        Cpu cpu = getCpu();
+        int pc = cpu.getPC();
+        int sp = cpu.getSP();
+        int bc = cpu.getRegB() << 8 | cpu.getRegC();
+        int de = cpu.getRegD() << 8 | cpu.getRegE();
+        int hl = cpu.getRegH() << 8 | cpu.getRegL();
+        int a = cpu.getRegA();
+        nativeSetMemory(pc, sp, bc, de, hl, a);
+    }
+
     public void setDisplay(DisplaySurface DisplaySurface) {
         this.DisplaySurface = DisplaySurface;
     }
@@ -210,4 +230,12 @@ public class AndroidPlatform extends Platform implements Serializable {
         this.context = context;
     }
 
+    @Override
+    public void start() {
+        writeLog("TEST BEGIN: " + LocalDateTime.now().toString() + "\n\n\n");
+        super.start();
+    }
+
+    public native void nativeSetMemory(int pc, int sp, int bc, int de, int hl, int a);
+    public native void nativeSetDebugging(boolean debugging);
 }

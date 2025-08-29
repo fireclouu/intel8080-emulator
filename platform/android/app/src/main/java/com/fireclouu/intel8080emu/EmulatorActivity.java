@@ -122,15 +122,18 @@ public class EmulatorActivity extends Activity implements Button.OnClickListener
         }
 
         if (buttonId == R.id.btn_logs) {
-            boolean isVisible = llLogs.getVisibility() == View.VISIBLE;
-            int toggledVisibility = isVisible ? View.GONE : View.VISIBLE;
-            llLogs.setVisibility(toggledVisibility);
-            isVisible = llLogs.getVisibility() == View.VISIBLE;
+            boolean isDebugging = !platform.isDebugging();
+            platform.setDebugging(isDebugging);
+            platform.nativeSetDebugging(isDebugging);
+//            boolean isVisible = llLogs.getVisibility() == View.VISIBLE;
+//            int toggledVisibility = isVisible ? View.GONE : View.VISIBLE;
+//            llLogs.setVisibility(toggledVisibility);
+//            isVisible = llLogs.getVisibility() == View.VISIBLE;
+
         }
     }
 
     private void requestFullscreen() {
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_FULLSCREEN | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
-
 }

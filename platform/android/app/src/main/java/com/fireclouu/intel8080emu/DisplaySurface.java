@@ -34,7 +34,6 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
     private Paint paint;
 
     private Handler handler;
-    private Runnable renderRunnable;
 
     public DisplaySurface(Context context) {
         super(context);
@@ -48,22 +47,26 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        nativeShutdown();
         mSurface = holder.getSurface();
-        nativeInit(mSurface);
+        Runnable runnable = () -> {
+            nativeInit(mSurface);
+        };
+        handler.post(runnable);
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        nativeShutdown();
         mSurface = holder.getSurface();
-        nativeInit(mSurface);
+        Runnable runnable = () -> {
+            nativeInit(mSurface);
+        };
+        handler.post(runnable);
     }
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
-        handler.removeCallbacks(renderRunnable);
-        nativeShutdown();
+        Runnable runnable = this::nativeShutdown;
+        handler.post(runnable);
     }
 
     private void init() {
@@ -121,37 +124,21 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
     public void draw(short[] memoryVideoRam) {
         if (!mSurface.isValid()) return;
 
-//        Canvas canvas = mSurface.lockHardwareCanvas();
         orientationWidth = GUEST_WIDTH;
         orientationHeight = GUEST_HEIGHT;
-
-//        if (getHostMaxDimension() == DIMENSION_WIDTH) {
-//            canvas.translate((canvas.getWidth() / 2.0f) - ((GUEST_WIDTH / 2.0f) * getScaleValueLogical()), 0);
-//        }
-//
-//        canvas.scale(getScaleValueLogical(), getScaleValueLogical());
-//        canvas.drawColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
-        bitmap.eraseColor(Color.parseColor(Guest.Display.COLOR_BACKGROUND));
+        bitmap.eraseColor(Color.TRANSPARENT);
         createGraphicsBitmapRotated(memoryVideoRam);
 
-        // 22-07-2025
         ByteBuffer buffer = ByteBuffer.allocateDirect(bitmap.getByteCount());
         bitmap.copyPixelsToBuffer(buffer);
-        buffer.rewind();
 
-        renderRunnable = () -> {
-            if (mSurface != null && mSurface.isValid()) nativeMainLoopStep(buffer, bitmap.getWidth(), bitmap.getHeight());
-//            handler.postDelayed(renderRunnable, 16);
+        Runnable runnable = () -> {
+            if (mSurface != null && mSurface.isValid()) nativeMainLoopStep(buffer, bitmap.getWidth(), bitmap.getHeight(), getScaleValueLogical());
         };
-        handler.post(renderRunnable);
-//        canvas.drawBitmap(bitmap, 0, 0, null);
-//
-//        if (!mSurface.isValid()) return;
-//        mSurface.unlockCanvasAndPost(canvas);
+        handler.post(runnable);
     }
 
     public native int nativeInit(Surface surface);
-    public native void nativeMainLoopStep(ByteBuffer buffer, int width, int height);
+    public native void nativeMainLoopStep(ByteBuffer buffer, int width, int height, float scale);
     public native void nativeShutdown();
-
 }
