@@ -1,8 +1,8 @@
-package com.fireclouu.intel8080emu.emulator;
+package com.fireclouu.spaceinvaders.intel8080;
 
 public class Cpu {
-	private final Mmu mmu;
-	
+    private final Mmu mmu;
+
     // SOURCES: superzazu
     private final static byte[] OPCODES_CYCLES = {    //  0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
             4, 10, 7, 5, 5, 5, 7, 4, 4, 10, 7, 5, 5, 5, 7, 4,  // 0
@@ -22,7 +22,7 @@ public class Cpu {
             5, 10, 10, 18, 11, 11, 7, 11, 5, 5, 10, 4, 11, 17, 7, 11, // E
             5, 10, 10, 4, 11, 11, 7, 11, 5, 5, 10, 4, 11, 17, 7, 11  // F
     };
-    private short opodeCycle = 0;
+    private final short opcodeCycle = 0;
     private final Flags cc;
     ///  REGISTERS  ///
     private short b, c, d, e, h, l, a;
@@ -53,50 +53,50 @@ public class Cpu {
         cc.init();
     }
 
-	public byte getCurrentOpcodeCycle() {
-		byte cycle;
-		int opcode = mmu.readMemory(pc);
-		cycle = OPCODES_CYCLES[opcode];
-		boolean hasExtraCycle = false;
-		switch (opcode) {
-			case 0xc0:
-			case 0xc4:
-				hasExtraCycle = cc.z == 0;
+    public byte getCurrentOpcodeCycle() {
+        byte cycle;
+        int opcode = mmu.readMemory(pc);
+        cycle = OPCODES_CYCLES[opcode];
+        boolean hasExtraCycle = false;
+        switch (opcode) {
+            case 0xc0:
+            case 0xc4:
+                hasExtraCycle = cc.z == 0;
                 break;
-			case 0xc8:
+            case 0xc8:
             case 0xcc:
-				hasExtraCycle = cc.z == 1;
+                hasExtraCycle = cc.z == 1;
                 break;
-			case 0xd0:
+            case 0xd0:
             case 0xd4:
                 hasExtraCycle = cc.cy == 0;
                 break;
-			case 0xd8:
+            case 0xd8:
             case 0xdc:
-				hasExtraCycle = cc.cy == 1;
+                hasExtraCycle = cc.cy == 1;
                 break;
-			case 0xe0:
+            case 0xe0:
             case 0xe4:
-				hasExtraCycle = cc.p == 0;
+                hasExtraCycle = cc.p == 0;
                 break;
-			case 0xe8:
+            case 0xe8:
             case 0xec:
-				hasExtraCycle = cc.p == 1;
+                hasExtraCycle = cc.p == 1;
                 break;
-			case 0xf0:
+            case 0xf0:
             case 0xf4:
-				hasExtraCycle = cc.s == 0;
+                hasExtraCycle = cc.s == 0;
                 break;
-			case 0xf8:
+            case 0xf8:
             case 0xfc:
-				hasExtraCycle = cc.s == 1;
+                hasExtraCycle = cc.s == 1;
                 break;
-		}
+        }
 
-		if (hasExtraCycle) cycle += 6;
+        if (hasExtraCycle) cycle += 6;
 
-		return cycle;
-	}
+        return cycle;
+    }
 
     public void step() {
         int currentPc = pc;
@@ -1154,7 +1154,6 @@ public class Cpu {
     }
 
     private void push_psw() {
-        
         mmu.writeMemory(sp - 1, a);
         // prepare variable higher than 0xff, but with 0's in bit 0-7
         // this way, it serves as flags' default state waiting to be flipped, like a template
@@ -1256,32 +1255,38 @@ public class Cpu {
         return ((carry & (1 << bit_no)) != 0) ? (byte) 1 : 0;
     }
 
+    public short getRegB() {
+        return this.b;
+    }
     public short getRegC() {
         return this.c;
     }
-
     public short getRegD() {
         return this.d;
     }
-
     public short getRegE() {
         return this.e;
     }
-
+    public short getRegH() {
+        return this.h;
+    }
+    public short getRegL() {
+        return this.l;
+    }
     public short getRegA() {
         return this.a;
     }
-
     public void setRegA(short a) {
         this.a = a;
     }
-
     public int getPC() {
         return this.pc;
     }
-
     public void setPC(int pc) {
         this.pc = pc;
+    }
+    public int getSP() {
+        return this.sp;
     }
 
     public boolean hasInterrupt() {
