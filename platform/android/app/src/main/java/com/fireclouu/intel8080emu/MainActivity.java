@@ -20,11 +20,12 @@ import java.util.Arrays;
 
 public class MainActivity extends Activity {
     // native
-    private String[] files = null;
     private final String ASSET_TEST_LOCATION = "tests";
-    private final String[] SUPPORTED_TEST_FILE_EXTENSIONS = [
+    private final String[] SUPPORTED_TEST_FILE_EXTENSIONS = {
         ".bin", ".com"
-    ];
+    };
+    private String[] files = null;
+    private int selectedTestFileIndex;
 
     // android-related go here
     private static final int REQUEST_PICK_DOC_MULTI = 1;
@@ -33,7 +34,6 @@ public class MainActivity extends Activity {
     private TextView mTvChooseFile;
     private CheckBox mCbTestRom;
     private Spinner mSpinnerTestRomSelector;
-    private String testRomFilename;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,9 +77,11 @@ public class MainActivity extends Activity {
         mBtnLoadEmulator.setOnClickListener(new View.OnClickListener () {
             @Override
             public void onClick(View view) {
+                String testRomFileName = files[selectedTestFileIndex];
+
                 Intent intent = new Intent(MainActivity.this, EmulatorActivity.class);
                 intent.putExtra(HostUtils.INTENT_FILE_IS_TEST_ROM, mCbTestRom.isChecked());
-                intent.putExtra(HostUtils.INTENT_ROM_FILE_NAME, testRomFilename);
+                intent.putExtra(HostUtils.INTENT_ROM_FILE_NAME, testRomFileName);
                 startActivity(intent);
             }
         });
@@ -116,10 +118,8 @@ public class MainActivity extends Activity {
             files = assetManager.list(ASSET_TEST_LOCATION);
             if (files != null) {
                 files = Arrays.stream(files)
-                    .filter(name -> 
-                        for (String fileExtension : SUPPORTED_TEST_FILE_EXTENSIONS) {
-                            return name.toLowerCase().endsWith(fileExtension);
-                        }
+                    .filter(name -> Arrays.stream(SUPPORTED_TEST_FILE_EXTENSIONS)
+                        .anyMatch(ext -> name.toLowerCase().endsWith(ext))
                     )
                     .toArray(String[]::new);
             }
@@ -137,7 +137,7 @@ public class MainActivity extends Activity {
         mSpinnerTestRomSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> p1, View p2, int p3, long p4) {
-                testRomFilename = files[p3];
+                selectedTestFileIndex = p3;
             }
 
             @Override
