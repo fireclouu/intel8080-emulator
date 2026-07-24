@@ -31,6 +31,13 @@ public class Cpu {
     ///  INTERRUPT  ///
     private boolean hasInterrupt;
 
+    // flag positions
+    private final short PSW_FLAG_POS_CY = 0b00000001; // 1
+    private final short PSW_FLAG_POS_PA = 0b00000100; // 4
+    private final short PSW_FLAG_POS_AC = 0b00010000; // 16 
+    private final short PSW_FLAG_POS_ZE = 0b01000000; // 64
+    private final short PSW_FLAG_POS_SN = 0b10000000; // 128
+
     public Cpu(Mmu mmu) {
         this.mmu = mmu;
         cc = new Flags();
@@ -1126,11 +1133,6 @@ public class Cpu {
 
     private void pop_psw() {
         int PSW = mmu.readMemory(sp);
-        int PSW_FLAG_POS_CY = 0b00000001;
-        int PSW_FLAG_POS_PA = 0b00000100;
-        int PSW_FLAG_POS_AC = 0b00010000;
-        int PSW_FLAG_POS_ZE = 0b01000000;
-        int PSW_FLAG_POS_SN = 0b10000000;
 
         cc.cy = ((PSW & PSW_FLAG_POS_CY) != 0) ? (byte) 1 : 0;
         cc.p = ((PSW & PSW_FLAG_POS_PA) != 0) ? (byte) 1 : 0;
