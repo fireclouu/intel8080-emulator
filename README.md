@@ -7,7 +7,13 @@ Functional **Intel 8080 CPU** emulation running **Space Invaders** arcade game s
 <img src="https://github.com/user-attachments/assets/8b35ddc7-0ba2-422f-997b-cce66c0d35ff" width="300"/>
 
 ## Building
-Clone this repository, and follow instructions below for specific platform.
+Clone this repository:
+
+```
+git clone --recurse-submodules https://github.com/fireclouu/intel8080-emulator
+```
+
+and follow instructions below for specific platform.
 
 ### Android
 
