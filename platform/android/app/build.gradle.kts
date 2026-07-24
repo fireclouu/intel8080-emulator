@@ -25,9 +25,12 @@ android {
             )
             signingConfig = signingConfigs.getByName("debug")
         }
-        create("debuggable") {
+        debug {
+            isMinifyEnabled = false
+            isShrinkResources = false
             isDebuggable = true
-            signingConfig = signingConfigs.getByName("debug")
+            applicationIdSuffix = ".debug"
+            isJniDebuggable = true
         }
     }
 
