@@ -17,11 +17,12 @@ and follow instructions below for specific platform.
 
 ### Android
 
-Use Android Studio and navigate to directory:
+### Linux
+Navigate to directory:
 ```bash
-./platform/android
+./platform/android/.gradlew assembleDebug
 ```
-It will automate the initial build process for you, follow additional instructions related to fetching of required libraries in order to build the project.
+It will automate the initial build process for you, assuming you have proper tooling installed.
 
 ## Download
 Binaries are available in [Releases](https://github.com/fireclouu/intel_8080_java/releases) tab. You can also get latest builds via [Actions](https://github.com/fireclouu/space_invaders_intel_8080_emu/actions) tab.
