@@ -16,15 +16,23 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
+import java.util.Arrays;
 
-public class MainActivity extends Activity implements View.OnClickListener, CheckBox.OnCheckedChangeListener, AdapterView.OnItemSelectedListener {
+public class MainActivity extends Activity {
+    // native
+    private String[] files = null;
+    private final String ASSET_TEST_LOCATION = "tests";
+    private final String[] SUPPORTED_TEST_FILE_EXTENSIONS = [
+        ".bin", ".com"
+    ];
+
+    // android-related go here
     private static final int REQUEST_PICK_DOC_MULTI = 1;
-    private Button buttonLoadEmulator;
-    private Button buttonChooseFile;
-    private TextView tvChooseFile;
-    private CheckBox cbTestRom;
-    private Spinner spinnerTestRom;
-    private String[] files;
+    private Button mBtnLoadEmulator;
+    private Button mBtnChooseFile;
+    private TextView mTvChooseFile;
+    private CheckBox mCbTestRom;
+    private Spinner mSpinnerTestRomSelector;
     private String testRomFilename;
 
     @Override
@@ -32,75 +40,22 @@ public class MainActivity extends Activity implements View.OnClickListener, Chec
         super.onCreate(savedInstanceState);
         setContentView(R.layout.layout_file_picker);
 
-        buttonChooseFile = findViewById(R.id.buttonChooseFile);
-        buttonLoadEmulator = findViewById(R.id.buttonLoadEmulator);
-        tvChooseFile = findViewById(R.id.tvChooseFile);
-        cbTestRom = findViewById(R.id.cbTestRom);
-        spinnerTestRom = findViewById(R.id.spinnerTestRoms);
+        mBtnChooseFile = findViewById(R.id.buttonChooseFile);
+        mBtnLoadEmulator = findViewById(R.id.buttonLoadEmulator);
+        mTvChooseFile = findViewById(R.id.tvChooseFile);
+        mCbTestRom = findViewById(R.id.cbTestRom);
+        mSpinnerTestRomSelector = findViewById(R.id.spinnerTestRoms);
 
-        buttonLoadEmulator.setOnClickListener(this);
-        buttonChooseFile.setOnClickListener(new View.OnClickListener() {
+        // default behavior while checkbox 
+        // for test rom tests not selected
+        mSpinnerTestRomSelector.setVisibility(View.GONE);
 
-            @Override
-            public void onClick(View p1) {
-                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
-                intent.setType("*/*");
-                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                intent.addCategory(Intent.CATEGORY_OPENABLE);
-                startActivityForResult(intent, REQUEST_PICK_DOC_MULTI);
-            }
-
-
-        });
-
-        AssetManager assetManager = getAssets();
-        files = null;
-
-        try {
-            files = assetManager.list("tests");
-        } catch (IOException e) {
-            Log.e(HostUtils.TAG, e.getMessage());
+        setupBtnLoadEmulator();
+        setupBtnChooseFile();
+        setupCbForTestRom();
+        if (isTestAssetsLoaded()) {
+            makeArrayAdapterForFiles();
         }
-
-        if (files != null) {
-            ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, files);
-            arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            spinnerTestRom.setAdapter(arrayAdapter);
-            spinnerTestRom.setOnItemSelectedListener(this);
-        }
-
-        cbTestRom.setOnCheckedChangeListener(this);
-
-        cbTestRom.setChecked(false);
-        spinnerTestRom.setVisibility(View.GONE);
-    }
-
-    @Override
-    public void onClick(View view) {
-        final int id = view.getId();
-
-        if (id == R.id.buttonLoadEmulator) {
-            Intent intent = new Intent(MainActivity.this, EmulatorActivity.class);
-            intent.putExtra(HostUtils.INTENT_FILE_IS_TEST_ROM, cbTestRom.isChecked());
-            intent.putExtra(HostUtils.INTENT_ROM_FILE_NAME, testRomFilename);
-            startActivity(intent);
-        }
-    }
-
-    @Override
-    public void onItemSelected(AdapterView<?> p1, View p2, int p3, long p4) {
-        testRomFilename = files[p3];
-    }
-
-    @Override
-    public void onNothingSelected(AdapterView<?> p1) {
-        // TODO: Implement this method
-    }
-
-    @Override
-    public void onCheckedChanged(CompoundButton p1, boolean p2) {
-        int visibility = p2 ? View.VISIBLE : View.GONE;
-        spinnerTestRom.setVisibility(visibility);
     }
 
     @Override
@@ -114,7 +69,81 @@ public class MainActivity extends Activity implements View.OnClickListener, Chec
             int itemCount = data.getClipData().getItemCount();
 
             String test = data.getClipData().getItemAt(0).getUri().toString();
-            tvChooseFile.setText(test);
+            mTvChooseFile.setText(test);
         }
+    }
+
+    private void setupBtnLoadEmulator() {
+        mBtnLoadEmulator.setOnClickListener(new View.OnClickListener () {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(MainActivity.this, EmulatorActivity.class);
+                intent.putExtra(HostUtils.INTENT_FILE_IS_TEST_ROM, mCbTestRom.isChecked());
+                intent.putExtra(HostUtils.INTENT_ROM_FILE_NAME, testRomFilename);
+                startActivity(intent);
+            }
+        });
+    }
+
+    private void setupBtnChooseFile() {
+        mBtnChooseFile.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View p1) {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.setType("*/*");
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                startActivityForResult(intent, REQUEST_PICK_DOC_MULTI);
+            }
+        });
+    }
+
+    private void setupCbForTestRom() {
+        mCbTestRom.setOnCheckedChangeListener(new CheckBox.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton p1, boolean p2) {
+                int visibility = p2 ? View.VISIBLE : View.GONE;
+                mSpinnerTestRomSelector.setVisibility(visibility);
+            }
+        });
+        mCbTestRom.setChecked(false);
+    }
+
+    private boolean isTestAssetsLoaded() {
+        AssetManager assetManager = getAssets();
+
+        try {
+            files = assetManager.list(ASSET_TEST_LOCATION);
+            if (files != null) {
+                files = Arrays.stream(files)
+                    .filter(name -> 
+                        for (String fileExtension : SUPPORTED_TEST_FILE_EXTENSIONS) {
+                            return name.toLowerCase().endsWith(fileExtension);
+                        }
+                    )
+                    .toArray(String[]::new);
+            }
+        } catch (IOException e) {
+            Log.e(HostUtils.TAG, e.getMessage());
+        }
+
+        return files != null;
+    }
+
+    private void makeArrayAdapterForFiles() {
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, files);
+        arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpinnerTestRomSelector.setAdapter(arrayAdapter);
+        mSpinnerTestRomSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> p1, View p2, int p3, long p4) {
+                testRomFilename = files[p3];
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> p1) {
+                // TODO: Implement this method
+            }
+        });
     }
 }
