@@ -32,6 +32,10 @@ public class Emulator {
     private long systemLastTime;
     private long systemGuestCycleTotal;
 
+    private static final int CPU_HZ = 2_000_000;
+    private static final int FPS    = 60;
+    private static final int CYCLES_PER_FRAME = CPU_HZ / FPS;
+
     public Emulator(Guest guest) {
         this.guest = guest;
         this.platform = guest.getPlatform();
@@ -40,6 +44,10 @@ public class Emulator {
         this.programTimeEpoch = System.nanoTime();
 
         cyclePerSecond = 0;
+    }
+
+    public void newCycle() {
+
     }
 
     private short handleIn(short mode) {
@@ -140,8 +148,8 @@ public class Emulator {
                 break;
         }
     }
-
-    public void tick() {
+    
+    public void cycle() {
         long currentTime = getRelativeTimeEpoch();
         long frameElapsedTime = currentTime - frameLastTime;
         long cpuElapsedTime = currentTime - cpuLastTime;
@@ -171,15 +179,14 @@ public class Emulator {
         long MAX_CYCLE_PER_SECOND = 2_000_000L;
         do {
             catchupCount++;
-            int cycle = cpu.getCurrentOpcodeCycle();
+            int cycle = cpu.step();
 
             // io
             handleInOut();
 
-            cpu.step();
 
             // get next exec
-            nextTimeExecution = (NANO_ONE_SECOND - (getRelativeTimeEpoch() - cpuLastTime)) * cpu.getCurrentOpcodeCycle() / (MAX_CYCLE_PER_SECOND - cyclePerSecond);
+            // nextTimeExecution = (NANO_ONE_SECOND - (getRelativeTimeEpoch() - cpuLastTime)) * cpu.getCurrentOpcodeCycle() / (MAX_CYCLE_PER_SECOND - cyclePerSecond);
             nextTimeExecution += getRelativeTimeEpoch();
             cyclePerSecond += cycle;
             systemGuestCycleTotal += cycle;
@@ -200,7 +207,7 @@ public class Emulator {
         }
     }
 
-    public void tickCpuOnly() {
+    public void cycleWithoutTiming() {
         int op = mmu.readMemory(cpu.getPC());
         switch (op) {
             case 0xd3:

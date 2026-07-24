@@ -148,4 +148,12 @@ public class Mmu {
 
 		return data;
 	}
+
+	public short readRawMemory(int address) {
+		return guest.getDataOnMemory(address & 0xFFFF);
+	}
+
+	public void writeMemoryRaw(int address, short value) {
+		guest.writeMemory(address & 0xFFFF, value);
+	}
 }

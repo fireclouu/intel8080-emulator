@@ -122,13 +122,13 @@ public abstract class Platform {
             while (emulator.isRunning()) {
                 if (emulator.isPaused()) continue;
                 if (isDebugging) showDebug();
-                emulator.tickCpuOnly();
+                emulator.cycleWithoutTiming();
             }
         } : () -> {
             while (emulator.isRunning()) {
                 if (emulator.isPaused()) continue;
                 if (isDebugging) showDebug();
-                emulator.tick();
+                emulator.cycle();
             }
         };
     }
