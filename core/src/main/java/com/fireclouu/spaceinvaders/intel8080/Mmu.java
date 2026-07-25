@@ -66,7 +66,26 @@ public class Mmu {
 		guest.writeMemory(0x0007, (short) 0xC9);
 	}
 
+	// bypass rom write protection
+	public void load(int address, short value) {
+		address &= 0xFFFF;
+
+		if (isTestSuite || !emulateMemoryMap) {
+			guest.writeMemory(address, value);
+			return;
+		}
+
+		if (address <= Guest.MEMORY_MAP_ROM_MAX) {
+			guest.writeMemoryRom(address - Guest.MEMORY_MAP_ROM_MIN, value);
+			return;
+		}
+
+		writeMemory(address, value);
+	}
+
 	private void writeMemoryEmulated(int address, short value) {
+		address &= 0xFFFF;
+
 		// TODO: separate value interceptor
 		if (!isTestSuite) {
 			value = interceptValue(address, value);
@@ -110,9 +129,11 @@ public class Mmu {
 	}
 
 	private short readMemoryEmulated(int address) {
+		address &= 0xFFFF;
+
 		// for test suites
 		if (isTestSuite) {
-			return guest.getDataOnMemory(address & 0xFFFF);
+			return guest.getDataOnMemory(address);
 		}
 
 		int map = address & 0xF000;
@@ -120,7 +141,7 @@ public class Mmu {
 		switch (map) {
 			case 0x0000:
 			case 0x1000:
-				data = guest.getDataOnRom(address);
+				data = guest.getDataOnRom(address - Guest.MEMORY_MAP_ROM_MIN);
 				break;
 			case 0x2000:
 				map = address & 0x0F00;
