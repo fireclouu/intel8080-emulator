@@ -23,7 +23,7 @@ dependencyResolutionManagement {
       */
 
 }
-rootProject.name = "Space Invaders"
+rootProject.name = "spaceinvaders"
 include(":app")
-include(":spaceinvaders")
-project(":spaceinvaders").projectDir = file("../../spaceinvaders")
+include(":core")
+project(":core").projectDir = file("../../core")

@@ -58,7 +58,7 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":spaceinvaders"))
+    implementation(project(":core"))
 }
 
 java {
