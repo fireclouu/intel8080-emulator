@@ -24,8 +24,17 @@ public class MainActivity extends Activity {
     private final String[] SUPPORTED_TEST_FILE_EXTENSIONS = {
         ".bin", ".com"
     };
-    private String[] files = null;
     private int selectedTestFileIndex;
+    private String[] TESTS = {
+        "/assets/tests/8080EX1.COM",
+        "/assets/tests/8080EXER.COM",
+        "/assets/tests/8080EXER.MAC",
+        "/assets/tests/8080EXM.COM",
+        "/assets/tests/8080PRE.COM",
+        "/assets/tests/cpudiag.bin",
+        "/assets/tests/CPUTEST.COM",
+        "/assets/tests/TST8080.COM",
+    };
 
     // android-related go here
     private static final int REQUEST_PICK_DOC_MULTI = 1;
@@ -53,9 +62,7 @@ public class MainActivity extends Activity {
         setupBtnLoadEmulator();
         setupBtnChooseFile();
         setupCbForTestRom();
-        if (isTestAssetsLoaded()) {
-            makeArrayAdapterForFiles();
-        }
+        makeArrayAdapterForFiles();
     }
 
     @Override
@@ -77,7 +84,7 @@ public class MainActivity extends Activity {
         mBtnLoadEmulator.setOnClickListener(new View.OnClickListener () {
             @Override
             public void onClick(View view) {
-                String testRomFileName = files[selectedTestFileIndex];
+                String testRomFileName = TESTS[selectedTestFileIndex];
 
                 Intent intent = new Intent(MainActivity.this, EmulatorActivity.class);
                 intent.putExtra(HostUtils.INTENT_FILE_IS_TEST_ROM, mCbTestRom.isChecked());
@@ -111,27 +118,8 @@ public class MainActivity extends Activity {
         mCbTestRom.setChecked(false);
     }
 
-    private boolean isTestAssetsLoaded() {
-        AssetManager assetManager = getAssets();
-
-        try {
-            files = assetManager.list(ASSET_TEST_LOCATION);
-            if (files != null) {
-                files = Arrays.stream(files)
-                    .filter(name -> Arrays.stream(SUPPORTED_TEST_FILE_EXTENSIONS)
-                        .anyMatch(ext -> name.toLowerCase().endsWith(ext))
-                    )
-                    .toArray(String[]::new);
-            }
-        } catch (IOException e) {
-            Log.e(HostUtils.TAG, e.getMessage());
-        }
-
-        return files != null;
-    }
-
     private void makeArrayAdapterForFiles() {
-        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, files);
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, TESTS);
         arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         mSpinnerTestRomSelector.setAdapter(arrayAdapter);
         mSpinnerTestRomSelector.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {

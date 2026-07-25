@@ -59,6 +59,7 @@ repositories {
 
 dependencies {
     implementation(project(":core"))
+    runtimeOnly(project(":assets"))
 }
 
 java {
