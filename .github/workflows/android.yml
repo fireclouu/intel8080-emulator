@@ -36,10 +36,10 @@ jobs:
       run: chmod +x gradlew
 
     - name: Build with Gradle
-      run: ./gradlew build
+      run: WITH_ANDROID=1 ./gradlew build
 
     - name: Build Debug APK
-      run: ./gradlew assembleDebug
+      run: WITH_ANDROID=1 ./gradlew assembleDebug
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
@@ -48,7 +48,7 @@ jobs:
         path: ./platform/android/app/build/outputs/apk/debug/*.apk
 
     - name: Build Release APK
-      run: ./gradlew assembleRelease
+      run: WITH_ANDROID=1 ./gradlew assembleRelease
 
     - name: Upload Release APK
       uses: actions/upload-artifact@v4
