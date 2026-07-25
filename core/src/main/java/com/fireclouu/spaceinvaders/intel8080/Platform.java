@@ -62,16 +62,23 @@ public abstract class Platform {
         setMediaId(Guest.Media.Audio.SHIP_HIT, getMediaAudioIdShipHit());
         setMediaId(Guest.Media.Audio.SHIP_INCOMING, getMediaAudioIdShipIncoming());
 
+        boolean isLoaded = true;
         if (isFileTestSuite) {
-            loadFile(this.filePath, 0x100);
+            isLoaded = loadFile(this.filePath, 0x100);
             guest.getMmu().writeTestSuitePatch();
             guest.getCpu().setPC(0x100);
         } else {
             for (Map.Entry<String, Integer> item : Guest.mapFileData.entrySet()) {
-                loadFile( "/assets/" + item.getKey(), item.getValue());
+                isLoaded &= loadFile( "/assets/" + item.getKey(), item.getValue());
             }
+            guest.getCpu().setPC(0x0000);
         }
 
+        // on a blank memory the cpu executes NOPs until it walks off the address space
+        if (!isLoaded) {
+            writeLog("Error: program not loaded, emulation aborted.");
+            return;
+        }
 
         emuThread = new Thread(() -> {
             while(emulator.isRunning()) {
@@ -90,13 +97,18 @@ public abstract class Platform {
 
     private boolean loadFile(String filePath, int startAddress) {
         try (InputStream in = getClass().getResourceAsStream(filePath)) {
+            if (in == null) {
+                writeLog("Error: file not found: " + filePath);
+                return false;
+            }
+
             short read;
             while((read = (short) in.read()) != -1) {
-                guest.writeMemory(startAddress++, read);
+                guest.getMmu().load(startAddress++, read);
             }
             return true;
         } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
+            log(e, "Error reading " + filePath);
         }
         return false;
     }
