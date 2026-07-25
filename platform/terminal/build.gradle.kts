@@ -14,6 +14,7 @@ java {
 
 dependencies {
     implementation(project(":core"))
+    runtimeOnly(project(":assets"))
 }
 
 application {

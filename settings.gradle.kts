@@ -26,7 +26,7 @@ dependencyResolutionManagement {
 rootProject.name = "intel8080demo"
 
 include(":core")
-include(":platform:terminal")
+include(":platform:terminal", ":assets")
 
 // android
 include(":platform:android:app")
