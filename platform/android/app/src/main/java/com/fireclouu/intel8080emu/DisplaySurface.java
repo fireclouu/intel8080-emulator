@@ -29,7 +29,8 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
 
     private int orientationWidth, orientationHeight;
     //    private SurfaceHolder holder;
-    private Surface mSurface;
+    // written on the ui thread, read on the emulator thread
+    private volatile Surface mSurface;
     private Bitmap bitmap;
     private Paint paint;
 
@@ -65,6 +66,7 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
 
     @Override
     public void surfaceDestroyed(SurfaceHolder holder) {
+        mSurface = null;
         Runnable runnable = this::nativeShutdown;
         handler.post(runnable);
     }
@@ -122,7 +124,9 @@ public class DisplaySurface extends SurfaceView implements SurfaceHolder.Callbac
     }
 
     public void draw(short[] memoryVideoRam) {
-        if (!mSurface.isValid()) return;
+        // emulation starts on activity create, the surface only exists once the view is laid out
+        final Surface surface = mSurface;
+        if (surface == null || !surface.isValid()) return;
 
         orientationWidth = GUEST_WIDTH;
         orientationHeight = GUEST_HEIGHT;
