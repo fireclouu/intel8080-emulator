@@ -4,6 +4,8 @@ public class Mmu {
 	private static final int SP_MEM_ADDRESS_HI_SCORE_MSB = 0x20f5;
 	private static final int SP_MEM_ADDRESS_HI_SCORE_LSB = 0x20f4;
 
+    private boolean emulateMemoryMap = true;
+
 	private final Guest guest;
 	private final Platform platform;
 	private boolean isInitialHighScoreInjected;
@@ -64,7 +66,7 @@ public class Mmu {
 		guest.writeMemory(0x0007, (short) 0xC9);
 	}
 
-	public void writeMemory(int address, short value) {
+	private void writeMemoryEmulated(int address, short value) {
 		// TODO: separate value interceptor
 		if (!isTestSuite) {
 			value = interceptValue(address, value);
@@ -107,7 +109,7 @@ public class Mmu {
 		}
 	}
 
-	public short readMemory(int address) {
+	private short readMemoryEmulated(int address) {
 		// for test suites
 		if (isTestSuite) {
 			return guest.getDataOnMemory(address & 0xFFFF);
@@ -149,11 +151,24 @@ public class Mmu {
 		return data;
 	}
 
-	public short readRawMemory(int address) {
+	private short readMemoryRaw(int address) {
 		return guest.getDataOnMemory(address & 0xFFFF);
 	}
 
-	public void writeMemoryRaw(int address, short value) {
+	private void writeMemoryRaw(int address, short value) {
 		guest.writeMemory(address & 0xFFFF, value);
+	}
+
+	public short readMemory(int address) {
+		return emulateMemoryMap ? readMemoryEmulated(address) : readMemoryRaw(address);
+	}
+
+	public void writeMemory(int address, short value) {
+		if (emulateMemoryMap) {
+			writeMemoryEmulated(address, value);
+			return;
+		}
+
+		writeMemoryRaw(address, value);
 	}
 }

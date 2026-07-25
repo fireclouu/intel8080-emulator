@@ -31,8 +31,6 @@ public class Cpu {
     ///  INTERRUPT  ///
     private boolean hasInterrupt;
 
-    private boolean useEmulatedMemoryMap = true;
-
     // flag positions
     private final short PSW_FLAG_POS_CY = 0b00000001; // 1
     private final short PSW_FLAG_POS_PA = 0b00000100; // 4
@@ -62,26 +60,14 @@ public class Cpu {
         cc.init();
     }
 
-    private short readMemory(int address) {
-        return useEmulatedMemoryMap ? mmu.readMemory(address) : mmu.readRawMemory(address);
-    }
-
-    private void writeMemory(int address, short value) {
-        if (useEmulatedMemoryMap) {
-            mmu.writeMemory(address, value);
-        } else {
-            mmu.writeMemoryRaw(address, value);
-        }
-    }
-
     public byte step() {
-        int opcode = readMemory(pc);
+        int opcode = mmu.readMemory(pc);
         byte cycles = OPCODES_CYCLES[opcode];
 
         switch (opcode) {
             case 0x01:
-                b = readMemory(pc + 2);
-                c = readMemory(pc + 1);
+                b = mmu.readMemory(pc + 2);
+                c = mmu.readMemory(pc + 1);
                 pc += 3;
                 break; // LXI B, D16
             case 0x02:
@@ -97,8 +83,8 @@ public class Cpu {
                 pc++;
                 break; // LDAX B
             case 0x11:
-                d = readMemory(pc + 2);
-                e = readMemory(pc + 1);
+                d = mmu.readMemory(pc + 2);
+                e = mmu.readMemory(pc + 1);
                 pc += 3;
                 break; // LXI D, D16
             case 0x12:
@@ -114,8 +100,8 @@ public class Cpu {
                 pc++;
                 break; // LDAX D
             case 0x21:
-                h = readMemory(pc + 2);
-                l = readMemory(pc + 1);
+                h = mmu.readMemory(pc + 2);
+                l = mmu.readMemory(pc + 1);
                 pc += 3;
                 break; // LXI H, D16
             case 0x22:
@@ -154,11 +140,11 @@ public class Cpu {
                 pc++;
                 break; // CMA
             case 0x31:
-                sp = ((readMemory(pc + 2) << 8) | readMemory(pc + 1));
+                sp = ((mmu.readMemory(pc + 2) << 8) | mmu.readMemory(pc + 1));
                 pc += 3;
                 break; // LXI SP, D16
             case 0x32:
-                instr_sta(readMemory(pc + 2), readMemory(pc + 1));
+                instr_sta(mmu.readMemory(pc + 2), mmu.readMemory(pc + 1));
                 pc += 3;
                 break; // STA adr
             case 0x39:
@@ -166,7 +152,7 @@ public class Cpu {
                 pc++;
                 break; //DAD SP
             case 0x3a:
-                instr_lda(readMemory(pc + 2), readMemory(pc + 1));
+                instr_lda(mmu.readMemory(pc + 2), mmu.readMemory(pc + 1));
                 pc += 3;
                 break; // LDA adr
             case 0xeb:
@@ -176,35 +162,35 @@ public class Cpu {
 
             // IMMEDIATE
             case 0x06:
-                b = readMemory(pc + 1);
+                b = mmu.readMemory(pc + 1);
                 pc += 2;
                 break; // MVI B, D8
             case 0x0e:
-                c = readMemory(pc + 1);
+                c = mmu.readMemory(pc + 1);
                 pc += 2;
                 break; // MVI C, D8
             case 0x16:
-                d = readMemory(pc + 1);
+                d = mmu.readMemory(pc + 1);
                 pc += 2;
                 break; // MVI D, D8
             case 0x1e:
-                e = readMemory(pc + 1);
+                e = mmu.readMemory(pc + 1);
                 pc += 2;
                 break; // MVI E, D8
             case 0x26:
-                h = readMemory(pc + 1);
+                h = mmu.readMemory(pc + 1);
                 pc += 2;
                 break; // MVI H, D8
             case 0x2e:
-                l = readMemory(pc + 1);
+                l = mmu.readMemory(pc + 1);
                 pc += 2;
                 break; // MVI L, D8
             case 0x36:
-                writeMemory(get_pair_hl(), readMemory(pc + 1));
+                mmu.writeMemory(get_pair_hl(), mmu.readMemory(pc + 1));
                 pc += 2;
                 break; // MVI M, D8
             case 0x3e:
-                a = readMemory(pc + 1);
+                a = mmu.readMemory(pc + 1);
                 pc += 2;
                 break; // MVI A, D8
 
@@ -233,7 +219,7 @@ public class Cpu {
                 pc++;
                 break; // MOV B, L
             case 0x46:
-                b = readMemory(get_pair_hl());
+                b = mmu.readMemory(get_pair_hl());
                 pc++;
                 break; // MOV B, M
             case 0x47:
@@ -266,7 +252,7 @@ public class Cpu {
                 pc++;
                 break; // MOV C, L
             case 0x4e:
-                c = readMemory(get_pair_hl());
+                c = mmu.readMemory(get_pair_hl());
                 pc++;
                 break; // MOV C, M
             case 0x4f:
@@ -299,7 +285,7 @@ public class Cpu {
                 pc++;
                 break; // MOV D, L
             case 0x56:
-                d = readMemory(get_pair_hl());
+                d = mmu.readMemory(get_pair_hl());
                 pc++;
                 break; // MOV D, M
             case 0x57:
@@ -332,7 +318,7 @@ public class Cpu {
                 pc++;
                 break; // MOV E, L
             case 0x5e:
-                e = readMemory(get_pair_hl());
+                e = mmu.readMemory(get_pair_hl());
                 pc++;
                 break; // MOV E, M
             case 0x5f:
@@ -365,7 +351,7 @@ public class Cpu {
                 pc++;
                 break; // MOV H, L
             case 0x66:
-                h = readMemory(get_pair_hl());
+                h = mmu.readMemory(get_pair_hl());
                 pc++;
                 break; // MOV H, M
             case 0x67:
@@ -398,7 +384,7 @@ public class Cpu {
                 pc++;
                 break; // MOV L, L
             case 0x6e:
-                l = readMemory(get_pair_hl());
+                l = mmu.readMemory(get_pair_hl());
                 pc++;
                 break; // MOV L, M
             case 0x6f:
@@ -408,31 +394,31 @@ public class Cpu {
 
             // MEMORY
             case 0x70:
-                writeMemory(get_pair_hl(), b);
+                mmu.writeMemory(get_pair_hl(), b);
                 pc++;
                 break; // MOV M, B
             case 0x71:
-                writeMemory(get_pair_hl(), c);
+                mmu.writeMemory(get_pair_hl(), c);
                 pc++;
                 break; // MOV M, C
             case 0x72:
-                writeMemory(get_pair_hl(), d);
+                mmu.writeMemory(get_pair_hl(), d);
                 pc++;
                 break; // MOV M, D
             case 0x73:
-                writeMemory(get_pair_hl(), e);
+                mmu.writeMemory(get_pair_hl(), e);
                 pc++;
                 break; // MOV M, E
             case 0x74:
-                writeMemory(get_pair_hl(), h);
+                mmu.writeMemory(get_pair_hl(), h);
                 pc++;
                 break; // MOV M, H
             case 0x75:
-                writeMemory(get_pair_hl(), l);
+                mmu.writeMemory(get_pair_hl(), l);
                 pc++;
                 break; // MOV M, L
             case 0x77:
-                writeMemory(get_pair_hl(), a);
+                mmu.writeMemory(get_pair_hl(), a);
                 pc++;
                 break; // MOV M, A
 
@@ -462,7 +448,7 @@ public class Cpu {
                 pc++;
                 break; // MOV A, L
             case 0x7e:
-                a = readMemory(get_pair_hl());
+                a = mmu.readMemory(get_pair_hl());
                 pc++;
                 break; // MOV A, M
             case 0x7f:
@@ -495,7 +481,7 @@ public class Cpu {
                 pc++;
                 break; // ADD L
             case 0x86:
-                instr_add(readMemory(get_pair_hl()), 0);
+                instr_add(mmu.readMemory(get_pair_hl()), 0);
                 pc++;
                 break; // ADD M
             case 0x87:
@@ -529,7 +515,7 @@ public class Cpu {
                 pc++;
                 break; // ADC L
             case 0x8e:
-                instr_add(readMemory(get_pair_hl()), cc.cy);
+                instr_add(mmu.readMemory(get_pair_hl()), cc.cy);
                 pc++;
                 break; // ADC M
             case 0x8f:
@@ -563,7 +549,7 @@ public class Cpu {
                 pc++;
                 break; // SUB L
             case 0x96:
-                instr_sub(readMemory(get_pair_hl()), 0);
+                instr_sub(mmu.readMemory(get_pair_hl()), 0);
                 pc++;
                 break; // SUB M
             case 0x97:
@@ -597,7 +583,7 @@ public class Cpu {
                 pc++;
                 break; // SBB L
             case 0x9e:
-                instr_sub(readMemory(get_pair_hl()), cc.cy);
+                instr_sub(mmu.readMemory(get_pair_hl()), cc.cy);
                 pc++;
                 break; // SBB M
             case 0x9f:
@@ -631,7 +617,7 @@ public class Cpu {
                 pc++;
                 break; // ANA L
             case 0xa6:
-                instr_ana(readMemory(get_pair_hl()));
+                instr_ana(mmu.readMemory(get_pair_hl()));
                 pc++;
                 break; // ANA M
             case 0xa7:
@@ -665,7 +651,7 @@ public class Cpu {
                 pc++;
                 break; // XRA L
             case 0xae:
-                instr_xra(readMemory(get_pair_hl()));
+                instr_xra(mmu.readMemory(get_pair_hl()));
                 pc++;
                 break; // XRA M
             case 0xaf:
@@ -699,7 +685,7 @@ public class Cpu {
                 pc++;
                 break; // ORA L
             case 0xb6:
-                instr_ora(readMemory(get_pair_hl()));
+                instr_ora(mmu.readMemory(get_pair_hl()));
                 pc++;
                 break; // ORA M
             case 0xb7:
@@ -733,7 +719,7 @@ public class Cpu {
                 pc++;
                 break; // CMP L
             case 0xbe:
-                instr_cmp(readMemory(get_pair_hl()));
+                instr_cmp(mmu.readMemory(get_pair_hl()));
                 pc++;
                 break; // CMP M
             case 0xbf:
@@ -767,7 +753,7 @@ public class Cpu {
                 pc++;
                 break; // INR L
             case 0x34:
-                writeMemory(get_pair_hl(), instr_inr(readMemory(get_pair_hl())));
+                mmu.writeMemory(get_pair_hl(), instr_inr(mmu.readMemory(get_pair_hl())));
                 pc++;
                 break; // INR M
             case 0x3c:
@@ -801,7 +787,7 @@ public class Cpu {
                 pc++;
                 break; // DCR L
             case 0x35:
-                writeMemory(get_pair_hl(), instr_dcr(readMemory(get_pair_hl())));
+                mmu.writeMemory(get_pair_hl(), instr_dcr(mmu.readMemory(get_pair_hl())));
                 pc++;
                 break; // DCR M
             case 0x3d:
@@ -875,35 +861,35 @@ public class Cpu {
 
             // ALU (IMMEDIATE)
             case 0xc6:
-                instr_add(readMemory(pc + 1), 0);
+                instr_add(mmu.readMemory(pc + 1), 0);
                 pc += 2;
                 break; // ADI D8
             case 0xce:
-                instr_add(readMemory(pc + 1), cc.cy);
+                instr_add(mmu.readMemory(pc + 1), cc.cy);
                 pc += 2;
                 break; // ACI D8
             case 0xd6:
-                instr_sub(readMemory(pc + 1), 0);
+                instr_sub(mmu.readMemory(pc + 1), 0);
                 pc += 2;
                 break; // SUI D8
             case 0xde:
-                instr_sub(readMemory(pc + 1), cc.cy);
+                instr_sub(mmu.readMemory(pc + 1), cc.cy);
                 pc += 2;
                 break; // SBI D8
             case 0xe6:
-                instr_ana(readMemory(pc + 1));
+                instr_ana(mmu.readMemory(pc + 1));
                 pc += 2;
                 break; // ANI D8
             case 0xee:
-                instr_xra(readMemory(pc + 1));
+                instr_xra(mmu.readMemory(pc + 1));
                 pc += 2;
                 break; // XRI D8
             case 0xf6:
-                instr_ora(readMemory(pc + 1));
+                instr_ora(mmu.readMemory(pc + 1));
                 pc += 2;
                 break; // ORI D8
             case 0xfe:
-                instr_cmp(readMemory(pc + 1));
+                instr_cmp(mmu.readMemory(pc + 1));
                 pc += 2;
                 break; // CPI D8
 
@@ -1244,8 +1230,8 @@ public class Cpu {
 
     /// INTERRUPT
     public void sendInterrupt(int vectorAddress) {
-        writeMemory(sp - 1, (short) ((pc & 0xff00) >> 8));
-        writeMemory(sp - 2, (short) (pc & 0xff));
+        mmu.writeMemory(sp - 1, (short) ((pc & 0xff00) >> 8));
+        mmu.writeMemory(sp - 2, (short) (pc & 0xff));
         sp = (sp - 2) & 0xffff;
         pc = vectorAddress;
         hasInterrupt = false;
@@ -1345,8 +1331,8 @@ public class Cpu {
     // JUMPS
     private void instr_call(int pc) {
         int nextAddress = pc + 3;
-        writeMemory(sp - 1, (short) ((nextAddress >> 8) & 0xff));
-        writeMemory(sp - 2, (short) (nextAddress & 0xff));
+        mmu.writeMemory(sp - 1, (short) ((nextAddress >> 8) & 0xff));
+        mmu.writeMemory(sp - 2, (short) (nextAddress & 0xff));
         sp = (sp - 2) & 0xffff;
         instr_jmp(pc);
     }
@@ -1366,46 +1352,46 @@ public class Cpu {
     }
 
     private void instr_jmp(int pc) {
-        this.pc = (readMemory(pc + 2) << 8) | readMemory(pc + 1);
+        this.pc = (mmu.readMemory(pc + 2) << 8) | mmu.readMemory(pc + 1);
     }
 
     private void instr_lda(int hi_nib, int lo_nib) {
         int address = (hi_nib << 8) | lo_nib;
-        a = readMemory(address);
+        a = mmu.readMemory(address);
     }
 
     private void instr_lhld(int pc) {
-        int address = (readMemory(pc + 2) << 8) | readMemory(pc + 1);
-        h = readMemory(address + 1);
-        l = readMemory(address);
+        int address = (mmu.readMemory(pc + 2) << 8) | mmu.readMemory(pc + 1);
+        h = mmu.readMemory(address + 1);
+        l = mmu.readMemory(address);
     }
 
     private void pop_psw() {
-        int PSW = readMemory(sp);
+        int PSW = mmu.readMemory(sp);
 
         cc.cy = ((PSW & PSW_FLAG_POS_CY) != 0) ? (byte) 1 : 0;
         cc.p = ((PSW & PSW_FLAG_POS_PA) != 0) ? (byte) 1 : 0;
         cc.ac = ((PSW & PSW_FLAG_POS_AC) != 0) ? (byte) 1 : 0;
         cc.z = ((PSW & PSW_FLAG_POS_ZE) != 0) ? (byte) 1 : 0;
         cc.s = ((PSW & PSW_FLAG_POS_SN) != 0) ? (byte) 1 : 0;
-        a = readMemory(sp + 1);
+        a = mmu.readMemory(sp + 1);
         sp = (sp + 2) & 0xffff;
     }
 
     private int instr_pop() {
-        int res = (readMemory(sp + 1) << 8) | readMemory(sp);
+        int res = (mmu.readMemory(sp + 1) << 8) | mmu.readMemory(sp);
         sp = (sp + 2) & 0xffff;
         return res;
     }
 
     private void instr_push(int pair) {
-        writeMemory(sp - 1, (short) (pair >> 8));
-        writeMemory(sp - 2, (short) (pair & 0xff));
+        mmu.writeMemory(sp - 1, (short) (pair >> 8));
+        mmu.writeMemory(sp - 2, (short) (pair & 0xff));
         sp = (sp - 2) & 0xffff;
     }
 
     private void push_psw() {
-        writeMemory(sp - 1, a);
+        mmu.writeMemory(sp - 1, a);
         // prepare variable higher than 0xff, but with 0's in bit 0-7
         // this way, it serves as flags' default state waiting to be flipped, like a template
         // also helps to retain flags proper positioning
@@ -1415,7 +1401,7 @@ public class Cpu {
                 (cc.ac << 4) |   // place aux. carry flag status on pos 4
                 (cc.p << 2) |   // place parity flag status on pos 2
                 (1 << 1) | (cc.cy);   // place carry flag status on pos 0
-        writeMemory(sp - 2, (short) (psw & 0xff));
+        mmu.writeMemory(sp - 2, (short) (psw & 0xff));
         sp = (sp - 2) & 0xffff;
     }
 
@@ -1432,7 +1418,7 @@ public class Cpu {
     }
 
     private void instr_ret() {
-        int address = readMemory(sp + 1) << 8 | readMemory(sp);
+        int address = mmu.readMemory(sp + 1) << 8 | mmu.readMemory(sp);
         sp = (sp + 2) & 0xffff;
         pc = address;
     }
@@ -1448,9 +1434,9 @@ public class Cpu {
     }
 
     private void instr_shld(int pc) {
-        int address = readMemory(pc + 2) << 8 | readMemory(pc + 1);
-        writeMemory(address + 1, h);
-        writeMemory(address, l);
+        int address = mmu.readMemory(pc + 2) << 8 | mmu.readMemory(pc + 1);
+        mmu.writeMemory(address + 1, h);
+        mmu.writeMemory(address, l);
     }
 
     private void instr_sphl(int address) {
@@ -1459,7 +1445,7 @@ public class Cpu {
 
     private void instr_sta(int hi_nib, int lo_nib) {
         int address = (hi_nib << 8) | lo_nib;
-        writeMemory(address, a);
+        mmu.writeMemory(address, a);
     }
 
     private void instr_xchg() {
@@ -1474,12 +1460,12 @@ public class Cpu {
     }
 
     private void instr_xthl() {
-        h = (short) (h + readMemory(sp + 1));
-        writeMemory(sp + 1, (short) (h - readMemory(sp + 1)));
-        h = (short) (h - readMemory(sp + 1));
-        l = (short) (l + readMemory(sp));
-        writeMemory(sp, (short) (l - readMemory(sp)));
-        l = (short) (l - readMemory(sp));
+        h = (short) (h + mmu.readMemory(sp + 1));
+        mmu.writeMemory(sp + 1, (short) (h - mmu.readMemory(sp + 1)));
+        h = (short) (h - mmu.readMemory(sp + 1));
+        l = (short) (l + mmu.readMemory(sp));
+        mmu.writeMemory(sp, (short) (l - mmu.readMemory(sp)));
+        l = (short) (l - mmu.readMemory(sp));
     }
 
     /// FLAGS
