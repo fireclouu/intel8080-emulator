@@ -15,14 +15,32 @@ git clone --recurse-submodules https://github.com/fireclouu/intel8080-emulator
 
 and follow instructions below for specific platform.
 
+## Requirements
+
+Your machine should install the following:
+
+- Java 17
+- For Android: SDK 26, NDK 25.x
+- Gradle 9.x
+
 ### Android
 
-### Linux
-Navigate to directory:
-```bash
-./platform/android/.gradlew assembleDebug
+```sh
+WITH_ANDROID=1 ./gradlew assembleDebug
 ```
 It will automate the initial build process for you, assuming you have proper tooling installed.
+
+### Terminal (tests)
+
+```sh
+./gradlew :platform:terminal:run [--args="/assets/tests/(test-file)"]
+```
+
+It will run shipped test suite files located at `assets/tests` directory of `assets` project.
+
+## Docker
+
+I personally recommend to build files thru docker. It is easy to setup, and separates properly from my host machine instead of spinning new VM. The `docker-compose.yml` on this repo is mainly for my gradle inits.
 
 ## Download
 Binaries are available in [Releases](https://github.com/fireclouu/intel_8080_java/releases) tab. You can also get latest builds via [Actions](https://github.com/fireclouu/space_invaders_intel_8080_emu/actions) tab.
