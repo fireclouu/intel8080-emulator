@@ -7,7 +7,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public abstract class Platform {
-    private boolean isInstantiated = false;
     private ExecutorService executor;
     private Runnable runnable;
     private final Guest guest;
@@ -74,10 +73,6 @@ public abstract class Platform {
         this.inputs = new Inputs(emulator);
     }
 
-    public boolean isInstantiated() {
-        return this.isInstantiated;
-    }
-
     private void init() {
         executor = Executors.newSingleThreadExecutor();
         runnable = null;
@@ -97,8 +92,6 @@ public abstract class Platform {
     }
 
     public void start() {
-        if (isInstantiated) return;
-
         init();
 
         // load test suite, else load space invaders
@@ -113,8 +106,6 @@ public abstract class Platform {
         emulator.setPause(false);
         emulator.setRunningState(true);
         executor.execute(runnable);
-
-        isInstantiated = true;
     }
 
     private void initRunnable() {
