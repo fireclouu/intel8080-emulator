@@ -1,8 +1,7 @@
-# vscode
-.vscode/
-
-.gradle/
 .cxx/
+.gradle/
+.vscode/
+bin/
 build/
 /libs/
-bin/
+vendor/
