@@ -1,65 +1,43 @@
 package com.fireclouu.spaceinvaders.intel8080;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
 public abstract class Platform {
-    private final Guest guest;
-
+    private final boolean isFileTestSuite;
     private final int[] mediaIds = new int[9];
+    private boolean isDebugging = false;
+    private int idMediaPlayed;
+    private String filePath;
+    
+    private Thread emuThread;
+    private final Guest guest;
     private final Emulator emulator;
     private final Inputs inputs;
-    private String filePath;
-    private final boolean isFileTestSuite;
-    private int idMediaPlayed;
-
-    private boolean isDebugging = false;
 
     public abstract void draw(short[] memoryVideoRam);
-
     public abstract void stopSound(int id);
-
     public abstract void vibrate(long milli);
-
     public abstract void writeLog(String message);
-
     public abstract void log(Exception e, String message);
-
     public abstract void saveHighScoreOnPlatform(int data);
-
     public abstract int playMedia(int id, int loop, int priority);
-
     public abstract int fetchHighScoreOnPlatform();
-
-    public abstract InputStream openFile(String romName);
-
-    public abstract String getTestAssetPath();
-
     public abstract void sendNotification(String message);
 
+    public abstract InputStream openFile(String romName);
+    public abstract String getTestAssetPath();
     public abstract int getMediaAudioIdAlienKilled();
-
     public abstract int getMediaAudioIdAlienMove1();
-
     public abstract int getMediaAudioIdAlienMove2();
-
     public abstract int getMediaAudioIdAlienMove3();
-
     public abstract int getMediaAudioIdAlienMove4();
-
     public abstract int getMediaAudioIdFire();
-
     public abstract int getMediaAudioIdPlayerExploded();
-
     public abstract int getMediaAudioIdShipHit();
-
     public abstract int getMediaAudioIdShipIncoming();
-
     public abstract void initMediaHandler();
-
     public abstract void releaseResources();
-
     public abstract void showDebug();
 
     public Platform(boolean isFileTestSuite) {
@@ -70,7 +48,6 @@ public abstract class Platform {
     }
 
     public void start() {
-
         // cant remove for now, was from extended class
         initMediaHandler();
 
@@ -85,68 +62,43 @@ public abstract class Platform {
         setMediaId(Guest.Media.Audio.SHIP_HIT, getMediaAudioIdShipHit());
         setMediaId(Guest.Media.Audio.SHIP_INCOMING, getMediaAudioIdShipIncoming());
 
-        int startAddress = 0x100;
-        try (InputStream in = getClass().getResourceAsStream(this.filePath)) {
-            short read;
-            while((read = (short) in.read()) != -1) {
-                guest.writeMemory(startAddress++, read);
+        if (isFileTestSuite) {
+            loadFile(this.filePath, 0x100);
+        } else {
+            for (Map.Entry<String, Integer> item : Guest.mapFileData.entrySet()) {
+                loadFile(item.getKey(), item.getValue());
             }
-        } catch (Exception e) {
-            System.err.println("Error: " + e.getMessage());
-            return;
         }
 
         guest.getCpu().setPC(0x100);
         guest.getMmu().writeTestSuitePatch();
 
-        // load test suite, else load space invaders
-        // if (isFileTestSuite()) {
-        //     if (!isFileLoadedToRom(getTestAssetPath() + filePath, 0x0100)) return;
-        //     guest.getMmu().writeTestSuitePatch();
-        //     guest.getCpu().setPC(0x0100);
-        // } else {
-        //     if (!isSpaceInvadersLoaded()) return;
-        // }
+        emuThread = new Thread(() -> {
+            while(emulator.isRunning()) {
+                if (emulator.isPaused()) continue;
+                if (isDebugging) showDebug();
 
-        while(emulator.isRunning()) {
-            if (emulator.isPaused()) continue;
-            if (isDebugging) showDebug();
-
-            if (isFileTestSuite) {
-                emulator.cycleWithoutTiming();
-            } else {
-                emulator.cycle();
-            }
-        }
-    }
-
-    private boolean isFileLoadedToRom(String filePath, int startAddress) {
-        boolean result = true;
-        InputStream file = openFile(filePath);
-        short read;
-
-        try {
-            while ((read = (short) file.read()) != -1) {
-                if (isFileTestSuite()) {
-                    guest.writeMemory(startAddress++, read);
-                }
-                else {
-                    guest.writeMemoryRom(startAddress++, read);
+                if (isFileTestSuite) {
+                    emulator.cycleWithoutTiming();
+                } else {
+                    emulator.cycle();
                 }
             }
-            file.close();
-        } catch (IOException e) {
-            log(e, filePath + " cannot be read!");
-            result = false;
-        }
-        return result;
+        }, "emulator");
+        emuThread.start();
     }
 
-    private boolean isSpaceInvadersLoaded() {
-        for (Map.Entry<String, Integer> item : Guest.mapFileData.entrySet()) {
-            if (!isFileLoadedToRom(item.getKey(), item.getValue())) return false;
+    private boolean loadFile(String filePath, int startAddress) {
+        try (InputStream in = getClass().getResourceAsStream(filePath)) {
+            short read;
+            while((read = (short) in.read()) != -1) {
+                guest.writeMemory(startAddress++, read);
+            }
+            return true;
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
         }
-        return true;
+        return false;
     }
 
     public void sendInput(int port, byte key, boolean isDown) {
