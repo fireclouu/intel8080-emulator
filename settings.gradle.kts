@@ -26,7 +26,12 @@ dependencyResolutionManagement {
 rootProject.name = "intel8080demo"
 
 include(":core")
-include(":platform:terminal", ":assets")
+include(":assets")
+include(":platform:terminal")
 
-// android
-include(":platform:android:app")
+// guard so we can build other platform
+// even without complete deps of it
+if (System.getenv("WITH_ANDROID") == "1") {
+     include(":platform:android:app")
+}
+
