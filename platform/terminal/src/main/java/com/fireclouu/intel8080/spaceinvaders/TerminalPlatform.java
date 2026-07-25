@@ -2,6 +2,8 @@ package com.fireclouu.intel8080.spaceinvaders;
 
 import java.io.InputStream;
 
+import com.fireclouu.spaceinvaders.intel8080.Cpu;
+import com.fireclouu.spaceinvaders.intel8080.Disassembler;
 import com.fireclouu.spaceinvaders.intel8080.Platform;
 
 public class TerminalPlatform extends Platform {
@@ -28,7 +30,7 @@ public class TerminalPlatform extends Platform {
 
     @Override
     public void writeLog(String message) {
-        // TODO Auto-generated method stub
+        System.out.print(message);
     }
 
     @Override
@@ -136,7 +138,15 @@ public class TerminalPlatform extends Platform {
 
     @Override
     public void showDebug() {
-        // TODO Auto-generated method stub
+        Cpu cpu = getCpu();
+        int pc = cpu.getPC();
+        int sp = cpu.getSP();
+        int bc = cpu.getRegB() << 8 | cpu.getRegC();
+        int de = cpu.getRegD() << 8 | cpu.getRegE();
+        int hl = cpu.getRegH() << 8 | cpu.getRegL();
+        int a = cpu.getRegA();
+
+        System.out.println("Debugging: PC: " + Disassembler.toHex04(pc));
     }
     
 }

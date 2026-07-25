@@ -3,18 +3,14 @@ package com.fireclouu.spaceinvaders.intel8080;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 public abstract class Platform {
-    private ExecutorService executor;
-    private Runnable runnable;
     private final Guest guest;
 
     private final int[] mediaIds = new int[9];
     private final Emulator emulator;
     private final Inputs inputs;
-    private String fileName;
+    private String filePath;
     private final boolean isFileTestSuite;
     private int idMediaPlayed;
 
@@ -66,20 +62,19 @@ public abstract class Platform {
 
     public abstract void showDebug();
 
-    public Platform(boolean isTestSuite) {
-        this.isFileTestSuite = isTestSuite;
+    public Platform(boolean isFileTestSuite) {
+        this.isFileTestSuite = isFileTestSuite;
         this.guest = new Guest(this);
         this.emulator = new Emulator(guest);
         this.inputs = new Inputs(emulator);
     }
 
-    private void init() {
-        executor = Executors.newSingleThreadExecutor();
-        runnable = null;
+    public void start() {
 
-        initRunnable();
+        // cant remove for now, was from extended class
         initMediaHandler();
 
+        // media
         setMediaId(Guest.Media.Audio.ALIEN_KILLED, getMediaAudioIdAlienKilled());
         setMediaId(Guest.Media.Audio.ALIEN_MOVE_1, getMediaAudioIdAlienMove1());
         setMediaId(Guest.Media.Audio.ALIEN_MOVE_2, getMediaAudioIdAlienMove2());
@@ -89,49 +84,50 @@ public abstract class Platform {
         setMediaId(Guest.Media.Audio.PLAYER_EXPLODED, getMediaAudioIdPlayerExploded());
         setMediaId(Guest.Media.Audio.SHIP_HIT, getMediaAudioIdShipHit());
         setMediaId(Guest.Media.Audio.SHIP_INCOMING, getMediaAudioIdShipIncoming());
-    }
 
-    public void start() {
-        init();
-
-        // load test suite, else load space invaders
-        if (fileIsTestSuite()) {
-            if (!isFileLoadedToRom(getTestAssetPath() + fileName, 0x0100)) return;
-            guest.getMmu().writeTestSuitePatch();
-            guest.getCpu().setPC(0x0100);
-        } else {
-            if (!isSpaceInvadersLoaded()) return;
+        int startAddress = 0x100;
+        try (InputStream in = getClass().getResourceAsStream(this.filePath)) {
+            short read;
+            while((read = (short) in.read()) != -1) {
+                guest.writeMemory(startAddress++, read);
+            }
+        } catch (Exception e) {
+            System.err.println("Error: " + e.getMessage());
+            return;
         }
 
-        emulator.setPause(false);
-        emulator.setRunningState(true);
-        executor.execute(runnable);
-    }
+        guest.getCpu().setPC(0x100);
+        guest.getMmu().writeTestSuitePatch();
 
-    private void initRunnable() {
-        runnable = fileIsTestSuite() ? () -> {
-            while (emulator.isRunning()) {
-                if (emulator.isPaused()) continue;
-                if (isDebugging) showDebug();
+        // load test suite, else load space invaders
+        // if (isFileTestSuite()) {
+        //     if (!isFileLoadedToRom(getTestAssetPath() + filePath, 0x0100)) return;
+        //     guest.getMmu().writeTestSuitePatch();
+        //     guest.getCpu().setPC(0x0100);
+        // } else {
+        //     if (!isSpaceInvadersLoaded()) return;
+        // }
+
+        while(emulator.isRunning()) {
+            if (emulator.isPaused()) continue;
+            if (isDebugging) showDebug();
+
+            if (isFileTestSuite) {
                 emulator.cycleWithoutTiming();
-            }
-        } : () -> {
-            while (emulator.isRunning()) {
-                if (emulator.isPaused()) continue;
-                if (isDebugging) showDebug();
+            } else {
                 emulator.cycle();
             }
-        };
+        }
     }
 
-    private boolean isFileLoadedToRom(String fileName, int startAddress) {
+    private boolean isFileLoadedToRom(String filePath, int startAddress) {
         boolean result = true;
-        InputStream file = openFile(fileName);
+        InputStream file = openFile(filePath);
         short read;
 
         try {
             while ((read = (short) file.read()) != -1) {
-                if (fileIsTestSuite()) {
+                if (isFileTestSuite()) {
                     guest.writeMemory(startAddress++, read);
                 }
                 else {
@@ -140,7 +136,7 @@ public abstract class Platform {
             }
             file.close();
         } catch (IOException e) {
-            log(e, fileName + " cannot be read!");
+            log(e, filePath + " cannot be read!");
             result = false;
         }
         return result;
@@ -174,8 +170,6 @@ public abstract class Platform {
     }
 
     public void emulationTerminate() {
-        emulator.setRunningState(false);
-        executor.shutdown();
         releaseResources();
     }
 
@@ -184,12 +178,12 @@ public abstract class Platform {
         emulator.setPause(pause);
     }
 
-    public boolean fileIsTestSuite() {
+    public boolean isFileTestSuite() {
         return this.isFileTestSuite;
     }
 
-    public void setRomFileName(String romFileName) {
-        this.fileName = romFileName;
+    public void setFilePath(String filePath) {
+        this.filePath = filePath;
     }
 
     public void setIdMediaPlayed(int idMediaPlayed) {
@@ -220,7 +214,7 @@ public abstract class Platform {
         return emulator.getCpu();
     }
 
-    public String getFileName() {
-        return fileName;
+    public String getfilePath() {
+        return filePath;
     }
 }

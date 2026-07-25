@@ -77,7 +77,7 @@ public class Disassembler
 		return returnValue;
 	}
 
-	private static String toHex04(int value) {
+	public static String toHex04(int value) {
 		char[] hexArray = "0123456789abcdef".toCharArray();
 		char[] hexChars = new char[4];
 		for (int j = 0; j < 4; j++) {
@@ -87,7 +87,7 @@ public class Disassembler
 		return new String(hexChars);
 	}
 
-	private static String toHex02(int value) {
+	public static String toHex02(int value) {
 		char[] hexArray = "0123456789abcdef".toCharArray();
 		char[] hexChars = new char[2];
 		for (int j = 0; j < 2; j++) {

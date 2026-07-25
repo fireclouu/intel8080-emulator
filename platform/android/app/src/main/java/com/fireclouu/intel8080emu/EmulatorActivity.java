@@ -75,7 +75,7 @@ public class EmulatorActivity extends Activity implements Button.OnClickListener
             androidPlatform = new AndroidPlatform(this, this, DisplaySurface, isTestSuite);
 
         // TODO: implement user defined file fetch, this is useless for now
-        androidPlatform.setRomFileName(romFileName);
+        androidPlatform.setFilePath(romFileName);
 
         for (GameButton button : Arrays.asList(mButtonCoin, mButtonStart, mButtonLeft, mButtonFire, mButtonRight)) {
             button.setPlatform(androidPlatform);

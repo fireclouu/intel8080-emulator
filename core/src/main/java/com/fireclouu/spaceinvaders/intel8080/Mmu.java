@@ -22,7 +22,7 @@ public class Mmu {
 		isInitialHighScoreInjected = false;
 		readHighScoreMsb = false;
 		readHighScoreLsb = false;
-		isTestSuite = platform.fileIsTestSuite();
+		isTestSuite = platform.isFileTestSuite();
 	}
 
 	private short interceptValue(int address, short value) {
