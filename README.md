@@ -1,10 +1,17 @@
-# Intel 8080
+<img width="1188" height="763" alt="image" src="https://github.com/user-attachments/assets/cffb4361-cc82-4029-81d3-f3c17200f942" /># Intel 8080
 [![Android CI](https://github.com/fireclouu/space_invaders_android/actions/workflows/android.yml/badge.svg?branch=master)](https://github.com/fireclouu/space_invaders_intel_8080_emu/actions/workflows/android.yml)
 
 Functional **Intel 8080 CPU** emulation running **Space Invaders** arcade game system, written in **Java**, with built-in graphical debug features intended for multiplatform systems support in future.
 
-<img src="https://github.com/user-attachments/assets/7d8c1c05-9644-4210-8b8e-bdd2a4ab809f" width="300"/>
-<img src="https://github.com/user-attachments/assets/8b35ddc7-0ba2-422f-997b-cce66c0d35ff" width="300"/>
+## Screenshots
+
+Android
+<img width="300" alt="android-1" src="https://github.com/user-attachments/assets/7d8c1c05-9644-4210-8b8e-bdd2a4ab809f" />
+<img width="300" alt="android-2" src="https://github.com/user-attachments/assets/8b35ddc7-0ba2-422f-997b-cce66c0d35ff" />
+
+Terminal
+<img width="300" alt="terminal" src="https://github.com/user-attachments/assets/c49f2507-cf94-4a41-a817-7604517d6bd4" />
+
 
 ## Building
 Clone this repository:
