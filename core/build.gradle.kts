@@ -1,14 +1,20 @@
-apply plugin: 'java-library'
+plugins {
+  `java-library`
+}
+
+group = "com.fireclouu"
 
 repositories {
   mavenCentral()
 }
 
-jar {
-  archiveVersion.set('0.0.1')
+java {
+  toolchain {
+    languageVersion = JavaLanguageVersion.of(17)
+  }
 }
 
-java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+tasks.withType<JavaCompile>().configureEach {
+  options.release = 11
+  options.encoding = "UTF-8"
 }
