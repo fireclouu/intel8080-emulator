@@ -64,14 +64,14 @@ public abstract class Platform {
 
         if (isFileTestSuite) {
             loadFile(this.filePath, 0x100);
+            guest.getMmu().writeTestSuitePatch();
+            guest.getCpu().setPC(0x100);
         } else {
             for (Map.Entry<String, Integer> item : Guest.mapFileData.entrySet()) {
-                loadFile(item.getKey(), item.getValue());
+                loadFile( "/assets/" + item.getKey(), item.getValue());
             }
         }
 
-        guest.getCpu().setPC(0x100);
-        guest.getMmu().writeTestSuitePatch();
 
         emuThread = new Thread(() -> {
             while(emulator.isRunning()) {
@@ -81,7 +81,7 @@ public abstract class Platform {
                 if (isFileTestSuite) {
                     emulator.cycleWithoutTiming();
                 } else {
-                    emulator.cycle();
+                    emulator.tick();
                 }
             }
         }, "emulator");

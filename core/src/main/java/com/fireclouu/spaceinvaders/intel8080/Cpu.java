@@ -1225,11 +1225,14 @@ public class Cpu {
                 break;
         }
 
+        pc &= 0xffff;
         return cycles;
     }
 
     /// INTERRUPT
-    public void sendInterrupt(int vectorAddress) {
+    public void requestInterrupt(int vectorAddress) {
+        // control INTE here
+        if (!hasInterrupt) return;
         mmu.writeMemory(sp - 1, (short) ((pc & 0xff00) >> 8));
         mmu.writeMemory(sp - 2, (short) (pc & 0xff));
         sp = (sp - 2) & 0xffff;
@@ -1520,7 +1523,7 @@ public class Cpu {
         return this.pc;
     }
     public void setPC(int pc) {
-        this.pc = pc;
+        this.pc = pc & 0xffff;
     }
     public int getSP() {
         return this.sp;

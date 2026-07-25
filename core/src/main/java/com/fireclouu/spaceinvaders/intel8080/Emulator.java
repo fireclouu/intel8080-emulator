@@ -32,9 +32,19 @@ public class Emulator {
     private long systemLastTime;
     private long systemGuestCycleTotal;
 
+    // from what im getting,  SI runs arount 2MHz
+    // we target a 60fps,
+    // and since we need to determine a per frame cycle, we divide 2MHz to 60fps
+    // and we get the cycle half due to mid screen vblanking 
     private static final int CPU_HZ = 2_000_000;
     private static final int FPS    = 60;
     private static final int CYCLES_PER_FRAME = CPU_HZ / FPS;
+    private static final int CYCLES_HALF      = CYCLES_PER_FRAME / 2;
+    // this is to compensate over cycles
+    private int cycleOveshoot = 0;
+
+    private static final long NANO_ONE_SECOND = 1_000_000_000L / FPS;  // 16_666_666
+    private long nextFrameTime = System.nanoTime();
 
     public Emulator(Guest guest) {
         this.guest = guest;
@@ -46,8 +56,38 @@ public class Emulator {
         cyclePerSecond = 0;
     }
 
-    public void newCycle() {
+    public void tick() {
+        if (isPaused) return;
+        long now = System.nanoTime();
+        if (now < nextFrameTime) return;
 
+        runFrame();
+        platform.draw(guest.getMemoryVram());
+
+        nextFrameTime += NANO_ONE_SECOND;
+        if (now - nextFrameTime > NANO_ONE_SECOND * 4) {
+            nextFrameTime = now + NANO_ONE_SECOND;
+        }
+    }
+
+    // timing fixes
+    private void runFrame() {
+        int spent = runCycles(CYCLES_HALF - cycleOveshoot);
+        cpu.requestInterrupt(0x08);
+
+        spent += runCycles(CYCLES_PER_FRAME - spent);
+        cpu.requestInterrupt(0x10);
+
+        cycleOveshoot = spent - CYCLES_PER_FRAME;
+    }
+
+    private int runCycles(int budget) {
+        int spent = 0;
+        while (spent < budget) {
+            handleInOut();
+            spent += cpu.step();
+        }
+        return spent;
     }
 
     private short handleIn(short mode) {
@@ -161,10 +201,10 @@ public class Emulator {
             long FRAME_INTERVAL_VBLANK = 8_330_000L;
             long FRAME_INTERVAL_END = 16_670_000L;
             if (frameElapsedTime >= FRAME_INTERVAL_VBLANK && !isVBlankServiced) {
-                cpu.sendInterrupt(0x08);
+                cpu.requestInterrupt(0x08);
                 isVBlankServiced = true;
             } else if (frameElapsedTime >= FRAME_INTERVAL_END) {
-                cpu.sendInterrupt(0x10);
+                cpu.requestInterrupt(0x10);
                 platform.draw(guest.getMemoryVram());
                 frameLastTime = currentTime;
                 isVBlankServiced = false;
@@ -186,7 +226,7 @@ public class Emulator {
 
 
             // get next exec
-            // nextTimeExecution = (NANO_ONE_SECOND - (getRelativeTimeEpoch() - cpuLastTime)) * cpu.getCurrentOpcodeCycle() / (MAX_CYCLE_PER_SECOND - cyclePerSecond);
+            // nextTimeExecution = (NANO_ONE_SECOND - (getRelativeTimeEpoch() - cpuLastTime)) * cpu.currentCycle / (MAX_CYCLE_PER_SECOND - cyclePerSecond);
             nextTimeExecution += getRelativeTimeEpoch();
             cyclePerSecond += cycle;
             systemGuestCycleTotal += cycle;
