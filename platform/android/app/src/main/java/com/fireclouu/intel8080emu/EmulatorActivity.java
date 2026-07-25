@@ -12,9 +12,10 @@ import com.fireclouu.spaceinvaders.intel8080.Inputs;
 import java.util.Arrays;
 
 public class EmulatorActivity extends Activity implements Button.OnClickListener {
-    private final static String KEY_PLATFORM = "Platform";
+    private final static String ANDROID_SERIALIZE_KEY_PLATFORM = "Platform";
+
     DisplaySurface DisplaySurface;
-    AndroidPlatform platform;
+    AndroidPlatform androidPlatform;
 
     private LinearLayout llLogs;
     private LinearLayout llLogs2;
@@ -63,68 +64,68 @@ public class EmulatorActivity extends Activity implements Button.OnClickListener
 //        Toast.makeText(getApplicationContext(), "Loading... " + nativeInit(this, display.getSurface()), Toast.LENGTH_SHORT).show();
 
         if (savedInstanceState != null) {
-            platform = (AndroidPlatform) savedInstanceState.getSerializable(KEY_PLATFORM);
-            if (platform != null) {
-                platform.setContext(this);
-                platform.setDisplay(DisplaySurface);
+            androidPlatform = (AndroidPlatform) savedInstanceState.getSerializable(ANDROID_SERIALIZE_KEY_PLATFORM);
+            if (androidPlatform != null) {
+                androidPlatform.setContext(this);
+                androidPlatform.setDisplay(DisplaySurface);
             }
         }
 
-        if (platform == null)
-            platform = new AndroidPlatform(this, this, DisplaySurface, isTestSuite);
+        if (androidPlatform == null)
+            androidPlatform = new AndroidPlatform(this, this, DisplaySurface, isTestSuite);
 
         // TODO: implement user defined file fetch, this is useless for now
-        platform.setRomFileName(romFileName);
+        androidPlatform.setRomFileName(romFileName);
 
         for (GameButton button : Arrays.asList(mButtonCoin, mButtonStart, mButtonLeft, mButtonFire, mButtonRight)) {
-            button.setPlatform(platform);
+            button.setPlatform(androidPlatform);
         }
 
         for (Button button : Arrays.asList(mButtonChangePlayer, mButtonLogs)) {
             button.setOnClickListener(this);
         }
 
-        platform.start();
+        androidPlatform.start();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putSerializable(KEY_PLATFORM, platform);
+        outState.putSerializable(ANDROID_SERIALIZE_KEY_PLATFORM, androidPlatform);
     }
 
     @Override
     protected void onResume() {
-        platform.emulationResume();
+        androidPlatform.emulationResume();
         super.onResume();
     }
 
     @Override
     protected void onPause() {
-        platform.emulationPause();
+        androidPlatform.emulationPause();
         super.onPause();
     }
 
     @Override
     protected void onDestroy() {
-        platform.emulationTerminate();
+        androidPlatform.emulationTerminate();
         super.onDestroy();
     }
 
     @Override
     public void onClick(View view) {
-        byte playerPort = platform.getPlayerPort();
+        byte playerPort = androidPlatform.getPlayerPort();
         int buttonId = view.getId();
         if (buttonId == R.id.btn_change_player) {
             playerPort = playerPort == Inputs.INPUT_PORT_1 ? Inputs.INPUT_PORT_2 : Inputs.INPUT_PORT_1;
-            platform.setPlayerPort(playerPort);
+            androidPlatform.setPlayerPort(playerPort);
             ((Button) view).setText("P" + playerPort);
         }
 
         if (buttonId == R.id.btn_logs) {
-            boolean isDebugging = !platform.isDebugging();
-            platform.setDebugging(isDebugging);
-            platform.nativeSetDebugging(isDebugging);
+            boolean isDebugging = !androidPlatform.isDebugging();
+            androidPlatform.setDebugging(isDebugging);
+            androidPlatform.nativeSetDebugging(isDebugging);
 //            boolean isVisible = llLogs.getVisibility() == View.VISIBLE;
 //            int toggledVisibility = isVisible ? View.GONE : View.VISIBLE;
 //            llLogs.setVisibility(toggledVisibility);
